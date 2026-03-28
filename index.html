@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>LX Form - beta</title>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        (function() {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
+        })();
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;700&display=swap');
+
+        :root {
+            --bg: #0b0d14;
+            --surface: #151822;
+            --surface-float: rgba(25, 28, 40, 0.85);
+            --surface-hover: #1f2333;
+            --border: #2c3142;
+            --text-main: #ffffff;
+            --text-muted: #8b95a5;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-btn: 14px;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-en: 'Inter', sans-serif;
+            --font-ar: 'Tajawal', sans-serif;
+            --shadow-float: 0 16px 32px rgba(0,0,0,0.4);
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        [data-theme="light"] {
+            --bg: #f4f5f7;
+            --surface: #ffffff;
+            --surface-float: rgba(255, 255, 255, 0.95);
+            --surface-hover: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --shadow-float: 0 16px 32px rgba(0,0,0,0.06);
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+        body { font-family: var(--font-en); background-color: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
+
+        .hud-bar { padding: 1.2rem 2.5rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; box-shadow: var(--shadow-sm); }
+        .hud-left { display: flex; align-items: center; gap: 2.5rem; }
+        .hud-title { font-weight: 700; font-size: 1.5rem; background: linear-gradient(135deg, var(--accent), #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; white-space: nowrap; }
+
+        .context-group { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        .hud-item { position: relative; }
+        .hud-pill { padding: 0.6rem 1rem; border-radius: var(--radius-btn); background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .hud-pill:hover { border-color: var(--text-muted); transform: translateY(-2px); }
+        .hud-pill.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+        .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.95rem; }
+
+        .hud-dropdown { position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(-10px); background: var(--surface-float); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.8rem; width: max-content; min-width: 200px; max-height: 350px; overflow-y: auto; box-shadow: var(--shadow-float); opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 200; }
+        .hud-dropdown.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+        .drop-item { padding: 0.8rem 1rem; border-radius: var(--radius-sm); cursor: pointer; font-family: var(--font-ar); font-weight: 600; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+        .drop-item:hover { background: var(--surface-hover); color: var(--accent); }
+        .drop-item span { font-family: var(--font-en); color: var(--text-muted); font-size: 0.8rem; }
+
+        .workspace { flex: 1; padding: 2rem 2.5rem; max-width: 1300px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; position: relative; min-height: 0; }
+
+        .omni-row { display: flex; gap: 1rem; position: relative; z-index: 50; height: 56px; }
+        .omni-wrapper { flex: 1; position: relative; height: 100%; }
+        .omni-input { width: 100%; height: 100%; padding: 0 1.5rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); font-family: var(--font-en); font-size: 1.05rem; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .omni-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+
+        .qty-input { width: 140px; height: 100%; padding: 0 1rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); font-family: var(--font-en); font-size: 1.2rem; text-align: center; font-weight: 700; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .qty-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+
+        button:disabled { opacity: 0.6; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; filter: none !important; }
+
+        .btn-enter { height: 100%; background: var(--accent); color: white; border: none; padding: 0 2rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-enter:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .btn-enter:active { transform: translateY(0); }
+
+        .omni-results { position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: var(--surface-float); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-float); max-height: 350px; overflow-y: auto; display: none; padding: 0.5rem; }
+        .omni-results.show { display: block; }
+        .res-item { padding: 0.8rem 1.2rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; transition: background 0.1s; }
+        .res-item:hover, .res-item.sel { background: var(--surface-hover); border-left: 3px solid var(--accent); }
+        .res-type { font-size: 0.7rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-sm); background: var(--accent-glow); color: var(--accent); font-weight: 700; text-transform: uppercase; }
+
+        .grid-area { flex: 1; overflow-y: auto; position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; min-height: 0; box-shadow: var(--shadow-sm); }
+        .empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-muted); pointer-events: none; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 1rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); position: sticky; top: -1rem; background: var(--surface); z-index: 10; }
+        tr.data-row { transition: background 0.2s; border-bottom: 1px solid var(--border); }
+        tr.data-row:hover { background: var(--surface-hover); }
+        td { padding: 1rem; vertical-align: middle; }
+        
+        .cell-input { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); font-size: 1.2rem; width: 110px; padding: 0.6rem; text-align: center; border-radius: var(--radius-sm); font-weight: 700; transition: border-color 0.2s; font-family: var(--font-en); }
+        .cell-input:focus { border-color: var(--accent); }
+
+        .c-select { background: var(--bg); color: var(--text-main); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-ar); font-size: 0.9rem; cursor: pointer; outline: none; width: 100%; transition: border-color 0.2s; }
+        .c-select:focus { border-color: var(--accent); }
+        .c-select.req { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+
+        .pill-tag { background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 700; margin-left: 10px; }
+
+        .btn-del { background: transparent; color: var(--text-muted); border: none; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; padding: 0.5rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
+        .btn-del:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+        .bottom-dock { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; }
+        .action-btns { display: flex; gap: 1rem; }
+        
+        .btn-hollow { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 0.8rem 1.5rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-hollow:hover { background: var(--surface); border-color: var(--text-muted); }
+        
+        .btn-solid { background: var(--success); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
+        .btn-solid:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); }
+
+        .btn-ghost { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-en); font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-ghost:hover { background: var(--surface); color: var(--text-main); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9000; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 2rem; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 1100px; padding: 2rem; box-shadow: var(--shadow-float); transform: translateY(20px); transition: transform 0.3s; max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+
+        .modal-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; font-family: var(--font-en); }
+        .guide-box { background: var(--bg); padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--accent); margin-bottom: 1.5rem; font-family: monospace; color: var(--text-muted); line-height: 1.5; font-size: 0.9rem; }
+
+        .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); display: block; }
+        .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
+        .drop-zone svg { color: var(--accent); margin-bottom: 1rem; }
+
+        .review-meta-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; background: var(--surface-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem; }
+        .review-meta-select { width: 100%; padding: 0.6rem; background: var(--bg); border: 1px solid var(--border); color: var(--text-main); border-radius: var(--radius-sm); font-family: var(--font-en); font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
+        .review-meta-select:focus { border-color: var(--accent); }
+        .review-meta-select.err { border-color: var(--danger); box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
+
+        .review-table-container { flex: 1; overflow-y: auto; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--bg); }
+        .review-table { width: 100%; text-align: left; border-collapse: collapse; }
+        .review-table th { position: sticky; top: 0; background: var(--surface-hover); z-index: 10; padding: 1rem; font-size: 0.75rem; border-bottom: 1px solid var(--border); }
+        .review-table td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); transition: opacity 0.2s; vertical-align: middle; background: var(--surface); }
+        
+        .rev-inp { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text-main); font-family: var(--font-en); padding: 0.6rem; border-radius: var(--radius-sm); font-size: 0.9rem; outline: none; transition: all 0.2s; }
+        .rev-inp:focus { border-color: var(--accent); }
+        
+        .qty-rev-inp { width: 100px; text-align: center; font-size: 1.1rem; font-weight: 700; padding: 0.6rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-main); font-family: var(--font-en); outline: none; transition: border-color 0.2s;}
+        .qty-rev-inp:focus { border-color: var(--accent); }
+
+        .status-badge { padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap; text-align: center; width: 100%;}
+        .status-ok { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-dupe { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-err { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-skip { background: rgba(100, 116, 139, 0.15); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.3); }
+
+        .err { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.2) !important; }
+        .row-disabled td { opacity: 0.5; background: var(--bg); transition: all 0.2s; }
+        .rev-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px); background: var(--text-main); color: var(--bg); padding: 0.8rem 1.8rem; border-radius: var(--radius-btn); box-shadow: var(--shadow-float); font-weight: 700; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error-toast { background: var(--danger); color: white; }
+
+        kbd { background: var(--surface-hover); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 0.8rem; color: var(--text-muted); box-shadow: 0 2px 0 var(--border); margin: 0 2px; }
+        .shortcuts-hint { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding-top: 1rem; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
+            .hud-left { flex-direction: column; gap: 1rem; }
+            .context-group { justify-content: center; }
+            .hud-title { text-align: center; }
+            .omni-row { flex-direction: column; height: auto; }
+            .omni-input, .qty-input, .btn-enter { height: 54px; }
+            .qty-input { width: 100%; }
+            .bottom-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
+            .action-btns { width: 100%; flex-direction: column; }
+            .action-btns button { width: 100%; justify-content: center; }
+            .workspace { padding: 1rem; overflow-y: auto; height: auto; }
+            .grid-area { overflow-x: auto; min-height: 400px; }
+            .shortcuts-hint { display: none; }
+            .modal-overlay { padding: 0.5rem; }
+            .modal-content { padding: 1rem; }
+            .review-meta-bar { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-bar">
+        <div class="hud-left">
+            <div class="hud-title">LX Form beta</div>
+            <div class="context-group">
+                <div class="hud-item">
+                    <div class="hud-pill" onclick="toggleHud('drop-year')">Year: <span class="ar" id="txt-year"></span></div>
+                    <div class="hud-dropdown" id="drop-year"></div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-pill" onclick="toggleHud('drop-month')">Month: <span class="ar" id="txt-month"></span></div>
+                    <div class="hud-dropdown" id="drop-month"></div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-pill" onclick="toggleHud('drop-class')">Class: <span class="ar" id="txt-class"></span></div>
+                    <div class="hud-dropdown" id="drop-class"></div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-pill" onclick="toggleHud('drop-region')">Region: <span class="ar" id="txt-region"></span></div>
+                    <div class="hud-dropdown" id="drop-region"></div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-pill" onclick="toggleHud('drop-pharmacy')">Pharmacy: <span class="ar" id="txt-pharmacy"></span></div>
+                    <div class="hud-dropdown" id="drop-pharmacy"></div>
+                </div>
+            </div>
+        </div>
+        <button class="btn-ghost" style="border-radius: var(--radius-sm); width: 42px; height: 42px; padding: 0;" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+    </div>
+
+    <div class="workspace">
+        <div class="omni-row">
+            <div class="omni-wrapper">
+                <input type="text" class="omni-input" id="omni" placeholder="Search product, ID (a21), Month, or type a Custom Name..." autocomplete="off">
+                <div class="omni-results" id="omni-res"></div>
+            </div>
+            <input type="number" class="qty-input" id="qty" placeholder="Qty" min="0">
+            <button class="btn-enter" onclick="processAdd()">Enter ↵</button>
+        </div>
+
+        <div class="grid-area">
+            <div class="empty-state" id="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                <h3 style="margin-top:1rem; color:var(--text-main);">No Entries Yet</h3>
+                <p style="font-size: 0.9rem; margin-top:0.5rem;">Use the search bar above or load a session.</p>
+            </div>
+            <table id="table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th style="width:120px">Unit</th>
+                        <th style="width:200px">Context Category</th>
+                        <th style="width:140px;text-align:center;">Units Sold</th>
+                        <th style="width:80px;text-align:center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="grid"></tbody>
+            </table>
+        </div>
+
+        <div class="bottom-dock">
+            <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div style="color: var(--text-muted); font-weight: 600;" id="stats-counter">Total Items: 0</div>
+                <div style="width: 1px; height: 20px; background: var(--border);"></div>
+                <button class="btn-ghost" onclick="saveSession()" title="Save Session">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Save
+                </button>
+                <label class="btn-ghost" title="Load Session" style="cursor: pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    Load
+                    <input type="file" id="file-load" accept=".json" style="display:none;" onchange="if(this.files[0]) loadSession(this.files[0])">
+                </label>
+            </div>
+            <div class="action-btns">
+                <button class="btn-hollow" onclick="openImport()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Import File
+                </button>
+                <button class="btn-solid" id="btn-submit" onclick="submitToDB()">
+                    <svg id="submit-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <span id="submit-text">Submit & Export</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="shortcuts-hint">
+            <kbd>/</kbd> Focus Search &nbsp;&nbsp;&nbsp; <kbd>Enter</kbd> Add Item &nbsp;&nbsp;&nbsp; <kbd>Esc</kbd> Clear / Close
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal-content">
+            <div id="import-ui">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+                    <h2 class="modal-title" style="margin:0;">Import Data</h2>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button class="btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="exportCSVTemplate()">↓ Template</button>
+                        <button class="btn-del" onclick="closeImport()">✕</button>
+                    </div>
+                </div>
+                <div class="guide-box">
+                    <strong>CSV Headers Supported:</strong><br>
+                    year, month, pharmacy, name, unit, qty, context<br><br>
+                    <em>Context options:</em> قرار لجنة, حكم قضائي, شئون طبية, داخل اللستة
+                </div>
+                <label class="drop-zone" id="dz">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <h3>Click or Drag CSV here</h3>
+                    <input type="file" id="file-in" accept=".csv" style="display:none;" onchange="if(this.files[0]) handleFile(this.files[0])">
+                </label>
+            </div>
+            
+            <div id="review-ui" style="display:none; flex: 1; flex-direction: column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <div>
+                        <h2 class="modal-title" style="margin:0;">Review & Submit Directly</h2>
+                        <span style="color:var(--text-muted); font-size: 0.85rem;">Verify imported data. Validated data will be pushed directly to the database.</span>
+                    </div>
+                    <button class="btn-del" onclick="closeImport()">✕</button>
+                </div>
+
+                <div class="review-meta-bar">
+                    <select id="rev-year" class="review-meta-select" onchange="validateMetaBar()"></select>
+                    <select id="rev-month" class="review-meta-select" onchange="validateMetaBar()"></select>
+                    <select id="rev-class" class="review-meta-select" onchange="updateRevPharm()"></select>
+                    <select id="rev-region" class="review-meta-select" onchange="updateRevPharm()"></select>
+                    <select id="rev-pharmacy" class="review-meta-select" onchange="validateMetaBar()"></select>
+                </div>
+
+                <div class="review-table-container">
+                    <table class="review-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;text-align:center">Inc.</th>
+                                <th>Product Name</th>
+                                <th style="width:140px">Unit</th>
+                                <th style="width:160px">Context</th>
+                                <th style="width:110px;text-align:center">Qty</th>
+                                <th style="width:120px;text-align:center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-tbody"></tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button class="btn-ghost" onclick="closeImport()">Cancel</button>
+                    <button class="btn-solid" id="btn-confirm-import" onclick="confirmReview()">Confirm & Push Database</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="status-modal" style="z-index: 99999;">
+        <div class="modal-content" style="max-width: 450px; text-align: center; padding: 3rem 2rem; align-items: center;">
+            <div id="status-icon"></div>
+            <h2 id="status-title" style="margin: 1.5rem 0 0.5rem; font-size: 1.8rem;"></h2>
+            <p id="status-desc" style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;"></p>
+            <button class="btn-solid" id="status-btn" onclick="document.getElementById('status-modal').classList.remove('active')" style="width: 100%; justify-content: center; padding: 1rem;">Acknowledge</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+<script>
+    let STATE = { year: new Date().getFullYear().toString(), month: null, class: null, region: null, pharmacy: null };
+    let DATA = [];
+    let STAGING = [];
+    
+    const DIC = {
+        months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
+        classes: { student: "طلاب", workforce: "قوى عاملة", infants: "مواليد" },
+        regions: { first: "الاولى", second: "الثانية", third: "الثالثة" }
+    };
+
+    const PHARM = {
+        student: {
+            first: [{n: "ابو المطامير طلاب", id: "a11"}, {n: "ادكو طلاب", id: "a12"}, {n: "البيضا طلاب", id: "a13"}, {n: "النوبارية طلاب", id: "a14"}, {n: "رشيد طلاب", id: "a15"}, {n: "كفر الدوار طلاب", id: "a16"}],
+            second: [{n: "ابو حمص طلاب", id: "a21"}, {n: "اورام طلاب", id: "a22"}, {n: "الرحمانية طلاب", id: "a23"}, {n: "المحمودية طلاب", id: "a24"}, {n: "حوش عيسي طلاب", id: "a25"}, {n: "دمنهور طلاب", id: "a26"}],
+            third: [{n: "ايتاي طلاب", id: "a31"}, {n: "بدر طلاب", id: "a32"}, {n: "الدلنجات طلاب", id: "a33"}, {n: "كوم حمادة طلاب", id: "a34"}, {n: "شبراخيت طلاب", id: "a35"}]
+        },
+        workforce: {
+            first: [{n: "ابو المطامير", id: "b11"}, {n: "ادكو", id: "b12"}, {n: "البيضا", id: "b13"}, {n: "النوبارية", id: "b14"}, {n: "رشيد", id: "b15"}, {n: "كفر الدوار سكر", id: "b16"}, {n: "كفر الدوار الشاملة 1", id: "b17"}, {n: "كفر الدوار الشاملة 2", id: "b18"}, {n: "كفر الدوار مسائي", id: "b19"}],
+            second: [{n: "ابو حمص", id: "b21"}, {n: "الرحمانية", id: "b22"}, {n: "المحمودية", id: "b23"}, {n: "المحمودية مسائي", id: "b24"}, {n: "حوش عيسي", id: "b25"}, {n: "دمنهور الشاملة 1", id: "b26"}, {n: "دمنهور الشاملة 2", id: "b27"}, {n: "دمنهور سكر", id: "b28"}, {n: "دمنهور مسائي", id: "b29"}, {n: "دمنهور اورام", id: "b210"}, {n: "الشرطة", id: "b211"}],
+            third: [{n: "ايتاي الشاملة 1", id: "b31"}, {n: "ايتاي الشاملة 2", id: "b32"}, {n: "ايتاي مسائي", id: "b33"}, {n: "بدر", id: "b34"}, {n: "الدلنجات", id: "b35"}, {n: "كوم حمادة", id: "b36"}, {n: "كوم حمادة مسائي", id: "b37"}, {n: "شبراخيت", id: "b38"}, {n: "قليشان", id: "b39"}, {n: "وادي النطرون", id: "b310"}, {n: "شبراخيت مسائي", id: "b311"}, {n: "الدلنجات مسائي", id: "b312"}]
+        },
+        infants: {
+            first: [{n: "ابو المطامير مواليد", id: "c11"}, {n: "ادكو مواليد", id: "c12"}, {n: "البيضا مواليد", id: "c13"}, {n: "النوبارية مواليد", id: "c14"}, {n: "رشيد مواليد", id: "c15"}, {n: "كفر الدوار مواليد", id: "c16"}],
+            second: [{n: "ابو حمص مواليد", id: "c21"}, {n: "اورام مواليد", id: "c22"}, {n: "الرحمانية مواليد", id: "c23"}, {n: "المحمودية مواليد", id: "c24"}, {n: "حوش عيسي مواليد", id: "c25"}, {n: "دمنهور مواليد", id: "c26"}],
+            third: [{n: "ايتاي مواليد", id: "c31"}, {n: "بدر مواليد", id: "c32"}, {n: "الدلنجات مواليد", id: "c33"}, {n: "كوم حمادة مواليد", id: "c34"}, {n: "شبراخيت مواليد", id: "c35"}]
+        }
+    };
+
+    const PRODS = [
+        "Antacid Syp|B", "Acetazolamide 250mg|10 T", "Acetylcysteine Sachets|10 Sach",
+        "Acetylsalicylic Acid 75mg|10 T", "Acetylsalicylic Acid 81mg|10 T", "Acyclovir 0.05 cream|Tube",
+        "Aescin gel|Tube", "Allopurinol 100mg|10 T", "Alpha Chymotrypsin|Amp", "Alpha Lipoic Acid 300mg|10 T",
+        "Alpha Lipoic Acid 600mg|10 T", "Amantadine HCL 100mg|10 T", "Amaryl 2mg (حكم قضائي)|30 T",
+        "Ambroxol|10 T", "Ambroxol Syp|B", "Amiodarone 200mg|10 T", "Amitriptyline 10mg|10 T",
+        "Amitriptyline 25mg|10 T", "Amlodipine 10mg|10T", "Amlodipine 10mg & Valsartan 160mg|10 T",
+        "Amlodipine 5mg|10 T", "Amlodipine 5mg & Olmesartan 20mg|10 T", "Amlodipine 5mg & Valsartan 160mg|10 T",
+        "Amlodipine, Olmesartan & HCT 10/40/25mg|10 T", "Amlodipine, Olmesartan & HCT 5/20/12.5mg|10 T",
+        "Amoxicillin & Clavulanic acid 1 gm|10 T", "Anagrelide 0.5mg|10 T", "Andovimpamide 100mg (استثناء من مدير الفرع)|10 T",
+        "Antacid|10 T", "Antacid Syp|B", "Antibiotic & Corticosteroid cream|Tube", "Antifungal cream|Tube",
+        "Anti-migraine|10 T", "Antirheumatic gel|Tube", "Apetryl 0.5mg ( الشئون الطبية)|10 T",
+        "Apixaban 2.5mg|10 T", "Apixaban 5mg|10 T", "Aranesp 100mcg|Syringe", "Aripiprazole 30mg|10 T",
+        "Artificial Tears|B", "Atorvastatin & Ezetimibe 20/10 mg|10 T", "Atorvastatin & Ezetimibe 40/10 mg|10 T",
+        "Atorvastatin 20mg|10T", "Atorvastatin 40mg|10 T", "Atropine Sulphate ED|B",
+        "Atropine Sulphate, Colchicine & Piperazine Sachets|12 Sach", "Avonex 30mcg (قرار لجنة)|Syringe",
+        "Azathioprine 50 mg|10 T", "Beclomethasone & Salbutamol Inhalation|B", "Beclomethasone inhalation|B",
+        "Bendamustin 100mg|vial", "Benztropine 2mg|10 T", "Betaferon (قرار لجنة)|Syringe", "Betahistine 8mg|10 T",
+        "Betamethasone & Calcipotriol Cr.|Tube", "Betamethasone & Salicylic acid Lotion|B",
+        "Betamethasone & Salicylic acid Oint.|Tube", "Betamethasone Cr.|Tube", "Betaxolol|B", "Bilichol|12 Cap",
+        "Bional (قرار لجنة )|10 T", "Biperidene 2mg|10 T", "Bisoprolol 2.5mg|10 T", "Bisoprolol 5mg|10 T",
+        "Bisoprolol 5mg & HCT 12.5mg|10 T", "Bleomycin 15 I.U|Vial", "Bosentan 62.5mg|10 T", "Brimonidine e.d|B",
+        "Budesonide 160mcg & Formoterol 4.5mcg|B", "Bumetanide|10 T", "Cabergoline 0.5mg|2 T", "Caelyx|Vial",
+        "Calcium 500mg|10 T", "Candesartan 16 mg|10 T", "Candesartan 16mg & HCT 12.5mg|10 T", "Candesartan 8mg|10 T",
+        "Capecitabine 500mg|T", "Capoten 25mg (حكم قضائي)|10 T", "Captopril 50mg & HCT 25mg|10 T",
+        "Carbamazepin 200mg|10 T", "Carbamazepin 400mg CR|10 T", "Carbamide cream|Tube", "Carbimazole 5mg|10 T",
+        "Carboplatin 150mg|Vial", "Carboplatin 450mg|Vial", "Carfilzomib 60mg|Vial", "Carvedilol 12.5mg|10T",
+        "Carvedilol 25mg|10 T", "Carvedilol 6.25mg|10 T", "Celecoxib 200mg|10 T", "Central Muscle Relaxant & Analgesic|10 T",
+        "Cetirizine|10 T", "Cetuximab 100mg|Vial", "Chlorpromazine 100mg|10 T", "Cholecalciferol 10000IU|10 T",
+        "Cholestyramine Sachets|12 Sach", "Chymotrypsin & Trypsin|10 T", "Cidophage 850mg (حكم قضائي)|10 T",
+        "Cilostazole 100mg|10 T", "Cilostazole 50mg|10 T", "Cinacalcet 30mg|10 T", "Cinchocaine & Hydrocortisone cream|Tube",
+        "Cinnarizine 25mg|10 T", "Cipralex 10mg (الشئون الطبية)|14 T", "Ciprapro (استثناء مدير الفرع)|10 T",
+        "Ciprofloxacin 500mg|10 T", "Citalopram 20mg|7 T", "Citicoline 500mg|Amp", "Citicoline Syp|B",
+        "Clobetasol Cream|Tube", "Clomipramine 25mg|10 T", "Clomipramine 75mg|10 T", "Clopidogrel 75mg|10 T",
+        "Clotrimazole Cream|Tube", "Clotrimazole Soln.|B", "Clozapine 100mg|10 T", "Colchicine|10 T", "Cough Sedative|B",
+        "Cyclosporin 50mg|5 T", "Cytarabine 1gm|Vial", "Dapagliflozin 10mg|10 T", "Dapagliflozin 5mg & Met. 1000mg|10 T",
+        "Dapagliflozin 10mg & Met. 1000mg|10 T", "Darbepoetin Alpha (لجنه عليا)|Syringe", "Deferoxamine 500mg|Amp",
+        "Dexamethasone , Neomycine & Polimyxin ED|B", "Dexamethasone , Neomycine & Polimyxin EO|Tube", "Diacerein 50mg|10 T",
+        "Diclofenac gel|Tube", "Digestive|10 T", "Digoxine 0.25mg|10 T", "Diltiazem 60mg|10 T",
+        "Diosmin 450mg & Hesperidin 50mg|10 T", "Domperidone 10mg|10 T", "Dorzolamide & Timolol ED|B",
+        "Dostenix (حكم قضائي)|2 T", "Dothiepin 25mg|10 T", "Dothiepin 75mg|10 T", "Doxazosin 1mg|10 T",
+        "Doxazosin 4mg|10 T", "Doxorubicin 20mg|Vial", "Doxycycline 100mg|10 Cap", "Duloxetine 30mg|10 T",
+        "Empagliflozin 12.5mg & Met. 1000mg|10 T", "Empagliflozin 25mg|10 T", "Empagliflozin 25mg & Met. 1000mg|10 T",
+        "Empagliflozin 5mg & Met. 1000mg|10 T", "Enalapril 20mg & HCT 12.5mg|10 T", "Endoxan 1g|Vial", "Endoxan 50mg|50T",
+        "Enoxaparin 20mg|Syringe", "Enoxaparin 40mg|Syringe", "Enoxaparin 60mg|Syringe", "Enoxaparin 80mg|Syringe",
+        "Entecavir 0.5mg|10 T", "Entecavir 1mg|10 T", "Erythropoietin alpha 4000IU|Vial", "Escitalopram 10mg|14T",
+        "Esomeprazole 40 mg|10 Cap", "Estradiol Valerate & Norgestrel|21 T", "Ethamsylate 250 mg|10 T", "Etoposide 100mg|Amp",
+        "Etoricoxib 120mg|10 T", "Etoricoxib 90mg|10 T", "Famotidine 20 mg|10 T", "Famotidine 40mg|10 T",
+        "Febuxostat 40mg|10 T", "Febuxostat 80mg|10 T", "Fenofibrate 300mg|10 T", "Ferro Sanol Duodenal ( الشئون الطبية)|30 T",
+        "Fexofenadine 120mg|10 T", "Fexofenadine 180mg|10 T", "Flavoxate 200mg|10 T", "Fluconazole 150mg|1 T",
+        "Fluoxetine 20mg|10 T", "Fluticasone 125mcg & Salmeterol 25mcg|B", "Folic acid|10 T", "Formoterol|30 T",
+        "Fucidic Acid Cream|Tube", "Furosemide 20mg & Spironolactone 50mg|10 T", "Gabapentin 100mg|10 T",
+        "Gabapentin 400mg|10 T", "Galvus 50mg (حكم قضائي )|28 T", "Gastrobiotic 550mg (لجنه عليا)|10 T",
+        "Gentamicin 80mg|Amp", "Gentamicin Cream|Tube", "Gilenya 0.5mg|28 Cap", "Ginkgo biloba|10 T",
+        "Glibenclamide 5mg|10 T", "Glibenclamide 5mg & Met. 1000mg|10 T", "Glibenclamide 5mg & Met. 500mg|10 T",
+        "Gliclazide 60mg|10 T", "Glimepiride 2mg|10 T", "Glimepiride 2mg & Met. 1000mg|10 T", "Glimepiride 3mg|10 T",
+        "Glimepiride 4mg|10 T", "Glucosamine|10 T", "Gramicidin, Neomycin, Nystatin & Triamcinolone Cream|Tube",
+        "Haloperidol 5mg|Amp", "Hexamine, Khellin & Piperazin Sachets|12 Sach", "Human chorionic gonadotropin|Amp",
+        "Hydroxychloroquine|10 T", "Hydroxyurea|10 T", "Imipramine 25mg|10 T", "Indepamid 2.5 mg|10 T",
+        "Indomethacin 100mg Supp.|10 Supp", "Insulin Isophane Protamine|Vial", "Insulin Isophane Protamine|Penfill",
+        "Insulin Mix 70/30 (Insulin Isophane Protamine & Insulin Neutral Human)|Vial",
+        "Insulin Mix 70/30 (Insulin Isophane Protamine & Insulin Neutral Human)|Penfill", "Insulin Neutral Human|Vial",
+        "Insulin Neutral Human|Penfill", "Invega 100mg (قرار لجنة)|Syringe", "Invega 150mg (قرار لجنة)|Syringe",
+        "Ipratropium & Salbutamol|Amp", "Irinotecan 100mg|Vial", "Iron|10 T", "Iruxol|Tube", "Isosorbide Mononitrate 20mg|10 T",
+        "Ivabradine 5mg|10 T", "Ivabradine 7.5mg|10 T", "Ketosteril|100 T", "Ketotifen|10 T", "Lacosamide 100 mg|10 T",
+        "Lactulose Syp|B", "Lamivudine|10 T", "Lamotrigine 100mg|10 T", "Latanoprost ED|B", "Laxative|10 T",
+        "L-Carnitine Amp|Amp", "L-Carnitine Cap|10 Cap", "Leflunomide 20mg|10 T", "Lercanidipine 10mg|10 T",
+        "Leucovorin Calcium 50mg|Amp", "Levetiracetam 1000mg|10 T", "Levetiracetam 500mg|10 T",
+        "Levodopa & Carbidopa 250/25mg|10 T", "Levodopa, Carbidopa & Entacapone 150/37.5/200mg|10 T",
+        "Levofloxacin 500mg|10 T", "Levothyroxine 100mcg|100 T", "Levothyroxine 25mcg|50 T", "Levothyroxine 50mcg|100 T",
+        "Lidocaine cream|Tube", "Linezolid 600 mg|10 T", "Lithium Carbonate 400mg|10 T", "Lolawest (قرار لجنة )|6 Sach",
+        "Long Acting Penicillin|Vial", "Losartan 50mg|10 T", "Losartan 50mg & HCT 12.5mg|10 T",
+        "Magnesium Citrate Eff.|12 Sach", "Mayzent 0.25 mg (لجنة)|12 T", "Mebeverine 100mg & Sulpiride 25mg|10 T",
+        "Meclofenoxate 500mg|10 T", "Memantine 10 mg|10 T", "Mesalazine 500mg|10 T", "Mesalazine Supp|28 Supp",
+        "Metformin 500mg|10 T", "Metformin 850mg|10 T", "Methotrexate|Vial", "Methotrexate 2.5mg|10 T",
+        "Methyl Folate (لجنة دواء)|10 T", "Methyldopa 250mg|10 T", "Metoclopramide 10mg|10 T", "Metoprolol 100mg|10 T",
+        "Metoprolol 50mg|10 T", "Metronidazole 250mg|10 T", "Miconazole vaginal cream|Tube", "Minirin 60mcg (قرار لجنة)|30T",
+        "Mometasone Cream|Tube", "Montelukast 10mg|10 T", "Mouth Wash|B", "Multivitamins|10 Cap", "Mycophenolate 180mg|10 T",
+        "Mycophenolate 500mg|10 T", "Naftidrofuryl 200mg|10 T", "Naphazoline HCL 0.5mg & Chlorpheniramine maleate ED|B",
+        "Napizole 20mg (حكم قضائي )|14 T", "Navelbin 20mg|T", "Nebivolol 2.5mg|10 T", "Nebivolol 5mg|10 T",
+        "Nebivolol 5mg & HCT 12.5mg|10 T", "Nebivolol 5mg & HCT 25mg|10 T", "Neostigmine 15mg|10 T", "Nicorandil 10mg|10 T",
+        "Nicorandil 20mg|10 T", "Nifedipine|10 T", "Nitroglycerin 2.5mg|10 Cap", "Nitroglycerin 5mg Patches|Patch",
+        "Nitromak 2.5mg (حكم قضائي)|10 T", "Norethisterone|10 T", "N-plate|Syringe", "Ofev (حكم قضائي)|60 T",
+        "Olanzapine 10mg|10 T", "Olmesartan 20mg|10 T", "Olmesartan 20mg & HCT 12.5mg|10 T", "Olmesartan 40mg|10 T",
+        "Omega 3|10 T", "Omeprazole 20mg|7 T", "Omeprazole 40mg|10 T", "Opsumit 10mg|30 T", "Oxcarbazepine 300mg|10 T",
+        "Oxybutynin 5mg|10 T", "Panthenol cream|Tube", "Pantoprazole 20mg|10 T", "Pantoprazole 40mg|10 T",
+        "Paracetamol 500mg|10 T", "Pentasa (لجنة عليا)|10 T", "Pentasa Supp (لجنة عليا)|28 Supp",
+        "Pentoxifylline 400mg|10 T", "Phenytoin 100mg|10 T", "Phenytoin 50mg|10 T", "Pimozide 4mg|10 T",
+        "Piperazine, Hexamine & Khellin Eff.|12 Sach", "Piracetam 400mg|10 T", "Piracetam 800mg|10 T", "Piracetam Syp|B",
+        "Pirfenex (حكم قضائي)|30 T", "Pirfenidone 200mg (قرار لجنة )|30 T", "Piroxicam 10mg|10 T", "Piroxicam 20mg|10 T",
+        "Plendil 5mg (موافقة الشئون الطبية)|30 T", "Potassium|B", "Povidone Iodine Shampoo|B", "Pramipexol 0.25mg|10 T",
+        "Pramipexol 1 mg|10 T", "Prednisolone 20mg|10 T", "Prednisolone 5mg|10 T", "Prednisolone ED|B",
+        "Progesteron 100mg|10 Cap", "Progesteron 250mg|Amp", "Propafenone 150mg|10 T", "Propranolol 10mg|10 T",
+        "Propranolol 40mg|10 T", "Propolis, Chamomile, Zinc Oxide & Honey Cream|Tube", "Propylthiouracil 50mg|10 T",
+        "Pyridostigmine 60mg|10 T", "Quetiapine 100mg|10 T", "Quinidine sulphate 250mg|10T", "Ramipril 10mg|10 T",
+        "Ramipril 2.5 mg|10 T", "Ramipril 5mg|10T", "Rasagiline 1mg|10 T", "Rebamipide|10 T", "Rebif 44mcg (قرار لجنة)|Syringe",
+        "Rilutek (لجنة دواء)|56 T", "Riluzole 50mg|56 T", "Risperidone 1 mg|10 T", "Risperidone 2 mg|10 T",
+        "Risperidone 3 mg|10 T", "Rivaroxaban 10mg|10 T", "Rivaroxaban 15mg|10 T", "Rivaroxaban 20mg|10 T",
+        "Rivaroxban 2.5mg|10 T", "Rosuvastatin 20mg|10 T", "Rutin & Vit.C|10 T", "Salbutamol|10 T", "Salbutamol Inhaler|B",
+        "Salbutamol Syp|B", "Sandostatin LAR|Syringe", "Sertraline 50 mg|10 T", "Sildenafil 20mg|10 T",
+        "Sildenafil 50mg|10 T", "Sitagliptin 100mg|10 T", "Sitagliptin 50 mg & Met. 1000 mg|10 T", "Sodium Valproate 200mg|10 T",
+        "Sodium Valproate 500mg|10 T", "Spiramycin 3MIU Tab|10 T", "Spironolactone 100 mg|10 T", "Spironolactone 25mg|10 T",
+        "Stivarga 40mg|84T", "Sulphamethoxazole & Trimethoprim|10 T", "Sulphasalazine|10 T", "Tacrolimus 1mg|10 T",
+        "Tamoxifen 10mg|10 T", "Tamsulosin 0.4mg|14T", "Tenofenamide 25mg|10 T", "Tenofovir 300mg|30 T",
+        "Terbinafine 0.01 Cream|Tube", "Terbutaline|10 T", "Testosterone|Amp", "Tetracosactrin|Amp", "Theophylline 300mg|10 T",
+        "Thrombonorm 0.5mg (لجنة عليا)|100 Cap", "Tiratam 1000 mg (تم الصرف بالاسم التجاري وفقا لتأشيرة الشئون الطبية)|10 T",
+        "Tiratam 500mg (استثناء من مدير الفرع)|10 T", "Topiramate 100 mg|10 T", "Topiramate 25 mg|10 T", "Torsemide 20mg|10 T",
+        "Tranexamic acid 500mg|10 T", "Travoprost ED|B", "Triamcinilone 40mg|Amp", "Trifluperazine 5mg (Stellasil)|10 T",
+        "Trimebutine 200mg|10 T", "Trimetazidine 20mg|10 T", "Urinex|12 Cap", "Ursodeoxycholic acid 250mg|10 Cap",
+        "Valcyte 450mg|60 T", "Valsartan 160mg|10T", "Valsartan 160mg & HCT 25mg|10 T", "Valsartan 40 mg|10 T",
+        "Vastarel MR ( حكم قضائي )|30 T", "Verapamil 240mg|10 T", "Verapamil 80mg|10 T", "Vidaza 100mg|Vial",
+        "Vildagliptin 50mg|10 T", "Vildagliptin 50mg & Metformin 1000mg|10 T", "Vildagliptin 50mg & Metformin 850mg|10 T",
+        "Vildagluse plus 50/1000mg (حكم قضائي )|30 T", "Vinblastin 10mg|vial", "Vincamine 30mg|10 T", "Vincristine 1mg|Vial",
+        "Vinorelbine 50mg|Vial", "Vitamin A|10 T", "Vitamin B amp|Amp", "Vitamin B comp|10 T", "Vitamin E 400|12 Cap",
+        "Vitamin K|10 T", "Voriconazole 50mg|10 T", "Warfarin 1mg|10 T", "Warfarin 3mg|10 T", "Warfarin 5 mg|10 T",
+        "Xarelto 20mg|28 T", "Xgeva|Vial", "Zoledronic 4mg|Vial"
+    ].sort();
+
+    let SEARCH_IDX = [];
+    DIC.months.en.forEach((m, i) => SEARCH_IDX.push({ t: 'month', txt: DIC.months.ar[i], val: m }));
+    for(let c in PHARM) for(let r in PHARM[c]) PHARM[c][r].forEach(p => SEARCH_IDX.push({ t: 'pharmacy', txt: `${p.n} (${p.id})`, obj: {c, r, n: p.n, id: p.id} }));
+    PRODS.forEach(p => { let [n, u] = p.split('|'); SEARCH_IDX.push({ t: 'product', txt: n, u: u||'', raw: p }); });
+
+    const fuse = new Fuse(SEARCH_IDX, { keys: ['txt', 'id', 'val'], threshold: 0.5, includeScore: true, ignoreLocation: true });
+    const dom = { omni: document.getElementById('omni'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
+    let selIdx = -1, resList = [];
+
+    function buildHudMenus() {
+        const yDrop = document.getElementById('drop-year');
+        const curr = new Date().getFullYear();
+        for(let i=curr-1; i<=curr+1; i++) yDrop.innerHTML += `<div class="drop-item" onclick="setHud('year', '${i}')">${i}</div>`;
+
+        const mDrop = document.getElementById('drop-month');
+        DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
+
+        const cDrop = document.getElementById('drop-class');
+        Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" onclick="setHud('class', '${k}')">${v}</div>`);
+
+        const rDrop = document.getElementById('drop-region');
+        Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" onclick="setHud('region', '${k}')">${v}</div>`);
+    }
+
+    function toggleHud(id) {
+        document.querySelectorAll('.hud-dropdown').forEach(d => { if(d.id !== id) d.classList.remove('show'); });
+        const el = document.getElementById(id);
+        if(id === 'drop-pharmacy') buildPharmMenu();
+        el.classList.toggle('show');
+    }
+
+    function buildPharmMenu() {
+        const d = document.getElementById('drop-pharmacy');
+        d.innerHTML = '';
+        if(!STATE.class || !STATE.region) { d.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Select Class & Region first</div>`; return; }
+        PHARM[STATE.class][STATE.region].forEach(p => d.innerHTML += `<div class="drop-item" onclick="setHud('pharmacy', '${p.n}')">${p.n} <span>${p.id}</span></div>`);
+    }
+
+    function setHud(key, val) {
+        STATE[key] = val;
+        if(key === 'class' || key === 'region') STATE.pharmacy = null;
+        updateHudUI();
+        document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show'));
+    }
+
+    function updateHudUI() {
+        const upd = (id, val, dict) => {
+            const el = document.getElementById(`txt-${id}`).parentNode;
+            const span = document.getElementById(`txt-${id}`);
+            if(val) { el.classList.add('active'); span.textContent = dict ? dict[val] || val : val; }
+            else { el.classList.remove('active'); span.textContent = 'Set'; }
+        };
+        upd('year', STATE.year);
+        upd('month', STATE.month, Object.fromEntries(DIC.months.en.map((m,i)=>[m,DIC.months.ar[i]])));
+        upd('class', STATE.class, DIC.classes);
+        upd('region', STATE.region, DIC.regions);
+        upd('pharmacy', STATE.pharmacy);
+    }
+
+    document.addEventListener('click', e => {
+        if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show'));
+        if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show');
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+            e.preventDefault();
+            dom.omni.focus();
+        }
+        if (e.key === 'Escape') {
+            dom.omni.value = ''; dom.res.classList.remove('show');
+            document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show'));
+            dom.omni.blur(); dom.qty.blur();
+        }
+        
+        if (['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
+            if (e.target === dom.omni || e.target === dom.qty || e.target.tagName === 'BUTTON') return;
+            const target = e.target;
+            if (!target.matches('table input, table select')) return;
+
+            const td = target.closest('td');
+            const tr = target.closest('tr');
+            const tbody = target.closest('tbody');
+            if (!td || !tr || !tbody) return;
+
+            let isDown = e.key === 'ArrowDown' || e.key === 'Enter';
+            let nextRowIdx = Array.from(tbody.children).indexOf(tr) + (isDown ? 1 : -1);
+            const nextTr = tbody.children[nextRowIdx];
+
+            if (nextTr) {
+                const colIdx = Array.from(tr.children).indexOf(td);
+                const nextTd = nextTr.children[colIdx];
+                if (nextTd) {
+                    let nextInput = nextTd.querySelector('input:not([disabled]):not([readonly]), select:not([disabled])');
+                    if (nextInput) {
+                        e.preventDefault();
+                        nextInput.focus();
+                        if (nextInput.select) nextInput.select();
+                    }
+                }
+            }
+        }
+    });
+
+    function smartSearch(sq) {
+        let terms = sq.toLowerCase().trim().split(/\s+/);
+        let scored = SEARCH_IDX.map(obj => {
+            let target = (obj.txt + " " + (obj.val || "") + " " + (obj.id || "")).toLowerCase();
+            let score = 0, matchedTokens = 0;
+            for (let t of terms) {
+                if (target.includes(t)) {
+                    score += t.length * 2; matchedTokens++;
+                    if (target.startsWith(t)) score += 5;
+                } else {
+                    let i = 0;
+                    for (let j = 0; j < target.length; j++) {
+                        if (t[i] === target[j]) i++;
+                        if (i === t.length) break;
+                    }
+                    if (i === t.length) { score += t.length; matchedTokens++; }
+                }
+            }
+            return { item: obj, score, matchedTokens };
+        });
+
+        let filtered = scored.filter(s => s.matchedTokens === terms.length);
+        if (filtered.length > 0) return filtered.sort((a,b) => b.score - a.score).map(f => ({ item: f.item }));
+        return fuse.search(sq).map(f => ({ item: f.item }));
+    }
+
+    dom.omni.addEventListener('input', e => {
+        const q = e.target.value.trim();
+        if(!q) { dom.res.classList.remove('show'); return; }
+
+        if(/^202[0-9]$/.test(q)) {
+            dom.res.innerHTML = `<div class="res-item" onclick="setHud('year', '${q}'); dom.omni.value=''; dom.res.classList.remove('show');"><div>Set Year: <strong>${q}</strong></div><span class="res-type">Year</span></div>`;
+            dom.res.classList.add('show'); return;
+        }
+
+        const match = q.match(/^(.*?)\s+(\d+)$/);
+        let sq = match ? match[1] : q, sqty = match ? match[2] : null;
+        const res = smartSearch(sq).slice(0, 8);
+        
+        dom.res.innerHTML = ''; resList = [];
+        let exactMatch = res.length > 0 && res[0].item.txt.toLowerCase() === sq.toLowerCase();
+
+        res.forEach((r, idx) => {
+            const div = document.createElement('div');
+            div.className = 'res-item';
+            if (idx === 0 && !exactMatch && sq.length > 2 && r.item.t === 'product') {
+                div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${r.item.txt}</strong> <small style="color:var(--text-muted); margin-left:8px">${r.item.u||''}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent);">Suggest</span>`;
+            } else {
+                div.innerHTML = `<div><strong>${r.item.txt}</strong> <small style="color:var(--text-muted); margin-left:8px">${r.item.u||''}</small></div><span class="res-type">${r.item.t}</span>`;
+            }
+            div.onclick = () => applyOmni(r.item, sqty);
+            dom.res.appendChild(div); resList.push(div);
+        });
+
+        if (!exactMatch) {
+            const custDiv = document.createElement('div');
+            custDiv.className = 'res-item';
+            custDiv.innerHTML = `<div>Add Custom: <strong>${q}</strong></div><span class="res-type" style="background:var(--warning); color:#fff;">Custom</span>`;
+            custDiv.onclick = () => applyOmni({t:'custom', txt:q}, sqty);
+            dom.res.appendChild(custDiv); resList.push(custDiv);
+        }
+
+        dom.res.classList.add('show'); selIdx = 0; hi();
+    });
+
+    const handleKey = e => {
+        if(e.target === dom.omni && dom.res.classList.contains('show')) {
+            if(e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx+1, resList.length-1); hi(); }
+            else if(e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx-1, 0); hi(); }
+            else if(e.key === 'Enter') { 
+                e.preventDefault(); 
+                if(selIdx >= 0 && resList[selIdx]) resList[selIdx].click(); 
+                else processAdd(); 
+            }
+        } else if(e.key === 'Enter') { e.preventDefault(); processAdd(); }
+    };
+
+    dom.omni.addEventListener('keydown', handleKey);
+    dom.qty.addEventListener('keydown', handleKey);
+
+    function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) resList[selIdx].classList.add('sel'); }
+
+    function applyOmni(item, pendingQty) {
+        dom.res.classList.remove('show');
+        if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value = ''; toast('Pharmacy Linked'); }
+        else if(item.t === 'month') { setHud('month', item.val); dom.omni.value = ''; toast('Month Linked'); }
+        else {
+            dom.omni.value = item.txt; dom.omni.dataset.raw = JSON.stringify(item);
+            if(pendingQty) { dom.qty.value = pendingQty; processAdd(); } else dom.qty.focus();
+        }
+    }
+
+    function resolveCoreItem(n, u) {
+        let nL = (n || '').trim().toLowerCase();
+        let uL = (u || '').trim().toLowerCase();
+        let match = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL && x.u.toLowerCase() === uL);
+        if (match) return { sys: true, n: match.txt, u: match.u, rawId: match.raw };
+        if (uL === '') {
+            let matchN = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL);
+            if (matchN) return { sys: true, n: matchN.txt, u: matchN.u, rawId: matchN.raw };
+        }
+        return { sys: false, n: (n||'').trim(), u: (u||'').trim() };
+    }
+
+    function updateGridContext(idx, newCtx) {
+        let item = DATA[idx];
+        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.cst === item.cst && d.n.toLowerCase() === item.n.toLowerCase() && d.u.toLowerCase() === item.u.toLowerCase() && d.ctx.toLowerCase() === newCtx.toLowerCase());
+        if(dupIdx >= 0) {
+            DATA[dupIdx].q += item.q;
+            DATA.splice(idx, 1);
+        } else {
+            item.ctx = newCtx;
+        }
+        drawGrid();
+    }
+
+    function processAdd() {
+        const text = dom.omni.value.trim(), q = parseInt(dom.qty.value) || 0;
+        if(!text) return;
+        let obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : { t: 'custom', txt: text, u: '' };
+        
+        let res = resolveCoreItem(obj.txt, obj.u);
+        let cst = !res.sys;
+        let n = res.n;
+        let u = res.u;
+        let ctx = '';
+        let raw = res.sys ? res.rawId : `${n}|${u}`;
+
+        let exIdx = DATA.findIndex(d => d.cst === cst && d.n.toLowerCase() === n.toLowerCase() && d.u.toLowerCase() === u.toLowerCase() && d.ctx.toLowerCase() === ctx.toLowerCase());
+
+        if(exIdx >= 0) {
+            DATA[exIdx].q += q;
+            toast('Quantity Updated');
+        } else {
+            DATA.unshift({ raw, n, u, q, cst, ctx });
+        }
+
+        dom.omni.value = ''; dom.qty.value = ''; dom.omni.dataset.raw = ''; dom.omni.focus();
+        drawGrid();
+    }
+
+    function drawGrid() {
+        dom.grid.innerHTML = '';
+        const empty = document.getElementById('empty-state'), tbl = document.getElementById('table');
+        
+        if(DATA.length) { empty.style.display = 'none'; tbl.style.display = 'table'; }
+        else { empty.style.display = 'block'; tbl.style.display = 'none'; }
+        document.getElementById('stats-counter').textContent = `Total Items: ${DATA.length}`;
+
+        DATA.forEach((d, i) => {
+            const tr = document.createElement('tr');
+            tr.className = 'data-row';
+            let ctxHtml = `<span style="color:var(--text-muted);font-size:0.9rem; margin-left:8px; font-weight:600;">System Core</span>`;
+            if(d.cst) {
+                ctxHtml = `
+                    <select class="c-select ${!d.ctx?'req':''}" onchange="updateGridContext(${i}, this.value)">
+                        <option value="">Select Category</option>
+                        <option value="قرار لجنة" ${d.ctx==='قرار لجنة'?'selected':''}>قرار لجنة</option>
+                        <option value="حكم قضائي" ${d.ctx==='حكم قضائي'?'selected':''}>حكم قضائي</option>
+                        <option value="شئون طبية" ${d.ctx==='شئون طبية'?'selected':''}>شئون طبية</option>
+                        <option value="داخل اللستة" ${d.ctx==='داخل اللستة'?'selected':''}>داخل اللستة</option>
+                    </select>
+                `;
+            }
+            tr.innerHTML = `
+                <td><strong style="font-size:1.05rem">${d.n}</strong>${d.cst?'<span class="pill-tag">EXT</span>':''}</td>
+                <td style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${d.u || '-'}</td>
+                <td>${ctxHtml}</td>
+                <td style="text-align:center"><input type="number" class="cell-input" value="${d.q}" onchange="DATA[${i}].q=parseInt(this.value)||0; drawGrid();"></td>
+                <td style="text-align:center"><button class="btn-del" style="margin: 0 auto;" onclick="DATA.splice(${i},1);drawGrid()">✕</button></td>
+            `;
+            dom.grid.appendChild(tr);
+        });
+    }
+
+    function openImport() { document.getElementById('import-modal').classList.add('active'); }
+    function closeImport() { 
+        document.getElementById('import-modal').classList.remove('active'); 
+        setTimeout(() => {
+            document.getElementById('import-ui').style.display = 'block';
+            document.getElementById('review-ui').style.display = 'none';
+            document.getElementById('file-in').value = '';
+            STAGING = [];
+        }, 300);
+    }
+
+    function exportCSVTemplate() {
+        const bom = "\uFEFF";
+        const csvContent = "year,month,pharmacy,name,unit,qty,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
+        const link = document.createElement("a");
+        link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(bom + csvContent));
+        link.setAttribute("download", "LX_Form_Template.csv");
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    const dz = document.getElementById('dz');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', e => { e.preventDefault(); dz.classList.remove('drag'); });
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+    function findPharmacyDetails(pName) {
+        if(!pName) return null;
+        pName = pName.trim();
+        for (let c in PHARM) {
+            for (let r in PHARM[c]) {
+                let found = PHARM[c][r].find(p => p.n === pName || p.id === pName);
+                if (found) return { c, r, n: found.n };
+            }
+        }
+        return null;
+    }
+
+    function handleFile(file) {
+        if(!file) return;
+        Papa.parse(file, {
+            header: true, skipEmptyLines: true,
+            complete: res => {
+                let stagingMap = new Map();
+                let metaSet = false;
+
+                res.data.forEach((r, i) => {
+                    if(!metaSet && (r.year || r.month || r.pharmacy)) {
+                        if(r.year) STATE.year = r.year.trim();
+                        if(r.month) STATE.month = r.month.trim();
+                        if(r.pharmacy) {
+                            let details = findPharmacyDetails(r.pharmacy);
+                            if(details) { STATE.class = details.c; STATE.region = details.r; STATE.pharmacy = details.n; }
+                        }
+                        metaSet = true;
+                    }
+
+                    let core = resolveCoreItem(r.name, r.unit);
+                    let n = core.n, u = core.u, sys = core.sys, rawId = sys ? core.rawId : '';
+                    let c = sys ? '' : (r.context ? r.context.trim() : '');
+                    let q = parseInt(r.qty) || 0;
+
+                    let key = (sys ? rawId : `${n}|${u}|${c}`).toLowerCase();
+                    if (n === '') key = 'empty_' + i;
+
+                    if(stagingMap.has(key)) {
+                        let ex = stagingMap.get(key);
+                        ex.q += q;
+                        ex.merged = true;
+                        if(!ex.c && !sys) ex.c = c;
+                    } else {
+                        stagingMap.set(key, { id: Date.now()+i, n, u, q, c, sys, rawId, merged: false, checked: true });
+                    }
+                });
+
+                STAGING = Array.from(stagingMap.values());
+                updateHudUI();
+                populateReviewMeta();
+                
+                document.getElementById('import-ui').style.display = 'none';
+                document.getElementById('review-ui').style.display = 'flex';
+                renderReview();
+            }
+        });
+    }
+
+    function populateReviewMeta() {
+        let ySel = document.getElementById('rev-year');
+        ySel.innerHTML = '<option value="">Select Year</option>';
+        let curr = new Date().getFullYear();
+        for(let i=curr-1; i<=curr+1; i++) ySel.innerHTML += `<option value="${i}" ${STATE.year==i?'selected':''}>${i}</option>`;
+        
+        let mSel = document.getElementById('rev-month');
+        mSel.innerHTML = '<option value="">Select Month</option>';
+        DIC.months.en.forEach((m, i) => mSel.innerHTML += `<option value="${m}" ${STATE.month==m?'selected':''}>${DIC.months.ar[i]}</option>`);
+
+        let cSel = document.getElementById('rev-class');
+        cSel.innerHTML = '<option value="">Select Class</option>';
+        Object.entries(DIC.classes).forEach(([k,v]) => cSel.innerHTML += `<option value="${k}" ${STATE.class==k?'selected':''}>${v}</option>`);
+
+        let rSel = document.getElementById('rev-region');
+        rSel.innerHTML = '<option value="">Select Region</option>';
+        Object.entries(DIC.regions).forEach(([k,v]) => rSel.innerHTML += `<option value="${k}" ${STATE.region==k?'selected':''}>${v}</option>`);
+
+        updateRevPharm();
+        validateMetaBar();
+    }
+
+    function updateRevPharm() {
+        let pSel = document.getElementById('rev-pharmacy');
+        let cls = document.getElementById('rev-class').value;
+        let rgn = document.getElementById('rev-region').value;
+        
+        pSel.innerHTML = '<option value="">Select Pharmacy</option>';
+        if(cls && rgn && PHARM[cls] && PHARM[cls][rgn]) {
+            PHARM[cls][rgn].forEach(p => {
+                pSel.innerHTML += `<option value="${p.n}" ${STATE.pharmacy===p.n?'selected':''}>${p.n}</option>`;
+            });
+        }
+        validateMetaBar();
+    }
+
+    function validateMetaBar() {
+        ['year', 'month', 'class', 'region', 'pharmacy'].forEach(k => {
+            let el = document.getElementById(`rev-${k}`);
+            if(!el.value) el.classList.add('err'); else el.classList.remove('err');
+        });
+    }
+
+    function updateStg(i, n, u) {
+        let res = resolveCoreItem(n, u);
+        STAGING[i].sys = res.sys;
+        STAGING[i].n = res.n;
+        STAGING[i].u = res.u;
+        if(res.sys) {
+            STAGING[i].rawId = res.rawId;
+            STAGING[i].c = '';
+        }
+        renderReview();
+    }
+
+    function renderReview() {
+        checkStagingDuplicates();
+        const tb = document.getElementById('review-tbody');
+        tb.innerHTML = '';
+        STAGING.forEach((s, i) => {
+            let trCls = s.checked ? '' : 'row-disabled';
+            let valid = s.n.trim() !== '' && !isNaN(s.q) && s.q > 0 && (s.sys || s.c !== '');
+            let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
+            let statTxt = !s.checked ? 'Skipped' : (s.n.trim() === '' ? 'Empty Name' : (!valid ? (s.sys ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
+
+            tb.innerHTML += `
+            <tr id="rev-tr-${i}" class="${trCls}">
+                <td style="text-align:center;">
+                    <input type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="STAGING[${i}].checked=this.checked; renderReview();">
+                </td>
+                <td>
+                    <input class="rev-inp ${s.n.trim()==='' && s.checked ? 'err' : ''}" value="${s.n}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].u)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
+                </td>
+                <td>
+                    <input class="rev-inp" value="${s.u}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].n, this.value)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
+                </td>
+                <td>
+                    <select class="c-select ${!s.sys && !s.c && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].c=this.value; renderReview();" ${s.sys ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
+                        <option value="">${s.sys ? 'System Core' : 'Select Context...'}</option>
+                        <option value="قرار لجنة" ${s.c==='قرار لجنة'?'selected':''}>قرار لجنة</option>
+                        <option value="حكم قضائي" ${s.c==='حكم قضائي'?'selected':''}>حكم قضائي</option>
+                        <option value="شئون طبية" ${s.c==='شئون طبية'?'selected':''}>شئون طبية</option>
+                        <option value="داخل اللستة" ${s.c==='داخل اللستة'?'selected':''}>داخل اللستة</option>
+                    </select>
+                </td>
+                <td style="text-align:center;">
+                    <input class="qty-rev-inp ${ (isNaN(s.q) || s.q<=0) && s.checked ? 'err' : '' }" type="number" value="${isNaN(s.q) ? '' : s.q}" onchange="STAGING[${i}].q=parseInt(this.value); renderReview();">
+                </td>
+                <td style="text-align:center;">
+                    <span id="badge-${i}" class="status-badge ${statCls}">${statTxt}</span>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function checkStagingDuplicates() {
+        let keys = {};
+        STAGING.forEach((s, i) => {
+            s.merged = false;
+            if(!s.checked) return;
+            let k = (s.sys ? s.rawId : `${s.n.trim()}|${s.u.trim()}|${s.c}`).toLowerCase();
+            if(!keys[k]) keys[k] = [];
+            keys[k].push(i);
+        });
+        Object.values(keys).forEach(arr => {
+            if(arr.length > 1) arr.forEach(idx => STAGING[idx].merged = true);
+            else if(arr.length === 1 && !STAGING[arr[0]].n.trim()) STAGING[arr[0]].merged = false;
+        });
+    }
+
+    function showErrorModal() {
+        document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+        document.getElementById('status-title').textContent = 'Submission Failed!';
+        document.getElementById('status-title').style.color = 'var(--danger)';
+        document.getElementById('status-desc').innerHTML = 'Network or database error.<br><strong style="color:var(--text-main)">Don\'t worry!</strong> Your data was automatically downloaded as CSV and JSON backups. You can load the JSON later.';
+        document.getElementById('status-btn').style.background = 'var(--surface-hover)';
+        document.getElementById('status-btn').style.color = 'var(--text-main)';
+        document.getElementById('status-modal').classList.add('active');
+    }
+
+    function showSuccessModal(msg) {
+        document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        document.getElementById('status-title').textContent = 'Success!';
+        document.getElementById('status-title').style.color = 'var(--success)';
+        document.getElementById('status-desc').textContent = msg;
+        document.getElementById('status-btn').style.background = 'var(--success)';
+        document.getElementById('status-btn').style.color = 'white';
+        document.getElementById('status-modal').classList.add('active');
+    }
+
+    function confirmReview() {
+        validateMetaBar();
+        let metas = ['year', 'month', 'class', 'region', 'pharmacy'].map(k => document.getElementById(`rev-${k}`).value);
+        if(metas.includes("")) { toast('Please complete all global settings above.'); return; }
+
+        let activeStaging = STAGING.filter(s => s.checked);
+        if(!activeStaging.length) { toast('No items selected to import.'); return; }
+        
+        let invalid = activeStaging.find(s => s.n.trim() === '' || isNaN(s.q) || s.q <= 0 || (!s.sys && !s.c));
+        if(invalid) { toast('Please fix highlighted errors before submitting.'); return; }
+
+        STATE.year = metas[0]; STATE.month = metas[1]; STATE.class = metas[2]; STATE.region = metas[3]; STATE.pharmacy = metas[4];
+        updateHudUI();
+
+        const p = activeStaging.map(s => {
+            let n = s.sys ? s.n : s.n.trim();
+            let u = s.sys ? s.u : s.u.trim();
+            let cst = !s.sys;
+            let ctx = s.sys ? '' : s.c;
+            return {
+                year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
+                name: cst ? `${n} (${ctx})` : n, unit: u, unitSold: s.q, method: cst ? 'new' : 'old', category: ctx, ts: new Date().toISOString()
+            };
+        });
+
+        const btn = document.getElementById('btn-confirm-import');
+        const origTxt = btn.textContent;
+        btn.disabled = true; btn.textContent = 'Submitting...';
+
+        exportPayload(p, '_Import');
+
+        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
+        firebase.database().ref('pharmacyData').push(p).then(() => {
+            showSuccessModal('Imported & Submitted successfully to DB.');
+            closeImport();
+            btn.disabled = false; btn.textContent = origTxt;
+        }).catch(() => { 
+            showErrorModal();
+            btn.disabled = false; btn.textContent = origTxt;
+        });
+    }
+
+    function saveSession() {
+        const sessionPayload = JSON.stringify({ state: STATE, data: DATA }, null, 2);
+        const link = document.createElement('a');
+        link.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(sessionPayload));
+        link.setAttribute('download', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        toast("Session Saved Locally");
+    }
+
+    function loadSession(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const session = JSON.parse(e.target.result);
+                if (session.state) Object.keys(session.state).forEach(k => STATE[k] = session.state[k]);
+                if (session.data) DATA = session.data;
+                updateHudUI(); drawGrid(); toast("Session Loaded Successfully");
+            } catch (err) { toast("Invalid Session File"); }
+        };
+        reader.readAsText(file);
+        document.getElementById('file-load').value = '';
+    }
+
+    function toggleTheme() {
+        const root = document.documentElement;
+        root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    }
+
+    function toast(msg, type = 'normal') {
+        const t = document.getElementById('toast');
+        t.textContent = msg; 
+        if(type === 'error') t.classList.add('error-toast'); else t.classList.remove('error-toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function validateReady() {
+        if(!STATE.year || !STATE.month || !STATE.class || !STATE.region || !STATE.pharmacy) { toast('Please complete all HUD fields.', 'error'); return false; }
+        if(!DATA.length) { toast('Add items to submit.', 'error'); return false; }
+        if(DATA.some(d => d.cst && !d.ctx)) { toast('Select a Context for all EXT items.', 'error'); return false; }
+        return true;
+    }
+
+    function exportPayload(p, suffix = '') {
+        const jsonLink = document.createElement('a');
+        jsonLink.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2)));
+        jsonLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.json`);
+        document.body.appendChild(jsonLink); jsonLink.click(); document.body.removeChild(jsonLink);
+
+        const headers = ["Year", "Month", "Class", "Region", "Pharmacy", "Product", "Unit", "UnitsSold", "Method", "Category", "Timestamp"];
+        const csvRows = [headers.join(',')];
+        p.forEach(row => {
+            csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(','));
+        });
+        
+        const csvLink = document.createElement('a');
+        csvLink.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent("\uFEFF" + csvRows.join('\n')));
+        csvLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.csv`);
+        document.body.appendChild(csvLink); csvLink.click(); document.body.removeChild(csvLink);
+    }
+
+    function submitToDB() {
+        if(!validateReady()) return;
+
+        const btn = document.getElementById('btn-submit');
+        const icon = document.getElementById('submit-icon');
+        const txt = document.getElementById('submit-text');
+        
+        const origIcon = icon.outerHTML;
+        const origTxt = txt.textContent;
+
+        btn.disabled = true;
+        icon.outerHTML = `<svg id="submit-icon" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+        txt.textContent = 'Submitting...';
+
+        const p = DATA.map(d => ({
+            year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
+            name: d.cst ? `${d.n} (${d.ctx})` : d.n, unit: d.u, unitSold: d.q, method: d.cst ? 'new' : 'old', category: d.ctx, ts: new Date().toISOString()
+        }));
+
+        exportPayload(p);
+
+        const restoreBtn = () => {
+            btn.disabled = false;
+            document.getElementById('submit-icon').outerHTML = origIcon;
+            txt.textContent = origTxt;
+        };
+
+        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
+        firebase.database().ref('pharmacyData').push(p).then(() => {
+            showSuccessModal('Workspace securely pushed & exported.'); 
+            DATA = []; drawGrid(); restoreBtn();
+        }).catch(() => { 
+            showErrorModal();
+            restoreBtn(); 
+        });
+    }
+
+    window.onload = () => { buildHudMenus(); updateHudUI(); dom.omni.focus(); };
+</script>
+</body>
+</html>
