@@ -732,6 +732,18 @@
         drawGrid();
     }
 
+    function updateGridUnit(idx, newUnit) {
+        let item = DATA[idx];
+        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.cst === item.cst && d.n.toLowerCase() === item.n.toLowerCase() && d.u.toLowerCase() === newUnit.toLowerCase() && d.ctx.toLowerCase() === item.ctx.toLowerCase());
+        if(dupIdx >= 0) {
+            DATA[dupIdx].q += item.q;
+            DATA.splice(idx, 1);
+        } else {
+            item.u = newUnit;
+        }
+        drawGrid();
+    }
+
     function processAdd() {
         const text = dom.omni.value.trim(), q = parseInt(dom.qty.value) || 0;
         if(!text) return;
@@ -769,6 +781,8 @@
             const tr = document.createElement('tr');
             tr.className = 'data-row';
             let ctxHtml = `<span style="color:var(--text-muted);font-size:0.9rem; margin-left:8px; font-weight:600;">System Core</span>`;
+            let unitHtml = `<span style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${d.u || '-'}</span>`;
+            
             if(d.cst) {
                 ctxHtml = `
                     <select class="c-select ${!d.ctx?'req':''}" onchange="updateGridContext(${i}, this.value)">
@@ -779,10 +793,11 @@
                         <option value="داخل اللستة" ${d.ctx==='داخل اللستة'?'selected':''}>داخل اللستة</option>
                     </select>
                 `;
+                unitHtml = `<input type="text" class="c-select ${!d.u?'req':''}" value="${d.u || ''}" placeholder="Unit..." onchange="updateGridUnit(${i}, this.value)" style="text-align:center;">`;
             }
             tr.innerHTML = `
                 <td><strong style="font-size:1.05rem">${d.n}</strong>${d.cst?'<span class="pill-tag">EXT</span>':''}</td>
-                <td style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${d.u || '-'}</td>
+                <td>${unitHtml}</td>
                 <td>${ctxHtml}</td>
                 <td style="text-align:center"><input type="number" class="cell-input" value="${d.q}" onchange="DATA[${i}].q=parseInt(this.value)||0; drawGrid();"></td>
                 <td style="text-align:center"><button class="btn-del" style="margin: 0 auto;" onclick="DATA.splice(${i},1);drawGrid()">✕</button></td>
@@ -937,7 +952,7 @@
         tb.innerHTML = '';
         STAGING.forEach((s, i) => {
             let trCls = s.checked ? '' : 'row-disabled';
-            let valid = s.n.trim() !== '' && !isNaN(s.q) && s.q > 0 && (s.sys || s.c !== '');
+            let valid = s.n.trim() !== '' && !isNaN(s.q) && s.q > 0 && (s.sys || (s.c !== '' && s.u.trim() !== ''));
             let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
             let statTxt = !s.checked ? 'Skipped' : (s.n.trim() === '' ? 'Empty Name' : (!valid ? (s.sys ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
 
@@ -950,7 +965,7 @@
                     <input class="rev-inp ${s.n.trim()==='' && s.checked ? 'err' : ''}" value="${s.n}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].u)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
                 </td>
                 <td>
-                    <input class="rev-inp" value="${s.u}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].n, this.value)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
+                    <input class="rev-inp ${!s.sys && s.u.trim()==='' && s.checked ? 'err' : ''}" value="${s.u}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].n, this.value)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
                 </td>
                 <td>
                     <select class="c-select ${!s.sys && !s.c && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].c=this.value; renderReview();" ${s.sys ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
@@ -1014,7 +1029,7 @@
         let activeStaging = STAGING.filter(s => s.checked);
         if(!activeStaging.length) { toast('No items selected to import.'); return; }
         
-        let invalid = activeStaging.find(s => s.n.trim() === '' || isNaN(s.q) || s.q <= 0 || (!s.sys && !s.c));
+        let invalid = activeStaging.find(s => s.n.trim() === '' || isNaN(s.q) || s.q <= 0 || (!s.sys && (!s.c || s.u.trim() === '')));
         if(invalid) { toast('Please fix highlighted errors before submitting.'); return; }
 
         STATE.year = metas[0]; STATE.month = metas[1]; STATE.class = metas[2]; STATE.region = metas[3]; STATE.pharmacy = metas[4];
@@ -1088,7 +1103,7 @@
     function validateReady() {
         if(!STATE.year || !STATE.month || !STATE.class || !STATE.region || !STATE.pharmacy) { toast('Please complete all HUD fields.', 'error'); return false; }
         if(!DATA.length) { toast('Add items to submit.', 'error'); return false; }
-        if(DATA.some(d => d.cst && !d.ctx)) { toast('Select a Context for all EXT items.', 'error'); return false; }
+        if(DATA.some(d => d.cst && (!d.ctx || !d.u.trim()))) { toast('Enter Unit and Context for all EXT items.', 'error'); return false; }
         return true;
     }
 
