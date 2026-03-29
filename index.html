@@ -79,6 +79,10 @@
 
         .workspace { flex: 1; padding: 2rem 2.5rem; max-width: 1300px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; position: relative; min-height: 0; }
 
+        .report-header { display: none; background-color: #fff; border: 2px solid #000; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; text-align: right; direction: rtl; color: #000; font-family: var(--font-ar); }
+        .report-header p { margin: 0.5rem 0; font-size: 1.2rem; font-weight: 600; }
+        .report-header span { color: #444; font-weight: 700; margin-right: 5px; }
+
         .omni-row { display: flex; gap: 1rem; position: relative; z-index: 50; height: 56px; }
         .omni-wrapper { flex: 1; position: relative; height: 100%; }
         .omni-input { width: 100%; height: 100%; padding: 0 1.5rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); font-family: var(--font-en); font-size: 1.05rem; transition: all 0.2s; box-shadow: var(--shadow-sm); }
@@ -180,6 +184,19 @@
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        @media print {
+            @page { margin: 1cm; }
+            body { background: #ffffff !important; color: #000000 !important; }
+            .hud-bar, .omni-row, .bottom-dock, .shortcuts-hint, .modal-overlay, .btn-del, th:last-child, td:last-child, .btn-ghost { display: none !important; }
+            .workspace { padding: 0; }
+            .grid-area { border: none; box-shadow: none; overflow: visible; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 10px; color: #000 !important; }
+            .report-header { display: block !important; }
+            .pill-tag { border: 1px solid #000; color: #000; background: transparent; }
+            input, select { border: none !important; background: transparent !important; color: #000 !important; appearance: none; -webkit-appearance: none; -moz-appearance: none; box-shadow: none !important; }
+        }
+
         @media (max-width: 768px) {
             .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
             .hud-left { flex-direction: column; gap: 1rem; }
@@ -204,7 +221,7 @@
 
     <div class="hud-bar">
         <div class="hud-left">
-            <div class="hud-title">LX Form beta</div>
+            <div class="hud-title">LX Form Pro</div>
             <div class="context-group">
                 <div class="hud-item">
                     <div class="hud-pill" onclick="toggleHud('drop-year')">Year: <span class="ar" id="txt-year"></span></div>
@@ -232,6 +249,13 @@
     </div>
 
     <div class="workspace">
+        <div class="report-header">
+            <p>مرسل الي ادارة التموين الطبي والصيدليات</p>
+            <p>فرع البحيرة الموازنة <span id="print-class"></span> المنطقة <span id="print-region"></span></p>
+            <p>صيدلية <span id="print-pharmacy"></span></p>
+            <p>بيان الخارجي عن شهر <span id="print-month"></span></p>
+        </div>
+
         <div class="omni-row">
             <div class="omni-wrapper">
                 <input type="text" class="omni-input" id="omni" placeholder="Search product, ID (a21), Month, or type a Custom Name..." autocomplete="off">
@@ -274,6 +298,10 @@
                     Load
                     <input type="file" id="file-load" accept=".json" style="display:none;" onchange="if(this.files[0]) loadSession(this.files[0])">
                 </label>
+                <button class="btn-ghost" onclick="window.print()" title="Print Report">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print
+                </button>
             </div>
             <div class="action-btns">
                 <button class="btn-hollow" onclick="openImport()">
@@ -304,7 +332,7 @@
                 </div>
                 <div class="guide-box">
                     <strong>CSV Headers Supported:</strong><br>
-                    year, month, pharmacy, name, unit, qty, context<br><br>
+                    year, month, pharmacy, name, unit, quantity, context<br><br>
                     <em>Context options:</em> قرار لجنة, حكم قضائي, شئون طبية, داخل اللستة
                 </div>
                 <label class="drop-zone" id="dz">
@@ -370,6 +398,8 @@
     let DATA = [];
     let STAGING = [];
     
+    const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
+
     const DIC = {
         months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
         classes: { student: "طلاب", workforce: "قوى عاملة", infants: "مواليد" },
@@ -521,6 +551,35 @@
     const dom = { omni: document.getElementById('omni'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
     let selIdx = -1, resList = [];
 
+    function saveLocalBackup() {
+        if (DATA.length || STATE.pharmacy) {
+            localStorage.setItem('lx_backup', JSON.stringify({ state: STATE, data: DATA }));
+        }
+    }
+
+    function loadLocalBackup() {
+        try {
+            const b = localStorage.getItem('lx_backup');
+            if(b) {
+                const p = JSON.parse(b);
+                if(p.state) STATE = { ...STATE, ...p.state };
+                if(p.data) DATA = p.data;
+                updateHudUI(); drawGrid(); toast("Session Recovered", "normal");
+            }
+        } catch(e) {}
+    }
+
+    function clearLocalBackup() {
+        localStorage.removeItem('lx_backup');
+    }
+
+    window.addEventListener('beforeunload', e => {
+        if (DATA.length > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
     function buildHudMenus() {
         const yDrop = document.getElementById('drop-year');
         const curr = new Date().getFullYear();
@@ -555,6 +614,7 @@
         if(key === 'class' || key === 'region') STATE.pharmacy = null;
         updateHudUI();
         document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show'));
+        saveLocalBackup();
     }
 
     function updateHudUI() {
@@ -569,6 +629,12 @@
         upd('class', STATE.class, DIC.classes);
         upd('region', STATE.region, DIC.regions);
         upd('pharmacy', STATE.pharmacy);
+        
+        document.getElementById('print-class').textContent = DIC.classes[STATE.class] || '';
+        document.getElementById('print-region').textContent = DIC.regions[STATE.region] || '';
+        document.getElementById('print-pharmacy').textContent = STATE.pharmacy || '';
+        let mIdx = DIC.months.en.indexOf(STATE.month);
+        document.getElementById('print-month').textContent = mIdx >= 0 ? DIC.months.ar[mIdx] : '';
     }
 
     document.addEventListener('click', e => {
@@ -662,9 +728,9 @@
             const div = document.createElement('div');
             div.className = 'res-item';
             if (idx === 0 && !exactMatch && sq.length > 2 && r.item.t === 'product') {
-                div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${r.item.txt}</strong> <small style="color:var(--text-muted); margin-left:8px">${r.item.u||''}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent);">Suggest</span>`;
+                div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent);">Suggest</span>`;
             } else {
-                div.innerHTML = `<div><strong>${r.item.txt}</strong> <small style="color:var(--text-muted); margin-left:8px">${r.item.u||''}</small></div><span class="res-type">${r.item.t}</span>`;
+                div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type">${r.item.t}</span>`;
             }
             div.onclick = () => applyOmni(r.item, sqty);
             dom.res.appendChild(div); resList.push(div);
@@ -673,7 +739,7 @@
         if (!exactMatch) {
             const custDiv = document.createElement('div');
             custDiv.className = 'res-item';
-            custDiv.innerHTML = `<div>Add Custom: <strong>${q}</strong></div><span class="res-type" style="background:var(--warning); color:#fff;">Custom</span>`;
+            custDiv.innerHTML = `<div>Add Custom: <strong>${esc(q)}</strong></div><span class="res-type" style="background:var(--warning); color:#fff;">Custom</span>`;
             custDiv.onclick = () => applyOmni({t:'custom', txt:q}, sqty);
             dom.res.appendChild(custDiv); resList.push(custDiv);
         }
@@ -708,65 +774,80 @@
         }
     }
 
-    function resolveCoreItem(n, u) {
-        let nL = (n || '').trim().toLowerCase();
-        let uL = (u || '').trim().toLowerCase();
+    function resolveCoreItem(name, unit) {
+        let nL = (name || '').trim().toLowerCase();
+        let uL = (unit || '').trim().toLowerCase();
         let match = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL && x.u.toLowerCase() === uL);
-        if (match) return { sys: true, n: match.txt, u: match.u, rawId: match.raw };
+        if (match) return { isSystem: true, name: match.txt, unit: match.u, rawId: match.raw };
         if (uL === '') {
             let matchN = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL);
-            if (matchN) return { sys: true, n: matchN.txt, u: matchN.u, rawId: matchN.raw };
+            if (matchN) return { isSystem: true, name: matchN.txt, unit: matchN.u, rawId: matchN.raw };
         }
-        return { sys: false, n: (n||'').trim(), u: (u||'').trim() };
+        return { isSystem: false, name: (name||'').trim(), unit: (unit||'').trim() };
     }
 
-    function updateGridContext(idx, newCtx) {
+    function updateItemContext(idx, newContext) {
         let item = DATA[idx];
-        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.cst === item.cst && d.n.toLowerCase() === item.n.toLowerCase() && d.u.toLowerCase() === item.u.toLowerCase() && d.ctx.toLowerCase() === newCtx.toLowerCase());
+        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === item.unit.toLowerCase() && d.context.toLowerCase() === newContext.toLowerCase());
         if(dupIdx >= 0) {
-            DATA[dupIdx].q += item.q;
+            DATA[dupIdx].quantity += item.quantity;
             DATA.splice(idx, 1);
         } else {
-            item.ctx = newCtx;
+            item.context = newContext;
         }
         drawGrid();
+        saveLocalBackup();
     }
 
-    function updateGridUnit(idx, newUnit) {
+    function updateItemUnit(idx, newUnit) {
         let item = DATA[idx];
-        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.cst === item.cst && d.n.toLowerCase() === item.n.toLowerCase() && d.u.toLowerCase() === newUnit.toLowerCase() && d.ctx.toLowerCase() === item.ctx.toLowerCase());
+        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === newUnit.toLowerCase() && d.context.toLowerCase() === item.context.toLowerCase());
         if(dupIdx >= 0) {
-            DATA[dupIdx].q += item.q;
+            DATA[dupIdx].quantity += item.quantity;
             DATA.splice(idx, 1);
         } else {
-            item.u = newUnit;
+            item.unit = newUnit;
         }
         drawGrid();
+        saveLocalBackup();
+    }
+
+    function updateItemQuantity(idx, val) {
+        DATA[idx].quantity = parseInt(val) || 0;
+        drawGrid();
+        saveLocalBackup();
+    }
+
+    function deleteItem(idx) {
+        DATA.splice(idx, 1);
+        drawGrid();
+        saveLocalBackup();
     }
 
     function processAdd() {
-        const text = dom.omni.value.trim(), q = parseInt(dom.qty.value) || 0;
+        const text = dom.omni.value.trim(), qty = parseInt(dom.qty.value) || 0;
         if(!text) return;
         let obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : { t: 'custom', txt: text, u: '' };
         
         let res = resolveCoreItem(obj.txt, obj.u);
-        let cst = !res.sys;
-        let n = res.n;
-        let u = res.u;
-        let ctx = '';
-        let raw = res.sys ? res.rawId : `${n}|${u}`;
+        let isCustom = !res.isSystem;
+        let name = res.name;
+        let unit = res.unit;
+        let context = '';
+        let raw = res.isSystem ? res.rawId : `${name}|${unit}`;
 
-        let exIdx = DATA.findIndex(d => d.cst === cst && d.n.toLowerCase() === n.toLowerCase() && d.u.toLowerCase() === u.toLowerCase() && d.ctx.toLowerCase() === ctx.toLowerCase());
+        let exIdx = DATA.findIndex(d => d.isCustom === isCustom && d.name.toLowerCase() === name.toLowerCase() && d.unit.toLowerCase() === unit.toLowerCase() && d.context.toLowerCase() === context.toLowerCase());
 
         if(exIdx >= 0) {
-            DATA[exIdx].q += q;
+            DATA[exIdx].quantity += qty;
             toast('Quantity Updated');
         } else {
-            DATA.unshift({ raw, n, u, q, cst, ctx });
+            DATA.unshift({ raw, name, unit, quantity: qty, isCustom, context });
         }
 
         dom.omni.value = ''; dom.qty.value = ''; dom.omni.dataset.raw = ''; dom.omni.focus();
         drawGrid();
+        saveLocalBackup();
     }
 
     function drawGrid() {
@@ -781,26 +862,26 @@
             const tr = document.createElement('tr');
             tr.className = 'data-row';
             let ctxHtml = `<span style="color:var(--text-muted);font-size:0.9rem; margin-left:8px; font-weight:600;">System Core</span>`;
-            let unitHtml = `<span style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${d.u || '-'}</span>`;
+            let unitHtml = `<span style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${esc(d.unit) || '-'}</span>`;
             
-            if(d.cst) {
+            if(d.isCustom) {
                 ctxHtml = `
-                    <select class="c-select ${!d.ctx?'req':''}" onchange="updateGridContext(${i}, this.value)">
+                    <select class="c-select ${!d.context?'req':''}" onchange="updateItemContext(${i}, this.value)">
                         <option value="">Select Category</option>
-                        <option value="قرار لجنة" ${d.ctx==='قرار لجنة'?'selected':''}>قرار لجنة</option>
-                        <option value="حكم قضائي" ${d.ctx==='حكم قضائي'?'selected':''}>حكم قضائي</option>
-                        <option value="شئون طبية" ${d.ctx==='شئون طبية'?'selected':''}>شئون طبية</option>
-                        <option value="داخل اللستة" ${d.ctx==='داخل اللستة'?'selected':''}>داخل اللستة</option>
+                        <option value="قرار لجنة" ${d.context==='قرار لجنة'?'selected':''}>قرار لجنة</option>
+                        <option value="حكم قضائي" ${d.context==='حكم قضائي'?'selected':''}>حكم قضائي</option>
+                        <option value="شئون طبية" ${d.context==='شئون طبية'?'selected':''}>شئون طبية</option>
+                        <option value="داخل اللستة" ${d.context==='داخل اللستة'?'selected':''}>داخل اللستة</option>
                     </select>
                 `;
-                unitHtml = `<input type="text" class="c-select ${!d.u?'req':''}" value="${d.u || ''}" placeholder="Unit..." onchange="updateGridUnit(${i}, this.value)" style="text-align:center;">`;
+                unitHtml = `<input type="text" class="c-select ${!d.unit?'req':''}" value="${esc(d.unit) || ''}" placeholder="Unit..." onchange="updateItemUnit(${i}, this.value)" style="text-align:center;">`;
             }
             tr.innerHTML = `
-                <td><strong style="font-size:1.05rem">${d.n}</strong>${d.cst?'<span class="pill-tag">EXT</span>':''}</td>
+                <td><strong style="font-size:1.05rem">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
                 <td>${unitHtml}</td>
                 <td>${ctxHtml}</td>
-                <td style="text-align:center"><input type="number" class="cell-input" value="${d.q}" onchange="DATA[${i}].q=parseInt(this.value)||0; drawGrid();"></td>
-                <td style="text-align:center"><button class="btn-del" style="margin: 0 auto;" onclick="DATA.splice(${i},1);drawGrid()">✕</button></td>
+                <td style="text-align:center"><input type="number" class="cell-input" value="${d.quantity}" onchange="updateItemQuantity(${i}, this.value)"></td>
+                <td style="text-align:center"><button class="btn-del" style="margin: 0 auto;" onclick="deleteItem(${i})">✕</button></td>
             `;
             dom.grid.appendChild(tr);
         });
@@ -819,7 +900,7 @@
 
     function exportCSVTemplate() {
         const bom = "\uFEFF";
-        const csvContent = "year,month,pharmacy,name,unit,qty,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
+        const csvContent = "year,month,pharmacy,name,unit,quantity,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
         const link = document.createElement("a");
         link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(bom + csvContent));
         link.setAttribute("download", "LX_Form_Template.csv");
@@ -863,20 +944,20 @@
                     }
 
                     let core = resolveCoreItem(r.name, r.unit);
-                    let n = core.n, u = core.u, sys = core.sys, rawId = sys ? core.rawId : '';
-                    let c = sys ? '' : (r.context ? r.context.trim() : '');
-                    let q = parseInt(r.qty) || 0;
+                    let name = core.name, unit = core.unit, isSystem = core.isSystem, rawId = isSystem ? core.rawId : '';
+                    let context = isSystem ? '' : (r.context ? r.context.trim() : '');
+                    let qty = parseInt(r.quantity || r.qty) || 0;
 
-                    let key = (sys ? rawId : `${n}|${u}|${c}`).toLowerCase();
-                    if (n === '') key = 'empty_' + i;
+                    let key = (isSystem ? rawId : `${name}|${unit}|${context}`).toLowerCase();
+                    if (name === '') key = 'empty_' + i;
 
                     if(stagingMap.has(key)) {
                         let ex = stagingMap.get(key);
-                        ex.q += q;
+                        ex.quantity += qty;
                         ex.merged = true;
-                        if(!ex.c && !sys) ex.c = c;
+                        if(!ex.context && !isSystem) ex.context = context;
                     } else {
-                        stagingMap.set(key, { id: Date.now()+i, n, u, q, c, sys, rawId, merged: false, checked: true });
+                        stagingMap.set(key, { id: Date.now()+i, name, unit, quantity: qty, context, isSystem, rawId, merged: false, checked: true });
                     }
                 });
 
@@ -934,14 +1015,14 @@
         });
     }
 
-    function updateStg(i, n, u) {
-        let res = resolveCoreItem(n, u);
-        STAGING[i].sys = res.sys;
-        STAGING[i].n = res.n;
-        STAGING[i].u = res.u;
-        if(res.sys) {
+    function updateStg(i, name, unit) {
+        let res = resolveCoreItem(name, unit);
+        STAGING[i].isSystem = res.isSystem;
+        STAGING[i].name = res.name;
+        STAGING[i].unit = res.unit;
+        if(res.isSystem) {
             STAGING[i].rawId = res.rawId;
-            STAGING[i].c = '';
+            STAGING[i].context = '';
         }
         renderReview();
     }
@@ -952,9 +1033,9 @@
         tb.innerHTML = '';
         STAGING.forEach((s, i) => {
             let trCls = s.checked ? '' : 'row-disabled';
-            let valid = s.n.trim() !== '' && !isNaN(s.q) && s.q > 0 && (s.sys || (s.c !== '' && s.u.trim() !== ''));
+            let valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
             let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
-            let statTxt = !s.checked ? 'Skipped' : (s.n.trim() === '' ? 'Empty Name' : (!valid ? (s.sys ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
+            let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
 
             tb.innerHTML += `
             <tr id="rev-tr-${i}" class="${trCls}">
@@ -962,22 +1043,22 @@
                     <input type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="STAGING[${i}].checked=this.checked; renderReview();">
                 </td>
                 <td>
-                    <input class="rev-inp ${s.n.trim()==='' && s.checked ? 'err' : ''}" value="${s.n}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].u)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
+                    <input class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].unit)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}">
                 </td>
                 <td>
-                    <input class="rev-inp ${!s.sys && s.u.trim()==='' && s.checked ? 'err' : ''}" value="${s.u}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].n, this.value)" style="font-weight:600; ${s.sys ? 'color:var(--accent); border-color:var(--accent);' : ''}">
+                    <input class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].name, this.value)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}">
                 </td>
                 <td>
-                    <select class="c-select ${!s.sys && !s.c && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].c=this.value; renderReview();" ${s.sys ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
-                        <option value="">${s.sys ? 'System Core' : 'Select Context...'}</option>
-                        <option value="قرار لجنة" ${s.c==='قرار لجنة'?'selected':''}>قرار لجنة</option>
-                        <option value="حكم قضائي" ${s.c==='حكم قضائي'?'selected':''}>حكم قضائي</option>
-                        <option value="شئون طبية" ${s.c==='شئون طبية'?'selected':''}>شئون طبية</option>
-                        <option value="داخل اللستة" ${s.c==='داخل اللستة'?'selected':''}>داخل اللستة</option>
+                    <select class="c-select ${!s.isSystem && !s.context && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].context=this.value; renderReview();" ${s.isSystem ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
+                        <option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option>
+                        <option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option>
+                        <option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option>
+                        <option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option>
+                        <option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option>
                     </select>
                 </td>
                 <td style="text-align:center;">
-                    <input class="qty-rev-inp ${ (isNaN(s.q) || s.q<=0) && s.checked ? 'err' : '' }" type="number" value="${isNaN(s.q) ? '' : s.q}" onchange="STAGING[${i}].q=parseInt(this.value); renderReview();">
+                    <input class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="STAGING[${i}].quantity=parseInt(this.value); renderReview();">
                 </td>
                 <td style="text-align:center;">
                     <span id="badge-${i}" class="status-badge ${statCls}">${statTxt}</span>
@@ -991,21 +1072,21 @@
         STAGING.forEach((s, i) => {
             s.merged = false;
             if(!s.checked) return;
-            let k = (s.sys ? s.rawId : `${s.n.trim()}|${s.u.trim()}|${s.c}`).toLowerCase();
+            let k = (s.isSystem ? s.rawId : `${s.name.trim()}|${s.unit.trim()}|${s.context}`).toLowerCase();
             if(!keys[k]) keys[k] = [];
             keys[k].push(i);
         });
         Object.values(keys).forEach(arr => {
             if(arr.length > 1) arr.forEach(idx => STAGING[idx].merged = true);
-            else if(arr.length === 1 && !STAGING[arr[0]].n.trim()) STAGING[arr[0]].merged = false;
+            else if(arr.length === 1 && !STAGING[arr[0]].name.trim()) STAGING[arr[0]].merged = false;
         });
     }
 
     function showErrorModal() {
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-        document.getElementById('status-title').textContent = 'Submission Failed!';
+        document.getElementById('status-title').textContent = 'Submission Failed / Offline!';
         document.getElementById('status-title').style.color = 'var(--danger)';
-        document.getElementById('status-desc').innerHTML = 'Network or database error.<br><strong style="color:var(--text-main)">Don\'t worry!</strong> Your data was automatically downloaded as CSV and JSON backups. You can load the JSON later.';
+        document.getElementById('status-desc').innerHTML = 'Network or database error.<br><strong style="color:var(--text-main)">Don\'t worry!</strong> Your data was automatically downloaded as CSV and JSON backups. It will try to sync later if connection returns.';
         document.getElementById('status-btn').style.background = 'var(--surface-hover)';
         document.getElementById('status-btn').style.color = 'var(--text-main)';
         document.getElementById('status-modal').classList.add('active');
@@ -1029,20 +1110,20 @@
         let activeStaging = STAGING.filter(s => s.checked);
         if(!activeStaging.length) { toast('No items selected to import.'); return; }
         
-        let invalid = activeStaging.find(s => s.n.trim() === '' || isNaN(s.q) || s.q <= 0 || (!s.sys && (!s.c || s.u.trim() === '')));
+        let invalid = activeStaging.find(s => s.name.trim() === '' || isNaN(s.quantity) || s.quantity <= 0 || (!s.isSystem && (!s.context || s.unit.trim() === '')));
         if(invalid) { toast('Please fix highlighted errors before submitting.'); return; }
 
         STATE.year = metas[0]; STATE.month = metas[1]; STATE.class = metas[2]; STATE.region = metas[3]; STATE.pharmacy = metas[4];
         updateHudUI();
 
         const p = activeStaging.map(s => {
-            let n = s.sys ? s.n : s.n.trim();
-            let u = s.sys ? s.u : s.u.trim();
-            let cst = !s.sys;
-            let ctx = s.sys ? '' : s.c;
+            let n = s.isSystem ? s.name : s.name.trim();
+            let u = s.isSystem ? s.unit : s.unit.trim();
+            let isCustom = !s.isSystem;
+            let ctx = s.isSystem ? '' : s.context;
             return {
                 year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
-                name: cst ? `${n} (${ctx})` : n, unit: u, unitSold: s.q, method: cst ? 'new' : 'old', category: ctx, ts: new Date().toISOString()
+                name: isCustom ? `${n} (${ctx})` : n, unit: u, unitSold: s.quantity, method: isCustom ? 'new' : 'old', category: ctx, ts: new Date().toISOString()
             };
         });
 
@@ -1053,11 +1134,24 @@
         exportPayload(p, '_Import');
 
         if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
+        
+        let isResolved = false;
+        const timeout = setTimeout(() => {
+            if(!isResolved) {
+                showErrorModal();
+                btn.disabled = false; btn.textContent = origTxt;
+            }
+        }, 8000);
+
         firebase.database().ref('pharmacyData').push(p).then(() => {
+            isResolved = true;
+            clearTimeout(timeout);
             showSuccessModal('Imported & Submitted successfully to DB.');
             closeImport();
             btn.disabled = false; btn.textContent = origTxt;
         }).catch(() => { 
+            isResolved = true;
+            clearTimeout(timeout);
             showErrorModal();
             btn.disabled = false; btn.textContent = origTxt;
         });
@@ -1081,6 +1175,7 @@
                 if (session.state) Object.keys(session.state).forEach(k => STATE[k] = session.state[k]);
                 if (session.data) DATA = session.data;
                 updateHudUI(); drawGrid(); toast("Session Loaded Successfully");
+                saveLocalBackup();
             } catch (err) { toast("Invalid Session File"); }
         };
         reader.readAsText(file);
@@ -1103,7 +1198,7 @@
     function validateReady() {
         if(!STATE.year || !STATE.month || !STATE.class || !STATE.region || !STATE.pharmacy) { toast('Please complete all HUD fields.', 'error'); return false; }
         if(!DATA.length) { toast('Add items to submit.', 'error'); return false; }
-        if(DATA.some(d => d.cst && (!d.ctx || !d.u.trim()))) { toast('Enter Unit and Context for all EXT items.', 'error'); return false; }
+        if(DATA.some(d => d.isCustom && (!d.context || !d.unit.trim()))) { toast('Enter Unit and Context for all EXT items.', 'error'); return false; }
         return true;
     }
 
@@ -1141,7 +1236,7 @@
 
         const p = DATA.map(d => ({
             year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
-            name: d.cst ? `${d.n} (${d.ctx})` : d.n, unit: d.u, unitSold: d.q, method: d.cst ? 'new' : 'old', category: d.ctx, ts: new Date().toISOString()
+            name: d.isCustom ? `${d.name} (${d.context})` : d.name, unit: d.unit, unitSold: d.quantity, method: d.isCustom ? 'new' : 'old', category: d.context, ts: new Date().toISOString()
         }));
 
         exportPayload(p);
@@ -1153,16 +1248,35 @@
         };
 
         if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
+        
+        let isResolved = false;
+        const timeout = setTimeout(() => {
+            if(!isResolved) {
+                showErrorModal();
+                restoreBtn();
+            }
+        }, 8000);
+
         firebase.database().ref('pharmacyData').push(p).then(() => {
+            isResolved = true;
+            clearTimeout(timeout);
             showSuccessModal('Workspace securely pushed & exported.'); 
-            DATA = []; drawGrid(); restoreBtn();
+            DATA = []; clearLocalBackup(); drawGrid(); restoreBtn();
         }).catch(() => { 
+            isResolved = true;
+            clearTimeout(timeout);
             showErrorModal();
             restoreBtn(); 
         });
     }
 
-    window.onload = () => { buildHudMenus(); updateHudUI(); dom.omni.focus(); };
+    window.onload = () => { 
+        buildHudMenus(); 
+        loadLocalBackup();
+        updateHudUI(); 
+        dom.omni.focus(); 
+        setInterval(saveLocalBackup, 30000);
+    };
 </script>
 </body>
 </html>
