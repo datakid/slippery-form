@@ -9,211 +9,142 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
     <script>
         (function() {
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
         })();
     </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;700&display=swap');
-
         :root {
-            --bg: #0b0d14;
-            --surface: #151822;
-            --surface-float: rgba(25, 28, 40, 0.85);
-            --surface-hover: #1f2333;
-            --border: #2c3142;
-            --text-main: #ffffff;
-            --text-muted: #8b95a5;
-            --accent: #6366f1;
-            --accent-hover: #818cf8;
-            --accent-glow: rgba(99, 102, 241, 0.2);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --radius-btn: 14px;
-            --radius-lg: 20px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
-            --font-en: 'Inter', sans-serif;
-            --font-ar: 'Tajawal', sans-serif;
-            --shadow-float: 0 16px 32px rgba(0,0,0,0.4);
-            --shadow-sm: 0 4px 12px rgba(0,0,0,0.2);
+            --bg: #0b0d14; --surface: #151822; --surface-float: rgba(25, 28, 40, 0.85); --surface-hover: #1f2333;
+            --border: #2c3142; --text-main: #ffffff; --text-muted: #8b95a5; --accent: #6366f1; --accent-hover: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.2); --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --radius-btn: 14px; --radius-lg: 20px; --radius-md: 12px; --radius-sm: 8px;
+            --font-en: 'Inter', sans-serif; --font-ar: 'Tajawal', sans-serif;
+            --shadow-float: 0 16px 32px rgba(0,0,0,0.4); --shadow-sm: 0 4px 12px rgba(0,0,0,0.2);
         }
-
         [data-theme="light"] {
-            --bg: #f4f5f7;
-            --surface: #ffffff;
-            --surface-float: rgba(255, 255, 255, 0.95);
-            --surface-hover: #f8fafc;
-            --border: #e2e8f0;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --shadow-float: 0 16px 32px rgba(0,0,0,0.06);
-            --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+            --bg: #f4f5f7; --surface: #ffffff; --surface-float: rgba(255, 255, 255, 0.95); --surface-hover: #f8fafc;
+            --border: #e2e8f0; --text-main: #0f172a; --text-muted: #64748b;
+            --shadow-float: 0 16px 32px rgba(0,0,0,0.06); --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-
         body { font-family: var(--font-en); background-color: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
-
         .hud-bar { padding: 1.2rem 2.5rem; background: var(--surface); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; box-shadow: var(--shadow-sm); }
         .hud-left { display: flex; align-items: center; gap: 2.5rem; }
         .hud-title { font-weight: 700; font-size: 1.5rem; background: linear-gradient(135deg, var(--accent), #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; white-space: nowrap; }
-
         .context-group { display: flex; gap: 0.8rem; flex-wrap: wrap; }
         .hud-item { position: relative; }
         .hud-pill { padding: 0.6rem 1rem; border-radius: var(--radius-btn); background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: var(--shadow-sm); }
         .hud-pill:hover { border-color: var(--text-muted); transform: translateY(-2px); }
         .hud-pill.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
         .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.95rem; }
-
         .hud-dropdown { position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(-10px); background: var(--surface-float); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.8rem; width: max-content; min-width: 200px; max-height: 350px; overflow-y: auto; box-shadow: var(--shadow-float); opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 200; }
         .hud-dropdown.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
         .drop-item { padding: 0.8rem 1rem; border-radius: var(--radius-sm); cursor: pointer; font-family: var(--font-ar); font-weight: 600; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .drop-item:hover { background: var(--surface-hover); color: var(--accent); }
         .drop-item span { font-family: var(--font-en); color: var(--text-muted); font-size: 0.8rem; }
-
-        .workspace { flex: 1; padding: 2rem 2.5rem; max-width: 1300px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; position: relative; min-height: 0; }
-
+        .workspace { flex: 1; padding: 2rem 2.5rem; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; position: relative; min-height: 0; }
         .report-header { display: none; background-color: #fff; border: 2px solid #000; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; text-align: right; direction: rtl; color: #000; font-family: var(--font-ar); }
         .report-header p { margin: 0.5rem 0; font-size: 1.2rem; font-weight: 600; }
         .report-header span { color: #444; font-weight: 700; margin-right: 5px; }
-
-        .omni-row { display: flex; gap: 1rem; position: relative; z-index: 50; height: 56px; }
-        .omni-wrapper { flex: 1; position: relative; height: 100%; }
-        .omni-input { width: 100%; height: 100%; padding: 0 1.5rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); font-family: var(--font-en); font-size: 1.05rem; transition: all 0.2s; box-shadow: var(--shadow-sm); }
-        .omni-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
-
-        .qty-input { width: 140px; height: 100%; padding: 0 1rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); font-family: var(--font-en); font-size: 1.2rem; text-align: center; font-weight: 700; transition: all 0.2s; box-shadow: var(--shadow-sm); }
-        .qty-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
-
+        .omni-row { display: flex; gap: 0.8rem; position: relative; z-index: 50; height: 56px; }
+        .omni-wrapper { flex: 2; position: relative; height: 100%; }
+        .omni-input, .omni-unit, .omni-ctx, .qty-input { height: 100%; padding: 0 1.2rem; border-radius: var(--radius-btn); background: var(--surface); border: 2px solid var(--border); color: var(--text-main); transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .omni-input { width: 100%; font-family: var(--font-en); font-size: 1.05rem; }
+        .omni-unit { flex: 0.8; font-family: var(--font-en); font-size: 1rem; }
+        .omni-ctx { flex: 1; font-family: var(--font-ar); font-size: 0.95rem; cursor: pointer; }
+        .qty-input { width: 120px; font-family: var(--font-en); font-size: 1.2rem; text-align: center; font-weight: 700; }
+        .omni-input:focus, .omni-unit:focus, .omni-ctx:focus, .qty-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+        .omni-unit:disabled, .omni-ctx:disabled { opacity: 0.5; cursor: not-allowed; background: var(--bg); }
         button:disabled { opacity: 0.6; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; filter: none !important; }
-
-        .btn-enter { height: 100%; background: var(--accent); color: white; border: none; padding: 0 2rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-enter { height: 100%; background: var(--accent); color: white; border: none; padding: 0 1.5rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px var(--accent-glow); }
         .btn-enter:hover { background: var(--accent-hover); transform: translateY(-2px); }
         .btn-enter:active { transform: translateY(0); }
-
         .omni-results { position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: var(--surface-float); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-float); max-height: 350px; overflow-y: auto; display: none; padding: 0.5rem; }
         .omni-results.show { display: block; }
         .res-item { padding: 0.8rem 1.2rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; transition: background 0.1s; }
         .res-item:hover, .res-item.sel { background: var(--surface-hover); border-left: 3px solid var(--accent); }
         .res-type { font-size: 0.7rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-sm); background: var(--accent-glow); color: var(--accent); font-weight: 700; text-transform: uppercase; }
-
         .grid-area { flex: 1; overflow-y: auto; position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; min-height: 0; box-shadow: var(--shadow-sm); }
         .empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-muted); pointer-events: none; }
-
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 1rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); position: sticky; top: -1rem; background: var(--surface); z-index: 10; }
         tr.data-row { transition: background 0.2s; border-bottom: 1px solid var(--border); }
         tr.data-row:hover { background: var(--surface-hover); }
         td { padding: 1rem; vertical-align: middle; }
-        
         .cell-input { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); font-size: 1.2rem; width: 110px; padding: 0.6rem; text-align: center; border-radius: var(--radius-sm); font-weight: 700; transition: border-color 0.2s; font-family: var(--font-en); }
         .cell-input:focus { border-color: var(--accent); }
-
         .c-select { background: var(--bg); color: var(--text-main); border: 1px solid var(--border); padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-ar); font-size: 0.9rem; cursor: pointer; outline: none; width: 100%; transition: border-color 0.2s; }
         .c-select:focus { border-color: var(--accent); }
         .c-select.req { border-color: var(--warning); color: var(--warning); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
-
         .pill-tag { background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 700; margin-left: 10px; }
-
         .btn-del { background: transparent; color: var(--text-muted); border: none; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; padding: 0.5rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
         .btn-del:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
-
         .bottom-dock { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; }
         .action-btns { display: flex; gap: 1rem; }
-        
         .btn-hollow { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 0.8rem 1.5rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
         .btn-hollow:hover { background: var(--surface); border-color: var(--text-muted); }
-        
         .btn-solid { background: var(--success); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: var(--radius-btn); font-family: var(--font-en); font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
         .btn-solid:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3); }
-
         .btn-ghost { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-en); font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-ghost:hover { background: var(--surface); color: var(--text-main); }
-
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9000; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 2rem; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-
         .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 1100px; padding: 2rem; box-shadow: var(--shadow-float); transform: translateY(20px); transition: transform 0.3s; max-height: 90vh; display: flex; flex-direction: column; }
         .modal-overlay.active .modal-content { transform: translateY(0); }
-
         .modal-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; font-family: var(--font-en); }
         .guide-box { background: var(--bg); padding: 1rem; border-radius: var(--radius-sm); border-left: 4px solid var(--accent); margin-bottom: 1.5rem; font-family: monospace; color: var(--text-muted); line-height: 1.5; font-size: 0.9rem; }
-
         .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); display: block; }
         .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
         .drop-zone svg { color: var(--accent); margin-bottom: 1rem; }
-
         .review-meta-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; background: var(--surface-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem; }
         .review-meta-select { width: 100%; padding: 0.6rem; background: var(--bg); border: 1px solid var(--border); color: var(--text-main); border-radius: var(--radius-sm); font-family: var(--font-en); font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
         .review-meta-select:focus { border-color: var(--accent); }
         .review-meta-select.err { border-color: var(--danger); box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
-
         .review-table-container { flex: 1; overflow-y: auto; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--bg); }
         .review-table { width: 100%; text-align: left; border-collapse: collapse; }
         .review-table th { position: sticky; top: 0; background: var(--surface-hover); z-index: 10; padding: 1rem; font-size: 0.75rem; border-bottom: 1px solid var(--border); }
         .review-table td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); transition: opacity 0.2s; vertical-align: middle; background: var(--surface); }
-        
         .rev-inp { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text-main); font-family: var(--font-en); padding: 0.6rem; border-radius: var(--radius-sm); font-size: 0.9rem; outline: none; transition: all 0.2s; }
         .rev-inp:focus { border-color: var(--accent); }
-        
         .qty-rev-inp { width: 100px; text-align: center; font-size: 1.1rem; font-weight: 700; padding: 0.6rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-main); font-family: var(--font-en); outline: none; transition: border-color 0.2s;}
         .qty-rev-inp:focus { border-color: var(--accent); }
-
         .status-badge { padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; white-space: nowrap; text-align: center; width: 100%;}
         .status-ok { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-dupe { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
         .status-err { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
         .status-skip { background: rgba(100, 116, 139, 0.15); color: var(--text-muted); border: 1px solid rgba(100, 116, 139, 0.3); }
-
         .err { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(239,68,68,0.2) !important; }
         .row-disabled td { opacity: 0.5; background: var(--bg); transition: all 0.2s; }
         .rev-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
-
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px); background: var(--text-main); color: var(--bg); padding: 0.8rem 1.8rem; border-radius: var(--radius-btn); box-shadow: var(--shadow-float); font-weight: 700; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999; }
         .toast.show { transform: translateX(-50%) translateY(0); }
         .toast.error-toast { background: var(--danger); color: white; }
-
         kbd { background: var(--surface-hover); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 0.8rem; color: var(--text-muted); box-shadow: 0 2px 0 var(--border); margin: 0 2px; }
         .shortcuts-hint { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding-top: 1rem; }
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
+        
         @media print {
             @page { margin: 1cm; }
             body { background: #ffffff !important; color: #000000 !important; }
-            .hud-bar, .omni-row, .bottom-dock, .shortcuts-hint, .modal-overlay, .btn-del, th:last-child, td:last-child, .btn-ghost { display: none !important; }
+            .hud-bar, .omni-row, .bottom-dock, .shortcuts-hint, .modal-overlay, .btn-del, th:last-child, td:last-child, .btn-ghost, .toast, .omni-results, .hud-dropdown, .empty-state { display: none !important; }
             .workspace { padding: 0; }
             .grid-area { border: none; box-shadow: none; overflow: visible; }
             table { width: 100%; border-collapse: collapse; }
+            tr { page-break-inside: avoid; }
             th, td { border: 1px solid #ddd; padding: 10px; color: #000 !important; }
             .report-header { display: block !important; }
             .pill-tag { border: 1px solid #000; color: #000; background: transparent; }
             input, select { border: none !important; background: transparent !important; color: #000 !important; appearance: none; -webkit-appearance: none; -moz-appearance: none; box-shadow: none !important; }
         }
-
-        @media (max-width: 768px) {
-            .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-            .hud-left { flex-direction: column; gap: 1rem; }
-            .context-group { justify-content: center; }
-            .hud-title { text-align: center; }
+        
+        @media (max-width: 900px) {
             .omni-row { flex-direction: column; height: auto; }
-            .omni-input, .qty-input, .btn-enter { height: 54px; }
-            .qty-input { width: 100%; }
-            .bottom-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
-            .action-btns { width: 100%; flex-direction: column; }
-            .action-btns button { width: 100%; justify-content: center; }
-            .workspace { padding: 1rem; overflow-y: auto; height: auto; }
-            .grid-area { overflow-x: auto; min-height: 400px; }
-            .shortcuts-hint { display: none; }
-            .modal-overlay { padding: 0.5rem; }
-            .modal-content { padding: 1rem; }
-            .review-meta-bar { grid-template-columns: 1fr 1fr; }
+            .omni-input, .omni-unit, .omni-ctx, .qty-input, .btn-enter { height: 54px; width: 100%; margin-bottom: 0.5rem; }
         }
     </style>
 </head>
@@ -258,9 +189,17 @@
 
         <div class="omni-row">
             <div class="omni-wrapper">
-                <input type="text" class="omni-input" id="omni" placeholder="Search product, ID (a21), Month, or type a Custom Name..." autocomplete="off">
+                <input type="text" class="omni-input" id="omni" placeholder="Search product, ID (a21), Month, or type Custom..." autocomplete="off">
                 <div class="omni-results" id="omni-res"></div>
             </div>
+            <input type="text" class="omni-unit" id="omni-unit" placeholder="Unit" autocomplete="off">
+            <select class="omni-ctx" id="omni-ctx">
+                <option value="">Context...</option>
+                <option value="قرار لجنة">قرار لجنة</option>
+                <option value="حكم قضائي">حكم قضائي</option>
+                <option value="شئون طبية">شئون طبية</option>
+                <option value="داخل اللستة">داخل اللستة</option>
+            </select>
             <input type="number" class="qty-input" id="qty" placeholder="Qty" min="0">
             <button class="btn-enter" onclick="processAdd()">Enter ↵</button>
         </div>
@@ -275,9 +214,9 @@
                 <thead>
                     <tr>
                         <th>Product</th>
-                        <th style="width:120px">Unit</th>
+                        <th style="width:140px">Unit</th>
                         <th style="width:200px">Context Category</th>
-                        <th style="width:140px;text-align:center;">Units Sold</th>
+                        <th style="width:120px;text-align:center;">Units Sold</th>
                         <th style="width:80px;text-align:center;">Action</th>
                     </tr>
                 </thead>
@@ -316,7 +255,7 @@
         </div>
         
         <div class="shortcuts-hint">
-            <kbd>/</kbd> Focus Search &nbsp;&nbsp;&nbsp; <kbd>Enter</kbd> Add Item &nbsp;&nbsp;&nbsp; <kbd>Esc</kbd> Clear / Close
+            <kbd>/</kbd> Focus Search &nbsp;&nbsp;&nbsp; <kbd>Alt + Arrows</kbd> Move Inputs &nbsp;&nbsp;&nbsp; <kbd>Enter</kbd> Add Item / Next &nbsp;&nbsp;&nbsp; <kbd>Esc</kbd> Clear
         </div>
     </div>
 
@@ -350,7 +289,6 @@
                     </div>
                     <button class="btn-del" onclick="closeImport()">✕</button>
                 </div>
-
                 <div class="review-meta-bar">
                     <select id="rev-year" class="review-meta-select" onchange="validateMetaBar()"></select>
                     <select id="rev-month" class="review-meta-select" onchange="validateMetaBar()"></select>
@@ -358,7 +296,6 @@
                     <select id="rev-region" class="review-meta-select" onchange="updateRevPharm()"></select>
                     <select id="rev-pharmacy" class="review-meta-select" onchange="validateMetaBar()"></select>
                 </div>
-
                 <div class="review-table-container">
                     <table class="review-table">
                         <thead>
@@ -399,6 +336,7 @@
     let STAGING = [];
     
     const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
+    const CONTEXTS = ["قرار لجنة", "حكم قضائي", "شئون طبية", "داخل اللستة"];
 
     const DIC = {
         months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
@@ -548,7 +486,15 @@
     PRODS.forEach(p => { let [n, u] = p.split('|'); SEARCH_IDX.push({ t: 'product', txt: n, u: u||'', raw: p }); });
 
     const fuse = new Fuse(SEARCH_IDX, { keys: ['txt', 'id', 'val'], threshold: 0.5, includeScore: true, ignoreLocation: true });
-    const dom = { omni: document.getElementById('omni'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
+    const dom = { 
+        omni: document.getElementById('omni'), 
+        unit: document.getElementById('omni-unit'),
+        ctx: document.getElementById('omni-ctx'),
+        qty: document.getElementById('qty'), 
+        res: document.getElementById('omni-res'), 
+        grid: document.getElementById('grid') 
+    };
+    const omniFields = [dom.omni, dom.unit, dom.ctx, dom.qty];
     let selIdx = -1, resList = [];
 
     function saveLocalBackup() {
@@ -584,13 +530,10 @@
         const yDrop = document.getElementById('drop-year');
         const curr = new Date().getFullYear();
         for(let i=curr-1; i<=curr+1; i++) yDrop.innerHTML += `<div class="drop-item" onclick="setHud('year', '${i}')">${i}</div>`;
-
         const mDrop = document.getElementById('drop-month');
         DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
-
         const cDrop = document.getElementById('drop-class');
         Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" onclick="setHud('class', '${k}')">${v}</div>`);
-
         const rDrop = document.getElementById('drop-region');
         Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" onclick="setHud('region', '${k}')">${v}</div>`);
     }
@@ -629,7 +572,6 @@
         upd('class', STATE.class, DIC.classes);
         upd('region', STATE.region, DIC.regions);
         upd('pharmacy', STATE.pharmacy);
-        
         document.getElementById('print-class').textContent = DIC.classes[STATE.class] || '';
         document.getElementById('print-region').textContent = DIC.regions[STATE.region] || '';
         document.getElementById('print-pharmacy').textContent = STATE.pharmacy || '';
@@ -644,40 +586,50 @@
 
     document.addEventListener('keydown', e => {
         if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-            e.preventDefault();
-            dom.omni.focus();
+            e.preventDefault(); dom.omni.focus();
         }
         if (e.key === 'Escape') {
-            dom.omni.value = ''; dom.res.classList.remove('show');
+            dom.omni.value = ''; dom.unit.value = ''; dom.ctx.value = ''; dom.res.classList.remove('show');
+            dom.unit.disabled = false; dom.ctx.disabled = false;
             document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show'));
-            dom.omni.blur(); dom.qty.blur();
+            omniFields.forEach(f => f.blur());
         }
-        
-        if (['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
-            if (e.target === dom.omni || e.target === dom.qty || e.target.tagName === 'BUTTON') return;
+        if (e.altKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+            const idx = omniFields.indexOf(document.activeElement);
+            if (idx !== -1) {
+                e.preventDefault();
+                let nextIdx = e.key === 'ArrowRight' ? (idx + 1) % omniFields.length : (idx - 1 + omniFields.length) % omniFields.length;
+                omniFields[nextIdx].focus();
+                if (omniFields[nextIdx].select && omniFields[nextIdx].tagName !== 'SELECT') omniFields[nextIdx].select();
+            }
+        }
+        if (['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key) || (e.altKey && ['ArrowLeft', 'ArrowRight'].includes(e.key))) {
+            if (omniFields.includes(e.target) || e.target.tagName === 'BUTTON') return;
             const target = e.target;
             if (!target.matches('table input, table select')) return;
-
             const td = target.closest('td');
             const tr = target.closest('tr');
             const tbody = target.closest('tbody');
             if (!td || !tr || !tbody) return;
-
-            let isDown = e.key === 'ArrowDown' || e.key === 'Enter';
-            let nextRowIdx = Array.from(tbody.children).indexOf(tr) + (isDown ? 1 : -1);
-            const nextTr = tbody.children[nextRowIdx];
-
-            if (nextTr) {
-                const colIdx = Array.from(tr.children).indexOf(td);
-                const nextTd = nextTr.children[colIdx];
-                if (nextTd) {
-                    let nextInput = nextTd.querySelector('input:not([disabled]):not([readonly]), select:not([disabled])');
-                    if (nextInput) {
-                        e.preventDefault();
-                        nextInput.focus();
-                        if (nextInput.select) nextInput.select();
-                    }
+            const colIdx = Array.from(tr.children).indexOf(td);
+            const rowIdx = Array.from(tbody.children).indexOf(tr);
+            let nextInput = null;
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') {
+                let nextRowIdx = rowIdx + ((e.key === 'ArrowDown' || e.key === 'Enter') ? 1 : -1);
+                const nextTr = tbody.children[nextRowIdx];
+                if (nextTr) {
+                    const nextTd = nextTr.children[colIdx];
+                    if (nextTd) nextInput = nextTd.querySelector('input:not([disabled]):not([readonly]), select:not([disabled])');
                 }
+            } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                let nextColIdx = colIdx + (e.key === 'ArrowRight' ? 1 : -1);
+                const nextTd = tr.children[nextColIdx];
+                if (nextTd) nextInput = nextTd.querySelector('input:not([disabled]):not([readonly]), select:not([disabled])');
+            }
+            if (nextInput) {
+                e.preventDefault();
+                nextInput.focus();
+                if (nextInput.select && nextInput.tagName !== 'SELECT') nextInput.select();
             }
         }
     });
@@ -702,7 +654,6 @@
             }
             return { item: obj, score, matchedTokens };
         });
-
         let filtered = scored.filter(s => s.matchedTokens === terms.length);
         if (filtered.length > 0) return filtered.sort((a,b) => b.score - a.score).map(f => ({ item: f.item }));
         return fuse.search(sq).map(f => ({ item: f.item }));
@@ -710,23 +661,29 @@
 
     dom.omni.addEventListener('input', e => {
         const q = e.target.value.trim();
+        dom.unit.disabled = false; dom.ctx.disabled = false; dom.omni.dataset.raw = '';
         if(!q) { dom.res.classList.remove('show'); return; }
-
         if(/^202[0-9]$/.test(q)) {
             dom.res.innerHTML = `<div class="res-item" onclick="setHud('year', '${q}'); dom.omni.value=''; dom.res.classList.remove('show');"><div>Set Year: <strong>${q}</strong></div><span class="res-type">Year</span></div>`;
             dom.res.classList.add('show'); return;
         }
-
-        const match = q.match(/^(.*?)\s+(\d+)$/);
-        let sq = match ? match[1] : q, sqty = match ? match[2] : null;
+        let cleanQ = q;
+        let parsedCtx = "";
+        cleanQ = cleanQ.replace(/^(add|custom)\s+/i, '');
+        for (let c of CONTEXTS) {
+            if (cleanQ.includes(c)) {
+                parsedCtx = c;
+                cleanQ = cleanQ.replace(c, '').replace(/\s{2,}/g, ' ').trim();
+                break;
+            }
+        }
+        const match = cleanQ.match(/^(.*?)\s+(\d+)$/);
+        let sq = match ? match[1] : cleanQ, sqty = match ? match[2] : null;
         const res = smartSearch(sq).slice(0, 8);
-        
         dom.res.innerHTML = ''; resList = [];
         let exactMatch = res.length > 0 && res[0].item.txt.toLowerCase() === sq.toLowerCase();
-
         res.forEach((r, idx) => {
-            const div = document.createElement('div');
-            div.className = 'res-item';
+            const div = document.createElement('div'); div.className = 'res-item';
             if (idx === 0 && !exactMatch && sq.length > 2 && r.item.t === 'product') {
                 div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent);">Suggest</span>`;
             } else {
@@ -735,15 +692,12 @@
             div.onclick = () => applyOmni(r.item, sqty);
             dom.res.appendChild(div); resList.push(div);
         });
-
-        if (!exactMatch) {
-            const custDiv = document.createElement('div');
-            custDiv.className = 'res-item';
-            custDiv.innerHTML = `<div>Add Custom: <strong>${esc(q)}</strong></div><span class="res-type" style="background:var(--warning); color:#fff;">Custom</span>`;
-            custDiv.onclick = () => applyOmni({t:'custom', txt:q}, sqty);
-            dom.res.appendChild(custDiv); resList.push(custDiv);
-        }
-
+        const custDiv = document.createElement('div');
+        custDiv.className = 'res-item';
+        let ctxBadge = parsedCtx ? `<span class="res-type" style="background:var(--accent); color:#fff; margin-right:5px;">${parsedCtx}</span>` : '';
+        custDiv.innerHTML = `<div>Add Custom: <strong>${esc(sq)}</strong></div><div>${ctxBadge}<span class="res-type" style="background:var(--warning); color:#fff;">Custom</span></div>`;
+        custDiv.onclick = () => applyOmni({t:'custom', txt:sq, ctx: parsedCtx}, sqty);
+        dom.res.appendChild(custDiv); resList.push(custDiv);
         dom.res.classList.add('show'); selIdx = 0; hi();
     });
 
@@ -759,8 +713,7 @@
         } else if(e.key === 'Enter') { e.preventDefault(); processAdd(); }
     };
 
-    dom.omni.addEventListener('keydown', handleKey);
-    dom.qty.addEventListener('keydown', handleKey);
+    omniFields.forEach(f => f.addEventListener('keydown', handleKey));
 
     function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) resList[selIdx].classList.add('sel'); }
 
@@ -770,7 +723,18 @@
         else if(item.t === 'month') { setHud('month', item.val); dom.omni.value = ''; toast('Month Linked'); }
         else {
             dom.omni.value = item.txt; dom.omni.dataset.raw = JSON.stringify(item);
-            if(pendingQty) { dom.qty.value = pendingQty; processAdd(); } else dom.qty.focus();
+            if (item.t === 'product') {
+                dom.unit.value = item.u || ''; dom.ctx.value = '';
+                dom.unit.disabled = true; dom.ctx.disabled = true;
+            } else {
+                dom.unit.disabled = false; dom.ctx.disabled = false;
+                if (item.ctx) dom.ctx.value = item.ctx;
+                dom.unit.value = '';
+            }
+            if(pendingQty) { dom.qty.value = pendingQty; processAdd(); } 
+            else if (item.t === 'custom' && !dom.unit.value) dom.unit.focus();
+            else if (item.t === 'custom' && !dom.ctx.value) dom.ctx.focus();
+            else dom.qty.focus();
         }
     }
 
@@ -789,81 +753,64 @@
     function updateItemContext(idx, newContext) {
         let item = DATA[idx];
         let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === item.unit.toLowerCase() && d.context.toLowerCase() === newContext.toLowerCase());
-        if(dupIdx >= 0) {
-            DATA[dupIdx].quantity += item.quantity;
-            DATA.splice(idx, 1);
-        } else {
-            item.context = newContext;
-        }
-        drawGrid();
-        saveLocalBackup();
+        if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); } else { item.context = newContext; }
+        drawGrid(); saveLocalBackup();
     }
 
     function updateItemUnit(idx, newUnit) {
         let item = DATA[idx];
         let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === newUnit.toLowerCase() && d.context.toLowerCase() === item.context.toLowerCase());
-        if(dupIdx >= 0) {
-            DATA[dupIdx].quantity += item.quantity;
-            DATA.splice(idx, 1);
-        } else {
-            item.unit = newUnit;
-        }
-        drawGrid();
-        saveLocalBackup();
+        if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); } else { item.unit = newUnit; }
+        drawGrid(); saveLocalBackup();
     }
 
     function updateItemQuantity(idx, val) {
         DATA[idx].quantity = parseInt(val) || 0;
-        drawGrid();
-        saveLocalBackup();
+        drawGrid(); saveLocalBackup();
     }
 
     function deleteItem(idx) {
         DATA.splice(idx, 1);
-        drawGrid();
-        saveLocalBackup();
+        drawGrid(); saveLocalBackup();
     }
 
     function processAdd() {
-        const text = dom.omni.value.trim(), qty = parseInt(dom.qty.value) || 0;
+        const text = dom.omni.value.trim();
+        let qty = parseInt(dom.qty.value) || 0;
         if(!text) return;
-        let obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : { t: 'custom', txt: text, u: '' };
-        
-        let res = resolveCoreItem(obj.txt, obj.u);
+        let obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : { t: 'custom', txt: text, u: dom.unit.value.trim(), ctx: dom.ctx.value };
+        let res = resolveCoreItem(obj.txt, obj.u || dom.unit.value.trim());
         let isCustom = !res.isSystem;
-        let name = res.name;
-        let unit = res.unit;
-        let context = '';
+        let name = res.isSystem ? res.name : obj.txt;
+        let unit = res.isSystem ? res.unit : dom.unit.value.trim();
+        let context = res.isSystem ? '' : dom.ctx.value;
         let raw = res.isSystem ? res.rawId : `${name}|${unit}`;
 
-        let exIdx = DATA.findIndex(d => d.isCustom === isCustom && d.name.toLowerCase() === name.toLowerCase() && d.unit.toLowerCase() === unit.toLowerCase() && d.context.toLowerCase() === context.toLowerCase());
-
-        if(exIdx >= 0) {
-            DATA[exIdx].quantity += qty;
-            toast('Quantity Updated');
+        if (isCustom) {
+            if (!unit) { dom.unit.focus(); toast('Enter a unit for custom item', 'error'); return; }
+            if (!context) { dom.ctx.focus(); toast('Select a context for custom item', 'error'); return; }
+            if (!qty) { dom.qty.focus(); toast('Enter quantity', 'error'); return; }
         } else {
-            DATA.unshift({ raw, name, unit, quantity: qty, isCustom, context });
+            if (!qty) { dom.qty.focus(); toast('Enter quantity', 'error'); return; }
         }
 
-        dom.omni.value = ''; dom.qty.value = ''; dom.omni.dataset.raw = ''; dom.omni.focus();
-        drawGrid();
-        saveLocalBackup();
+        let exIdx = DATA.findIndex(d => d.isCustom === isCustom && d.name.toLowerCase() === name.toLowerCase() && d.unit.toLowerCase() === unit.toLowerCase() && d.context.toLowerCase() === context.toLowerCase());
+        if(exIdx >= 0) { DATA[exIdx].quantity += qty; toast('Quantity Updated'); } else { DATA.unshift({ raw, name, unit, quantity: qty, isCustom, context }); }
+        dom.omni.value = ''; dom.qty.value = ''; dom.unit.value = ''; dom.ctx.value = '';
+        dom.unit.disabled = false; dom.ctx.disabled = false; dom.omni.dataset.raw = ''; dom.omni.focus();
+        drawGrid(); saveLocalBackup();
     }
 
     function drawGrid() {
         dom.grid.innerHTML = '';
         const empty = document.getElementById('empty-state'), tbl = document.getElementById('table');
-        
         if(DATA.length) { empty.style.display = 'none'; tbl.style.display = 'table'; }
         else { empty.style.display = 'block'; tbl.style.display = 'none'; }
         document.getElementById('stats-counter').textContent = `Total Items: ${DATA.length}`;
-
         DATA.forEach((d, i) => {
-            const tr = document.createElement('tr');
-            tr.className = 'data-row';
+            const tr = document.createElement('tr'); tr.className = 'data-row';
             let ctxHtml = `<span style="color:var(--text-muted);font-size:0.9rem; margin-left:8px; font-weight:600;">System Core</span>`;
             let unitHtml = `<span style="color:var(--text-muted); font-size:0.9rem; font-weight:700;">${esc(d.unit) || '-'}</span>`;
-            
             if(d.isCustom) {
                 ctxHtml = `
                     <select class="c-select ${!d.context?'req':''}" onchange="updateItemContext(${i}, this.value)">
@@ -890,14 +837,8 @@
     function openImport() { document.getElementById('import-modal').classList.add('active'); }
     function closeImport() { 
         document.getElementById('import-modal').classList.remove('active'); 
-        setTimeout(() => {
-            document.getElementById('import-ui').style.display = 'block';
-            document.getElementById('review-ui').style.display = 'none';
-            document.getElementById('file-in').value = '';
-            STAGING = [];
-        }, 300);
+        setTimeout(() => { document.getElementById('import-ui').style.display = 'block'; document.getElementById('review-ui').style.display = 'none'; document.getElementById('file-in').value = ''; STAGING = []; }, 300);
     }
-
     function exportCSVTemplate() {
         const bom = "\uFEFF";
         const csvContent = "year,month,pharmacy,name,unit,quantity,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
@@ -913,14 +854,8 @@
     dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
 
     function findPharmacyDetails(pName) {
-        if(!pName) return null;
-        pName = pName.trim();
-        for (let c in PHARM) {
-            for (let r in PHARM[c]) {
-                let found = PHARM[c][r].find(p => p.n === pName || p.id === pName);
-                if (found) return { c, r, n: found.n };
-            }
-        }
+        if(!pName) return null; pName = pName.trim();
+        for (let c in PHARM) { for (let r in PHARM[c]) { let found = PHARM[c][r].find(p => p.n === pName || p.id === pName); if (found) return { c, r, n: found.n }; } }
         return null;
     }
 
@@ -929,140 +864,70 @@
         Papa.parse(file, {
             header: true, skipEmptyLines: true,
             complete: res => {
-                let stagingMap = new Map();
-                let metaSet = false;
-
+                let stagingMap = new Map(); let metaSet = false;
                 res.data.forEach((r, i) => {
                     if(!metaSet && (r.year || r.month || r.pharmacy)) {
-                        if(r.year) STATE.year = r.year.trim();
-                        if(r.month) STATE.month = r.month.trim();
-                        if(r.pharmacy) {
-                            let details = findPharmacyDetails(r.pharmacy);
-                            if(details) { STATE.class = details.c; STATE.region = details.r; STATE.pharmacy = details.n; }
-                        }
+                        if(r.year) STATE.year = r.year.trim(); if(r.month) STATE.month = r.month.trim();
+                        if(r.pharmacy) { let details = findPharmacyDetails(r.pharmacy); if(details) { STATE.class = details.c; STATE.region = details.r; STATE.pharmacy = details.n; } }
                         metaSet = true;
                     }
-
                     let core = resolveCoreItem(r.name, r.unit);
                     let name = core.name, unit = core.unit, isSystem = core.isSystem, rawId = isSystem ? core.rawId : '';
                     let context = isSystem ? '' : (r.context ? r.context.trim() : '');
                     let qty = parseInt(r.quantity || r.qty) || 0;
-
                     let key = (isSystem ? rawId : `${name}|${unit}|${context}`).toLowerCase();
                     if (name === '') key = 'empty_' + i;
-
-                    if(stagingMap.has(key)) {
-                        let ex = stagingMap.get(key);
-                        ex.quantity += qty;
-                        ex.merged = true;
-                        if(!ex.context && !isSystem) ex.context = context;
-                    } else {
-                        stagingMap.set(key, { id: Date.now()+i, name, unit, quantity: qty, context, isSystem, rawId, merged: false, checked: true });
-                    }
+                    if(stagingMap.has(key)) { let ex = stagingMap.get(key); ex.quantity += qty; ex.merged = true; if(!ex.context && !isSystem) ex.context = context; } 
+                    else { stagingMap.set(key, { id: Date.now()+i, name, unit, quantity: qty, context, isSystem, rawId, merged: false, checked: true }); }
                 });
-
-                STAGING = Array.from(stagingMap.values());
-                updateHudUI();
-                populateReviewMeta();
-                
-                document.getElementById('import-ui').style.display = 'none';
-                document.getElementById('review-ui').style.display = 'flex';
-                renderReview();
+                STAGING = Array.from(stagingMap.values()); updateHudUI(); populateReviewMeta();
+                document.getElementById('import-ui').style.display = 'none'; document.getElementById('review-ui').style.display = 'flex'; renderReview();
             }
         });
     }
 
     function populateReviewMeta() {
-        let ySel = document.getElementById('rev-year');
-        ySel.innerHTML = '<option value="">Select Year</option>';
-        let curr = new Date().getFullYear();
-        for(let i=curr-1; i<=curr+1; i++) ySel.innerHTML += `<option value="${i}" ${STATE.year==i?'selected':''}>${i}</option>`;
-        
-        let mSel = document.getElementById('rev-month');
-        mSel.innerHTML = '<option value="">Select Month</option>';
+        let ySel = document.getElementById('rev-year'); ySel.innerHTML = '<option value="">Select Year</option>';
+        let curr = new Date().getFullYear(); for(let i=curr-1; i<=curr+1; i++) ySel.innerHTML += `<option value="${i}" ${STATE.year==i?'selected':''}>${i}</option>`;
+        let mSel = document.getElementById('rev-month'); mSel.innerHTML = '<option value="">Select Month</option>';
         DIC.months.en.forEach((m, i) => mSel.innerHTML += `<option value="${m}" ${STATE.month==m?'selected':''}>${DIC.months.ar[i]}</option>`);
-
-        let cSel = document.getElementById('rev-class');
-        cSel.innerHTML = '<option value="">Select Class</option>';
+        let cSel = document.getElementById('rev-class'); cSel.innerHTML = '<option value="">Select Class</option>';
         Object.entries(DIC.classes).forEach(([k,v]) => cSel.innerHTML += `<option value="${k}" ${STATE.class==k?'selected':''}>${v}</option>`);
-
-        let rSel = document.getElementById('rev-region');
-        rSel.innerHTML = '<option value="">Select Region</option>';
+        let rSel = document.getElementById('rev-region'); rSel.innerHTML = '<option value="">Select Region</option>';
         Object.entries(DIC.regions).forEach(([k,v]) => rSel.innerHTML += `<option value="${k}" ${STATE.region==k?'selected':''}>${v}</option>`);
-
-        updateRevPharm();
-        validateMetaBar();
+        updateRevPharm(); validateMetaBar();
     }
 
     function updateRevPharm() {
-        let pSel = document.getElementById('rev-pharmacy');
-        let cls = document.getElementById('rev-class').value;
-        let rgn = document.getElementById('rev-region').value;
-        
+        let pSel = document.getElementById('rev-pharmacy'); let cls = document.getElementById('rev-class').value; let rgn = document.getElementById('rev-region').value;
         pSel.innerHTML = '<option value="">Select Pharmacy</option>';
-        if(cls && rgn && PHARM[cls] && PHARM[cls][rgn]) {
-            PHARM[cls][rgn].forEach(p => {
-                pSel.innerHTML += `<option value="${p.n}" ${STATE.pharmacy===p.n?'selected':''}>${p.n}</option>`;
-            });
-        }
+        if(cls && rgn && PHARM[cls] && PHARM[cls][rgn]) { PHARM[cls][rgn].forEach(p => { pSel.innerHTML += `<option value="${p.n}" ${STATE.pharmacy===p.n?'selected':''}>${p.n}</option>`; }); }
         validateMetaBar();
     }
 
-    function validateMetaBar() {
-        ['year', 'month', 'class', 'region', 'pharmacy'].forEach(k => {
-            let el = document.getElementById(`rev-${k}`);
-            if(!el.value) el.classList.add('err'); else el.classList.remove('err');
-        });
-    }
+    function validateMetaBar() { ['year', 'month', 'class', 'region', 'pharmacy'].forEach(k => { let el = document.getElementById(`rev-${k}`); if(!el.value) el.classList.add('err'); else el.classList.remove('err'); }); }
 
     function updateStg(i, name, unit) {
-        let res = resolveCoreItem(name, unit);
-        STAGING[i].isSystem = res.isSystem;
-        STAGING[i].name = res.name;
-        STAGING[i].unit = res.unit;
-        if(res.isSystem) {
-            STAGING[i].rawId = res.rawId;
-            STAGING[i].context = '';
-        }
+        let res = resolveCoreItem(name, unit); STAGING[i].isSystem = res.isSystem; STAGING[i].name = res.name; STAGING[i].unit = res.unit;
+        if(res.isSystem) { STAGING[i].rawId = res.rawId; STAGING[i].context = ''; }
         renderReview();
     }
 
     function renderReview() {
-        checkStagingDuplicates();
-        const tb = document.getElementById('review-tbody');
-        tb.innerHTML = '';
+        checkStagingDuplicates(); const tb = document.getElementById('review-tbody'); tb.innerHTML = '';
         STAGING.forEach((s, i) => {
             let trCls = s.checked ? '' : 'row-disabled';
             let valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
             let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
             let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
-
             tb.innerHTML += `
             <tr id="rev-tr-${i}" class="${trCls}">
-                <td style="text-align:center;">
-                    <input type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="STAGING[${i}].checked=this.checked; renderReview();">
-                </td>
-                <td>
-                    <input class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].unit)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}">
-                </td>
-                <td>
-                    <input class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].name, this.value)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}">
-                </td>
-                <td>
-                    <select class="c-select ${!s.isSystem && !s.context && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].context=this.value; renderReview();" ${s.isSystem ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>
-                        <option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option>
-                        <option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option>
-                        <option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option>
-                        <option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option>
-                        <option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option>
-                    </select>
-                </td>
-                <td style="text-align:center;">
-                    <input class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="STAGING[${i}].quantity=parseInt(this.value); renderReview();">
-                </td>
-                <td style="text-align:center;">
-                    <span id="badge-${i}" class="status-badge ${statCls}">${statTxt}</span>
-                </td>
+                <td style="text-align:center;"><input type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="STAGING[${i}].checked=this.checked; renderReview();"></td>
+                <td><input class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, this.value, STAGING[${i}].unit)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}"></td>
+                <td><input class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, STAGING[${i}].name, this.value)" style="font-weight:600; ${s.isSystem ? 'color:var(--accent); border-color:var(--accent);' : ''}"></td>
+                <td><select class="c-select ${!s.isSystem && !s.context && s.checked ? 'req' : ''}" style="padding:0.6rem;" onchange="STAGING[${i}].context=this.value; renderReview();" ${s.isSystem ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
+                <td style="text-align:center;"><input class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="STAGING[${i}].quantity=parseInt(this.value); renderReview();"></td>
+                <td style="text-align:center;"><span id="badge-${i}" class="status-badge ${statCls}">${statTxt}</span></td>
             </tr>`;
         });
     }
@@ -1070,131 +935,63 @@
     function checkStagingDuplicates() {
         let keys = {};
         STAGING.forEach((s, i) => {
-            s.merged = false;
-            if(!s.checked) return;
+            s.merged = false; if(!s.checked) return;
             let k = (s.isSystem ? s.rawId : `${s.name.trim()}|${s.unit.trim()}|${s.context}`).toLowerCase();
-            if(!keys[k]) keys[k] = [];
-            keys[k].push(i);
+            if(!keys[k]) keys[k] = []; keys[k].push(i);
         });
-        Object.values(keys).forEach(arr => {
-            if(arr.length > 1) arr.forEach(idx => STAGING[idx].merged = true);
-            else if(arr.length === 1 && !STAGING[arr[0]].name.trim()) STAGING[arr[0]].merged = false;
-        });
+        Object.values(keys).forEach(arr => { if(arr.length > 1) arr.forEach(idx => STAGING[idx].merged = true); else if(arr.length === 1 && !STAGING[arr[0]].name.trim()) STAGING[arr[0]].merged = false; });
     }
 
     function showErrorModal() {
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-        document.getElementById('status-title').textContent = 'Submission Failed / Offline!';
-        document.getElementById('status-title').style.color = 'var(--danger)';
+        document.getElementById('status-title').textContent = 'Submission Failed / Offline!'; document.getElementById('status-title').style.color = 'var(--danger)';
         document.getElementById('status-desc').innerHTML = 'Network or database error.<br><strong style="color:var(--text-main)">Don\'t worry!</strong> Your data was automatically downloaded as CSV and JSON backups. It will try to sync later if connection returns.';
-        document.getElementById('status-btn').style.background = 'var(--surface-hover)';
-        document.getElementById('status-btn').style.color = 'var(--text-main)';
+        document.getElementById('status-btn').style.background = 'var(--surface-hover)'; document.getElementById('status-btn').style.color = 'var(--text-main)';
         document.getElementById('status-modal').classList.add('active');
     }
 
     function showSuccessModal(msg) {
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-        document.getElementById('status-title').textContent = 'Success!';
-        document.getElementById('status-title').style.color = 'var(--success)';
+        document.getElementById('status-title').textContent = 'Success!'; document.getElementById('status-title').style.color = 'var(--success)';
         document.getElementById('status-desc').textContent = msg;
-        document.getElementById('status-btn').style.background = 'var(--success)';
-        document.getElementById('status-btn').style.color = 'white';
+        document.getElementById('status-btn').style.background = 'var(--success)'; document.getElementById('status-btn').style.color = 'white';
         document.getElementById('status-modal').classList.add('active');
     }
 
     function confirmReview() {
-        validateMetaBar();
-        let metas = ['year', 'month', 'class', 'region', 'pharmacy'].map(k => document.getElementById(`rev-${k}`).value);
+        validateMetaBar(); let metas = ['year', 'month', 'class', 'region', 'pharmacy'].map(k => document.getElementById(`rev-${k}`).value);
         if(metas.includes("")) { toast('Please complete all global settings above.'); return; }
-
         let activeStaging = STAGING.filter(s => s.checked);
         if(!activeStaging.length) { toast('No items selected to import.'); return; }
-        
         let invalid = activeStaging.find(s => s.name.trim() === '' || isNaN(s.quantity) || s.quantity <= 0 || (!s.isSystem && (!s.context || s.unit.trim() === '')));
         if(invalid) { toast('Please fix highlighted errors before submitting.'); return; }
-
-        STATE.year = metas[0]; STATE.month = metas[1]; STATE.class = metas[2]; STATE.region = metas[3]; STATE.pharmacy = metas[4];
-        updateHudUI();
-
+        STATE.year = metas[0]; STATE.month = metas[1]; STATE.class = metas[2]; STATE.region = metas[3]; STATE.pharmacy = metas[4]; updateHudUI();
         const p = activeStaging.map(s => {
-            let n = s.isSystem ? s.name : s.name.trim();
-            let u = s.isSystem ? s.unit : s.unit.trim();
-            let isCustom = !s.isSystem;
-            let ctx = s.isSystem ? '' : s.context;
-            return {
-                year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
-                name: isCustom ? `${n} (${ctx})` : n, unit: u, unitSold: s.quantity, method: isCustom ? 'new' : 'old', category: ctx, ts: new Date().toISOString()
-            };
+            let n = s.isSystem ? s.name : s.name.trim(), u = s.isSystem ? s.unit : s.unit.trim(), isCustom = !s.isSystem, ctx = s.isSystem ? '' : s.context;
+            return { year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy, name: isCustom ? `${n} (${ctx})` : n, unit: u, unitSold: s.quantity, method: isCustom ? 'new' : 'old', category: ctx, ts: new Date().toISOString() };
         });
-
-        const btn = document.getElementById('btn-confirm-import');
-        const origTxt = btn.textContent;
-        btn.disabled = true; btn.textContent = 'Submitting...';
-
+        const btn = document.getElementById('btn-confirm-import'); const origTxt = btn.textContent; btn.disabled = true; btn.textContent = 'Submitting...';
         exportPayload(p, '_Import');
-
         if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
-        
         let isResolved = false;
-        const timeout = setTimeout(() => {
-            if(!isResolved) {
-                showErrorModal();
-                btn.disabled = false; btn.textContent = origTxt;
-            }
-        }, 8000);
-
-        firebase.database().ref('pharmacyData').push(p).then(() => {
-            isResolved = true;
-            clearTimeout(timeout);
-            showSuccessModal('Imported & Submitted successfully to DB.');
-            closeImport();
-            btn.disabled = false; btn.textContent = origTxt;
-        }).catch(() => { 
-            isResolved = true;
-            clearTimeout(timeout);
-            showErrorModal();
-            btn.disabled = false; btn.textContent = origTxt;
-        });
+        const timeout = setTimeout(() => { if(!isResolved) { showErrorModal(); btn.disabled = false; btn.textContent = origTxt; } }, 8000);
+        firebase.database().ref('pharmacyData').push(p).then(() => { isResolved = true; clearTimeout(timeout); showSuccessModal('Imported & Submitted successfully to DB.'); closeImport(); btn.disabled = false; btn.textContent = origTxt; }).catch(() => { isResolved = true; clearTimeout(timeout); showErrorModal(); btn.disabled = false; btn.textContent = origTxt; });
     }
 
     function saveSession() {
         const sessionPayload = JSON.stringify({ state: STATE, data: DATA }, null, 2);
-        const link = document.createElement('a');
-        link.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(sessionPayload));
-        link.setAttribute('download', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        toast("Session Saved Locally");
+        const link = document.createElement('a'); link.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(sessionPayload)); link.setAttribute('download', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link); toast("Session Saved Locally");
     }
 
     function loadSession(file) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            try {
-                const session = JSON.parse(e.target.result);
-                if (session.state) Object.keys(session.state).forEach(k => STATE[k] = session.state[k]);
-                if (session.data) DATA = session.data;
-                updateHudUI(); drawGrid(); toast("Session Loaded Successfully");
-                saveLocalBackup();
-            } catch (err) { toast("Invalid Session File"); }
-        };
-        reader.readAsText(file);
-        document.getElementById('file-load').value = '';
+        if (!file) return; const reader = new FileReader();
+        reader.onload = e => { try { const session = JSON.parse(e.target.result); if (session.state) Object.keys(session.state).forEach(k => STATE[k] = session.state[k]); if (session.data) DATA = session.data; updateHudUI(); drawGrid(); toast("Session Loaded Successfully"); saveLocalBackup(); } catch (err) { toast("Invalid Session File"); } };
+        reader.readAsText(file); document.getElementById('file-load').value = '';
     }
 
-    function toggleTheme() {
-        const root = document.documentElement;
-        root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
-    }
-
-    function toast(msg, type = 'normal') {
-        const t = document.getElementById('toast');
-        t.textContent = msg; 
-        if(type === 'error') t.classList.add('error-toast'); else t.classList.remove('error-toast');
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
-
+    function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; }
+    function toast(msg, type = 'normal') { const t = document.getElementById('toast'); t.textContent = msg; if(type === 'error') t.classList.add('error-toast'); else t.classList.remove('error-toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
     function validateReady() {
         if(!STATE.year || !STATE.month || !STATE.class || !STATE.region || !STATE.pharmacy) { toast('Please complete all HUD fields.', 'error'); return false; }
         if(!DATA.length) { toast('Add items to submit.', 'error'); return false; }
@@ -1203,80 +1000,30 @@
     }
 
     function exportPayload(p, suffix = '') {
-        const jsonLink = document.createElement('a');
-        jsonLink.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2)));
-        jsonLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.json`);
+        const jsonLink = document.createElement('a'); jsonLink.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2))); jsonLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.json`);
         document.body.appendChild(jsonLink); jsonLink.click(); document.body.removeChild(jsonLink);
-
-        const headers = ["Year", "Month", "Class", "Region", "Pharmacy", "Product", "Unit", "UnitsSold", "Method", "Category", "Timestamp"];
-        const csvRows = [headers.join(',')];
-        p.forEach(row => {
-            csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(','));
-        });
-        
-        const csvLink = document.createElement('a');
-        csvLink.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent("\uFEFF" + csvRows.join('\n')));
-        csvLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.csv`);
+        const headers = ["Year", "Month", "Class", "Region", "Pharmacy", "Product", "Unit", "UnitsSold", "Method", "Category", "Timestamp"]; const csvRows = [headers.join(',')];
+        p.forEach(row => { csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(',')); });
+        const csvLink = document.createElement('a'); csvLink.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent("\uFEFF" + csvRows.join('\n'))); csvLink.setAttribute("download", `LX_Export_${STATE.pharmacy}${suffix}.csv`);
         document.body.appendChild(csvLink); csvLink.click(); document.body.removeChild(csvLink);
     }
 
     function submitToDB() {
         if(!validateReady()) return;
-
-        const btn = document.getElementById('btn-submit');
-        const icon = document.getElementById('submit-icon');
-        const txt = document.getElementById('submit-text');
-        
-        const origIcon = icon.outerHTML;
-        const origTxt = txt.textContent;
-
-        btn.disabled = true;
+        const btn = document.getElementById('btn-submit'); const icon = document.getElementById('submit-icon'); const txt = document.getElementById('submit-text');
+        const origIcon = icon.outerHTML; const origTxt = txt.textContent; btn.disabled = true;
         icon.outerHTML = `<svg id="submit-icon" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
         txt.textContent = 'Submitting...';
-
-        const p = DATA.map(d => ({
-            year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy,
-            name: d.isCustom ? `${d.name} (${d.context})` : d.name, unit: d.unit, unitSold: d.quantity, method: d.isCustom ? 'new' : 'old', category: d.context, ts: new Date().toISOString()
-        }));
-
+        const p = DATA.map(d => ({ year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy, name: d.isCustom ? `${d.name} (${d.context})` : d.name, unit: d.unit, unitSold: d.quantity, method: d.isCustom ? 'new' : 'old', category: d.context, ts: new Date().toISOString() }));
         exportPayload(p);
-
-        const restoreBtn = () => {
-            btn.disabled = false;
-            document.getElementById('submit-icon').outerHTML = origIcon;
-            txt.textContent = origTxt;
-        };
-
+        const restoreBtn = () => { btn.disabled = false; document.getElementById('submit-icon').outerHTML = origIcon; txt.textContent = origTxt; };
         if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
-        
         let isResolved = false;
-        const timeout = setTimeout(() => {
-            if(!isResolved) {
-                showErrorModal();
-                restoreBtn();
-            }
-        }, 8000);
-
-        firebase.database().ref('pharmacyData').push(p).then(() => {
-            isResolved = true;
-            clearTimeout(timeout);
-            showSuccessModal('Workspace securely pushed & exported.'); 
-            DATA = []; clearLocalBackup(); drawGrid(); restoreBtn();
-        }).catch(() => { 
-            isResolved = true;
-            clearTimeout(timeout);
-            showErrorModal();
-            restoreBtn(); 
-        });
+        const timeout = setTimeout(() => { if(!isResolved) { showErrorModal(); restoreBtn(); } }, 8000);
+        firebase.database().ref('pharmacyData').push(p).then(() => { isResolved = true; clearTimeout(timeout); showSuccessModal('Workspace securely pushed & exported.'); DATA = []; clearLocalBackup(); drawGrid(); restoreBtn(); }).catch(() => { isResolved = true; clearTimeout(timeout); showErrorModal(); restoreBtn(); });
     }
 
-    window.onload = () => { 
-        buildHudMenus(); 
-        loadLocalBackup();
-        updateHudUI(); 
-        dom.omni.focus(); 
-        setInterval(saveLocalBackup, 30000);
-    };
+    window.onload = () => { buildHudMenus(); loadLocalBackup(); updateHudUI(); dom.omni.focus(); setInterval(saveLocalBackup, 30000); };
 </script>
 </body>
 </html>
