@@ -19,6 +19,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;600;700&display=swap');
 
     :root {
+        color-scheme: dark;
         --bg: #030509;
         --surface: #0a0e17;
         --surface-glass: rgba(10, 14, 23, 0.75);
@@ -29,7 +30,7 @@
         --text-muted: #8b9bb4;
         --accent: #8b5cf6;
         --accent-hover: #a78bfa;
-        --accent-grad: linear-gradient(135deg, #8b5cf6, #d946ef);
+        --accent-grad: linear-gradient(135deg, #7c5cf6, #a855f7 55%, #d946ef);
         --accent-glow: rgba(139, 92, 246, 0.15);
         --success: #10b981;
         --warning: #f59e0b;
@@ -37,15 +38,21 @@
         --radius-sm: 8px;
         --radius-md: 12px;
         --radius-lg: 20px;
+        --radius-xl: 28px;
         --font-en: 'Inter', system-ui, sans-serif;
         --font-ar: 'Tajawal', sans-serif;
         --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
         --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
         --shadow-lg: 0 24px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+        --shadow-glow: 0 8px 30px -6px rgba(139, 92, 246, 0.35);
+        --focus-ring: 0 0 0 3px var(--accent-glow);
+        --bg-wash: radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+                   radial-gradient(ellipse 900px 500px at 100% 0%, rgba(217, 70, 239, 0.08), transparent 55%);
     }
 
     [data-theme="light"] {
+        color-scheme: light;
         --bg: #f4f6f9;
         --surface: #ffffff;
         --surface-glass: rgba(255, 255, 255, 0.85);
@@ -57,9 +64,14 @@
         --accent-glow: rgba(139, 92, 246, 0.1);
         --shadow-sm: 0 2px 6px rgba(0,0,0,0.04);
         --shadow-lg: 0 20px 40px -8px rgba(0,0,0,0.1), 0 0 0 1px var(--border);
+        --shadow-glow: 0 8px 24px -6px rgba(139, 92, 246, 0.2);
+        --bg-wash: radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(139, 92, 246, 0.06), transparent 60%),
+                   radial-gradient(ellipse 900px 500px at 100% 0%, rgba(217, 70, 239, 0.05), transparent 55%);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+    input:focus-visible, select:focus-visible, button:focus-visible { outline-offset: 1px; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
@@ -68,6 +80,8 @@
     body {
         font-family: var(--font-en);
         background-color: var(--bg);
+        background-image: var(--bg-wash);
+        background-attachment: fixed;
         color: var(--text-main);
         height: 100vh;
         display: flex;
@@ -75,6 +89,12 @@
         overflow: hidden;
         transition: background-color 0.4s var(--ease-out), color 0.4s var(--ease-out);
         -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
     }
 
     .hud-bar {
@@ -88,6 +108,12 @@
         border-bottom: 1px solid var(--border);
         z-index: 100;
         position: relative;
+    }
+    .hud-bar::after {
+        content: '';
+        position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.35), transparent);
+        pointer-events: none;
     }
 
     .hud-left { display: flex; align-items: center; gap: 2rem; min-width: 0; }
@@ -193,7 +219,9 @@
         display: flex; gap: 0.8rem; height: 56px; position: relative; z-index: 50;
         background: var(--surface); padding: 6px; border-radius: var(--radius-lg);
         border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
     }
+    .omni-row:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow-sm), var(--focus-ring); }
 
     .omni-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
 
@@ -226,7 +254,7 @@
         font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s var(--ease-spring);
         box-shadow: 0 4px 15px var(--accent-glow); white-space: nowrap;
     }
-    .btn-enter:hover { filter: brightness(1.1); transform: scale(1.02); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3); }
+    .btn-enter:hover { filter: brightness(1.08); transform: scale(1.02); box-shadow: var(--shadow-glow); }
     .btn-enter:active { transform: scale(0.96); }
 
     .omni-results {
@@ -263,9 +291,11 @@
     .empty-state {
         position: absolute; inset: 0; display: flex; flex-direction: column;
         justify-content: center; align-items: center; color: var(--text-muted);
-        pointer-events: none; opacity: 0.5; animation: fadeIn 0.5s ease forwards;
+        pointer-events: none; opacity: 0; animation: fadeIn 0.5s var(--ease-out) forwards;
         padding: 2rem; text-align: center;
     }
+    .empty-state svg { padding: 18px; background: var(--surface-hover); border-radius: 50%; border: 1px solid var(--border); }
+    .empty-state h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
 
     table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
     th {
@@ -348,7 +378,7 @@
 
     .modal-content {
         background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-        width: 100%; max-width: 1200px; padding: 0; box-shadow: var(--shadow-lg);
+        width: 100%; max-width: 1200px; padding: 0; box-shadow: var(--shadow-lg), 0 0 80px -20px rgba(139, 92, 246, 0.2);
         transform: scale(0.95) translateY(20px); transition: all 0.4s var(--ease-spring);
         height: 85vh; max-height: 900px; display: flex; flex-direction: column; position: relative; overflow: hidden;
     }
@@ -440,7 +470,6 @@
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .spinner { animation: spin 1s linear infinite; }
 
-    /* --- MOBILE RESPONSIVE OVERHAUL --- */
     @media (max-width: 900px) {
         .workspace { padding: 1rem; gap: 1rem; }
         .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
@@ -519,7 +548,7 @@
         <button class="btn-ghost" onclick="resetHUD()" title="Reset Filters" style="padding: 8px; border-radius: 50%;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         </button>
-        <button class="btn-ghost" onclick="toggleTheme()" title="Toggle Theme" style="padding: 8px; border-radius: 50%;">🌓</button>
+        <button class="btn-ghost" onclick="toggleTheme()" title="Toggle Theme" style="padding: 8px; border-radius: 50%;"><span id="theme-icon"></span></button>
     </div>
 </div>
 
@@ -551,7 +580,7 @@
 
     <div class="grid-area" id="grid-container">
         <div class="empty-state" id="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1.25rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             <h2>No entries yet</h2>
             <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use the search bar to find or create items.</p>
             <div class="shortcuts-hint" style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.7;">
@@ -1209,10 +1238,10 @@
                     let stagingMap = new Map();
                     res.data.forEach((r, i) => {
                         if(!metaSet && (r.year||r.month||r.pharmacy)) {
-                            if(r.year) meta.year = esc(r.year.trim());
-                            if(r.month) meta.month = esc(r.month.trim());
+                            if(r.year) meta.year = r.year.trim();
+                            if(r.month) meta.month = r.month.trim();
                             if(r.pharmacy) {
-                                let pName = esc(r.pharmacy.trim());
+                                let pName = r.pharmacy.trim();
                                 for(let c in PHARM) for(let rgn in PHARM[c]) {
                                     let fObj = PHARM[c][rgn].find(x=>x.n===pName||x.id===pName);
                                     if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; }
@@ -1220,10 +1249,10 @@
                             }
                             metaSet = true;
                         }
-                        
-                        let safeName = esc((r.name||'').trim());
-                        let safeUnit = esc((r.unit||'').trim());
-                        let safeContext = esc((r.context||'').trim());
+
+                        let safeName = (r.name||'').trim();
+                        let safeUnit = (r.unit||'').trim();
+                        let safeContext = (r.context||'').trim();
 
                         let nL = safeName.toLowerCase();
                         let uL = safeUnit.toLowerCase();
@@ -1243,7 +1272,7 @@
                             stagingMap.set(key, { id: Date.now()+i, name: name, unit: unit, quantity: parseInt(r.quantity||r.qty)||0, context: ctx, isSystem: isSystem, rawId: rawId, merged: false, checked: true });
                         }
                     });
-                    IMPORT_FILES.push({ id: 'f_'+idx+'_'+Date.now(), name: esc(f.name), meta: meta, rows: Array.from(stagingMap.values()) });
+                    IMPORT_FILES.push({ id: 'f_'+idx+'_'+Date.now(), name: f.name, meta: meta, rows: Array.from(stagingMap.values()) });
                     processed++;
                     if(processed === files.length) {
                         openReviewScreen();
@@ -1365,7 +1394,7 @@
                 <td style="text-align:center;"><input id="rev-chk-${i}" type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="updateStg(${i}, 'chk', this.checked)"></td>
                 <td><input id="rev-name-${i}" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent);' : ''}"></td>
                 <td><input id="rev-unit-${i}" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent);' : ''}"></td>
-                <td><select id="rev-ctx-${i}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;" onchange="updateStg(${i}, 'ctx', this.value)" ${s.isSystem ? 'disabled style="opacity:0.4;"' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
+                <td><select id="rev-ctx-${i}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;${s.isSystem ? ' opacity:0.4;' : ''}" onchange="updateStg(${i}, 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
                 <td style="text-align:center;"><input id="rev-qty-${i}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg(${i}, 'qty', this.value)" style="width:100%;"></td>
                 <td style="text-align:center;"><span class="status-badge ${statCls}">${statTxt}</span></td>
             </tr>`;
@@ -1467,7 +1496,12 @@
         if(!file) return; const reader = new FileReader(); reader.onload = e => { try { const s = JSON.parse(e.target.result); if(s.state) STATE={...STATE,...s.state}; if(s.data) DATA=s.data; updateHudUI(); drawGrid(); showToast('Session Loaded'); saveLocalBackup(); } catch(err){} }; reader.readAsText(file); document.getElementById('file-load').value='';
     }
 
-    function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; }
+    const THEME_ICONS = {
+        dark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+        light: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
+    };
+    function syncThemeIcon() { const el = document.getElementById('theme-icon'); if(el) el.innerHTML = THEME_ICONS[document.documentElement.dataset.theme] || THEME_ICONS.dark; }
+    function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; syncThemeIcon(); }
     let toastTimeout; function showToast(msg, type='normal') { const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent = msg; if(type==='error') t.classList.add('error-toast'); else t.classList.remove('error-toast'); t.classList.add('show'); clearTimeout(toastTimeout); toastTimeout = setTimeout(()=>t.classList.remove('show'), 3000); }
 
     function exportPayload(p, suffix = '') {
@@ -1511,7 +1545,7 @@
         });
     }
 
-    window.onload = () => { buildHudMenus(); loadLocalBackup(); updateHudUI(); dom.omni.focus(); setInterval(saveLocalBackup, 30000); };
+    window.onload = () => { buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); dom.omni.focus(); setInterval(saveLocalBackup, 30000); };
 </script>
 </body>
 </html>
