@@ -6,9 +6,12 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>LX Form Beta</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;600;700&display=swap">
 <script>
     (function() {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -16,7 +19,6 @@
     })();
 </script>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;600;700&display=swap');
 
     :root {
         color-scheme: dark;
@@ -704,9 +706,13 @@
                         <select id="rev-region" class="c-select" onchange="updateRevPharm()"></select>
                         <select id="rev-pharmacy" class="c-select" onchange="syncMeta()"></select>
                     </div>
+                    <div id="overlap-warning" style="display:none; align-items:center; gap:10px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:var(--warning); padding:0.7rem 1rem; border-radius:var(--radius-md); margin-bottom:1rem; font-size:0.85rem; font-weight:600; flex-shrink:0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        <span id="overlap-warning-text"></span>
+                    </div>
                     <div class="review-table-container">
                         <table class="review-table">
-                            <thead><tr><th style="width:50px;text-align:center">Inc.</th><th>Product Name</th><th style="width:180px">Unit</th><th style="width:200px">Context</th><th style="width:120px;text-align:center">Qty</th><th style="width:120px;text-align:center">Status</th></tr></thead>
+                            <thead><tr><th style="width:50px;text-align:center"><input type="checkbox" id="rev-chk-all" class="rev-checkbox" title="Select / deselect all rows" onchange="toggleAllRows(this.checked)"></th><th>Product Name</th><th style="width:180px">Unit</th><th style="width:200px">Context</th><th style="width:120px;text-align:center">Qty</th><th style="width:120px;text-align:center">Status</th></tr></thead>
                             <tbody id="review-tbody"></tbody>
                         </table>
                     </div>
@@ -737,7 +743,7 @@
     let IMPORT_FILES = [];
     let activeFileId = null;
     const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
-    function getYearRange() { const y = new Date().getFullYear(); return { min: y - 1, max: 2999 }; }
+    function getYearRange() { const y = new Date().getFullYear(); return { min: y - 1, max: 2099 }; }
     function normalizeAr(str) {
         return (str || '').toLowerCase()
             .replace(/[\u064B-\u065F\u0670]/g, '')
@@ -802,7 +808,7 @@
     function buildHudMenus() {
         const ySugg = document.getElementById('year-suggestions'), mDrop = document.getElementById('drop-month'), cDrop = document.getElementById('drop-class'), rDrop = document.getElementById('drop-region');
         const yr = getYearRange();
-        for(let i=yr.min; i<=yr.max; i++) ySugg.innerHTML += `<div class="drop-item" onclick="setHud('year', '${i}')">${i}</div>`;
+        { let opts = []; for(let i=yr.min; i<=yr.max; i++) opts.push(`<div class="drop-item" onclick="setHud('year', '${i}')">${i}</div>`); ySugg.innerHTML += opts.join(''); }
         DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
         Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" onclick="setHud('class', '${k}')">${v}</div>`);
         Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" onclick="setHud('region', '${k}')">${v}</div>`);
@@ -1231,7 +1237,12 @@
     
     function closeImport() { 
         document.getElementById('import-modal').classList.remove('active'); 
-        setTimeout(() => { document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null; document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to database.'; }, 400); 
+        setTimeout(() => { 
+            document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null; 
+            document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to database.'; 
+            const dzIcon = document.querySelector('#dz .dz-icon'); if(dzIcon) dzIcon.innerHTML = ORIGINAL_DZ_ICON;
+            const dzEl = document.getElementById('dz'); if(dzEl) dzEl.style.pointerEvents = '';
+        }, 400); 
     }
     
     function exportCSVTemplate() {
@@ -1245,15 +1256,27 @@
     dz.addEventListener('dragleave', e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); });
     dz.addEventListener('drop', e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files); });
 
+    const ORIGINAL_DZ_ICON = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+    const SPINNER_DZ_ICON = `<svg class="spinner" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+
     function handleFile(fileList) {
         if(!fileList || !fileList.length) return;
-        let files = Array.from(fileList);
+        let allFiles = Array.from(fileList);
+        let files = allFiles.filter(f => /\.csv$/i.test(f.name));
+        let rejected = allFiles.length - files.length;
+        if(!files.length) { showToast(rejected ? `Only .csv files are supported (${rejected} rejected).` : 'No files selected.', 'error'); return; }
+
         document.getElementById('import-status-text').textContent = `Processing ${files.length} file(s)...`;
+        document.querySelector('#dz .dz-icon').innerHTML = SPINNER_DZ_ICON;
+        document.getElementById('dz').style.pointerEvents = 'none';
         IMPORT_FILES = [];
         let processed = 0;
+        let parseWarnings = [];
+        let emptyFiles = [];
+        let newFileIds = [];
         
         ['year','month','class','region'].forEach(k=>{let s=document.getElementById(`rev-${k}`); s.innerHTML='<option value="">'+k+'</option>';});
-        { const yr = getYearRange(); for(let i=yr.min; i<=yr.max; i++) document.getElementById('rev-year').innerHTML+=`<option value="${i}">${i}</option>`; }
+        { const yr = getYearRange(); let opts = []; for(let i=yr.min; i<=yr.max; i++) opts.push(`<option value="${i}">${i}</option>`); document.getElementById('rev-year').innerHTML += opts.join(''); }
         DIC.months.en.forEach((m,i)=>document.getElementById('rev-month').innerHTML+=`<option value="${m}">${DIC.months.ar[i]}</option>`);
         Object.entries(DIC.classes).forEach(([k,v])=>document.getElementById('rev-class').innerHTML+=`<option value="${k}">${v}</option>`);
         Object.entries(DIC.regions).forEach(([k,v])=>document.getElementById('rev-region').innerHTML+=`<option value="${k}">${v}</option>`);
@@ -1262,21 +1285,25 @@
             Papa.parse(f, {
                 header: true, skipEmptyLines: true,
                 complete: res => {
+                    if(res.errors && res.errors.length) parseWarnings.push(`${f.name} (${res.errors.length} row issue${res.errors.length>1?'s':''})`);
+                    if(!res.data.length) { emptyFiles.push(f.name); processed++; if(processed === files.length) finishBatch(); return; }
+
                     let meta = { year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy };
-                    let metaSet = false;
+                    // Fill each meta field independently the first time it's seen, instead of locking
+                    // all fields to whatever the first metadata-bearing row happened to contain.
+                    let metaFilled = { year: !!meta.year, month: !!meta.month, pharmacy: !!meta.pharmacy };
                     let stagingMap = new Map();
                     res.data.forEach((r, i) => {
-                        if(!metaSet && (r.year||r.month||r.pharmacy)) {
-                            if(r.year) meta.year = r.year.trim();
-                            if(r.month) meta.month = r.month.trim();
-                            if(r.pharmacy) {
+                        if(!(metaFilled.year && metaFilled.month && metaFilled.pharmacy)) {
+                            if(!metaFilled.year && r.year) { meta.year = r.year.trim(); metaFilled.year = true; }
+                            if(!metaFilled.month && r.month) { meta.month = r.month.trim(); metaFilled.month = true; }
+                            if(!metaFilled.pharmacy && r.pharmacy) {
                                 let pName = r.pharmacy.trim();
                                 for(let c in PHARM) for(let rgn in PHARM[c]) {
                                     let fObj = PHARM[c][rgn].find(x=>x.n===pName||x.id===pName);
-                                    if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; }
+                                    if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; metaFilled.pharmacy = true; }
                                 }
                             }
-                            metaSet = true;
                         }
 
                         let safeName = (r.name||'').trim();
@@ -1301,22 +1328,48 @@
                             stagingMap.set(key, { id: Date.now()+i, name: name, unit: unit, quantity: parseInt(r.quantity||r.qty)||0, context: ctx, isSystem: isSystem, rawId: rawId, merged: false, checked: true });
                         }
                     });
-                    IMPORT_FILES.push({ id: 'f_'+idx+'_'+Date.now(), name: f.name, meta: meta, rows: Array.from(stagingMap.values()) });
+                    let newId = 'f_'+IMPORT_FILES.length+'_'+idx+'_'+Date.now();
+                    IMPORT_FILES.push({ id: newId, name: f.name, meta: meta, rows: Array.from(stagingMap.values()) });
+                    newFileIds.push(newId);
                     processed++;
-                    if(processed === files.length) {
-                        openReviewScreen();
-                    }
+                    if(processed === files.length) finishBatch();
                 }
             });
         });
+
+        function finishBatch() {
+            let notes = [];
+            if(rejected) notes.push(`${rejected} non-CSV file(s) skipped`);
+            if(emptyFiles.length) notes.push(`${emptyFiles.length} file(s) had no data rows: ${emptyFiles.join(', ')}`);
+            if(parseWarnings.length) notes.push(`Parsing issues in: ${parseWarnings.join(', ')}`);
+            if(notes.length) showToast(notes.join(' — '), 'error');
+            if(!IMPORT_FILES.length) {
+                document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to database.';
+                document.querySelector('#dz .dz-icon').innerHTML = ORIGINAL_DZ_ICON;
+                document.getElementById('dz').style.pointerEvents = '';
+                return;
+            }
+            openReviewScreen(newFileIds[0]);
+        }
     }
 
-    function openReviewScreen() {
+    function openReviewScreen(preferFileId) {
         if(!IMPORT_FILES.length) { closeImport(); return; }
-        activeFileId = IMPORT_FILES[0].id;
+        activeFileId = (preferFileId && IMPORT_FILES.some(f => f.id === preferFileId)) ? preferFileId : IMPORT_FILES[0].id;
         switchView('review-ui');
         renderFileTabs();
         switchActiveFile(activeFileId);
+    }
+
+    function fileStatusCounts(f) {
+        checkStagingDuplicates(f.rows);
+        let ready = 0, dupe = 0, err = 0, skip = 0;
+        f.rows.forEach(s => {
+            if (!s.checked) { skip++; return; }
+            const valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
+            if (!valid) err++; else if (s.merged) dupe++; else ready++;
+        });
+        return { ready, dupe, err, skip };
     }
 
     function renderFileTabs() {
@@ -1325,7 +1378,12 @@
         IMPORT_FILES.forEach(f => {
             let div = document.createElement('div');
             div.className = `file-tab ${f.id === activeFileId ? 'active' : ''}`;
-            div.innerHTML = `<span>${esc(f.name)}</span> <span class="close-tab" onclick="event.stopPropagation(); removeFile('${f.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`;
+            const c = fileStatusCounts(f);
+            let chips = '';
+            if (c.err) chips += `<span style="color:var(--danger);font-weight:800;">${c.err} err</span>`;
+            if (c.dupe) chips += `${chips?' · ':''}<span style="color:var(--warning);font-weight:800;">${c.dupe} dup</span>`;
+            if (c.ready) chips += `${chips?' · ':''}<span style="color:var(--success);font-weight:800;">${c.ready} ok</span>`;
+            div.innerHTML = `<span>${esc(f.name)}</span>${chips ? `<span style="font-size:0.7rem;opacity:0.85;">${chips}</span>` : ''} <span class="close-tab" onclick="event.stopPropagation(); removeFile('${f.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`;
             div.onclick = () => switchActiveFile(f.id);
             tc.appendChild(div);
         });
@@ -1399,24 +1457,58 @@
     function checkStagingDuplicates(fRows) {
         let keys = {};
         fRows.forEach((s, i) => {
-            s.merged = false; if(!s.checked) return;
+            s.merged = false; if(!s.checked || !s.name.trim()) return;
             let k = (s.isSystem ? s.rawId : `${s.name.trim()}|${s.unit.trim()}|${s.context}`).toLowerCase();
             if(!keys[k]) keys[k] = []; keys[k].push(i);
         });
-        Object.values(keys).forEach(arr => { if(arr.length > 1) arr.forEach(idx => fRows[idx].merged = true); else if(arr.length === 1 && !fRows[arr[0]].name.trim()) fRows[arr[0]].merged = false; });
+        let toRemove = [];
+        let mergedGroups = 0;
+        Object.values(keys).forEach(arr => {
+            if(arr.length <= 1) return;
+            let first = fRows[arr[0]];
+            for(let j = 1; j < arr.length; j++) { first.quantity += (fRows[arr[j]].quantity || 0); toRemove.push(arr[j]); }
+            first.merged = true;
+            mergedGroups++;
+        });
+        if(toRemove.length) toRemove.sort((a,b)=>b-a).forEach(idx => fRows.splice(idx, 1));
+        return mergedGroups;
+    }
+
+    function toggleAllRows(checked) {
+        let f = IMPORT_FILES.find(x => x.id === activeFileId);
+        if(!f) return;
+        f.rows.forEach(s => s.checked = checked);
+        renderReview();
+    }
+
+    function checkGridOverlap(f) {
+        const banner = document.getElementById('overlap-warning');
+        const m = f.meta;
+        const sameTarget = m.year === STATE.year && m.month === STATE.month && m.class === STATE.class && m.region === STATE.region && m.pharmacy === STATE.pharmacy;
+        if (!sameTarget || !DATA.length) { banner.style.display = 'none'; return; }
+        const gridKeys = new Set(DATA.map(d => `${d.name}|${d.unit}|${d.isCustom ? d.context : ''}`.toLowerCase()));
+        const overlapping = f.rows.filter(s => s.checked && gridKeys.has(`${s.name}|${s.unit}|${s.isSystem ? '' : s.context}`.toLowerCase()));
+        if (overlapping.length) {
+            banner.style.display = 'flex';
+            document.getElementById('overlap-warning-text').textContent = `${overlapping.length} item(s) in this file (e.g. "${overlapping[0].name}") already exist in your open workspace for this pharmacy/month. Importing will create separate DB entries rather than merging — clear or submit your workspace first if you want them combined.`;
+        } else {
+            banner.style.display = 'none';
+        }
     }
 
     function renderReview() {
         let activeEl = document.activeElement ? document.activeElement.id : null;
         let f = IMPORT_FILES.find(x => x.id === activeFileId);
         if(!f) return;
-        checkStagingDuplicates(f.rows);
+        let mergedGroups = checkStagingDuplicates(f.rows);
+        if(mergedGroups) showToast(`Merged ${mergedGroups} duplicate row(s)`);
+        checkGridOverlap(f);
         const tb = document.getElementById('review-tbody'); tb.innerHTML = '';
         f.rows.forEach((s, i) => {
             let trCls = s.checked ? '' : 'row-disabled';
             let valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
             let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
-            let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Will Merge' : 'Ready')));
+            let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Merged' : 'Ready')));
             
             tb.innerHTML += `
             <tr class="${trCls}">
@@ -1428,6 +1520,14 @@
                 <td style="text-align:center;"><span class="status-badge ${statCls}">${statTxt}</span></td>
             </tr>`;
         });
+
+        renderFileTabs();
+        const allChk = document.getElementById('rev-chk-all');
+        if (allChk) {
+            const checkedCount = f.rows.filter(s => s.checked).length;
+            allChk.checked = checkedCount > 0 && checkedCount === f.rows.length;
+            allChk.indeterminate = checkedCount > 0 && checkedCount < f.rows.length;
+        }
         
         if (activeEl) {
             setTimeout(() => {
@@ -1462,6 +1562,7 @@
     function confirmReview() {
         if(isPushingImport) return;
         let payload = [];
+        let skippedFiles = [];
         for (let f of IMPORT_FILES) {
             let m = f.meta;
             if(!m.year || !m.month || !m.class || !m.region || !m.pharmacy) {
@@ -1470,7 +1571,7 @@
                 return;
             }
             let activeRows = f.rows.filter(r => r.checked);
-            if(!activeRows.length) continue;
+            if(!activeRows.length) { skippedFiles.push(f.name); continue; }
             let invalid = activeRows.find(s => s.name.trim() === '' || isNaN(s.quantity) || s.quantity <= 0 || (!s.isSystem && (!s.context || s.unit.trim() === '')));
             if(invalid) {
                 switchActiveFile(f.id);
@@ -1504,16 +1605,23 @@
             updates[newKey] = item;
         });
 
-        let isResolved = false;
+        // settled = we've already told the user an outcome. timedOut = that outcome was the
+        // "assumed failed" timeout path, so a late real success/error doesn't show a 2nd conflicting modal.
+        let settled = false, timedOut = false;
         const restoreConfirmBtn = () => { isPushingImport = false; btn.disabled = false; btn.textContent = origTxt; };
-        const timeout = setTimeout(() => { if(!isResolved) { showErrorModal(); restoreConfirmBtn(); } }, 8000);
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; showErrorModal(); restoreConfirmBtn(); } }, 8000);
         
         firebase.database().ref('pharmacyData').update(updates).then(() => { 
-            isResolved = true; clearTimeout(timeout); 
-            showSuccessModal('Batch Imported & Submitted successfully to DB.'); 
+            clearTimeout(timeout);
+            if (timedOut) { showToast('Import actually completed after the earlier timeout — no need to resubmit.'); closeImport(); return; }
+            if (settled) return;
+            settled = true;
+            showSuccessModal('Batch Imported & Submitted successfully to DB.' + (skippedFiles.length ? ` (Skipped, no active rows: ${skippedFiles.join(', ')})` : '')); 
             closeImport(); restoreConfirmBtn(); 
         }).catch(() => { 
-            isResolved = true; clearTimeout(timeout); 
+            clearTimeout(timeout);
+            if (settled) return;
+            settled = true;
             showErrorModal(); restoreConfirmBtn(); 
         });
     }
@@ -1567,15 +1675,24 @@
             updates[newKey] = item;
         });
 
-        let isResolved = false;
-        const timeout = setTimeout(() => { if(!isResolved) { showErrorModal(); restoreBtn(); } }, 8000);
+        // settled = we've already told the user an outcome. timedOut = that outcome was the
+        // "assumed failed" timeout path, so a late real success/error doesn't show a 2nd conflicting modal
+        // and — critically — doesn't silently wipe DATA out from under a user who already re-entered it.
+        let settled = false, timedOut = false;
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; showErrorModal(); restoreBtn(); } }, 8000);
         
         firebase.database().ref('pharmacyData').update(updates).then(()=>{ 
-            isResolved = true; clearTimeout(timeout); 
+            clearTimeout(timeout);
+            if (timedOut) { showToast('Earlier submission actually went through — your workspace was NOT auto-cleared, please check for duplicates before resubmitting.'); return; }
+            if (settled) return;
+            settled = true;
             showSuccessModal('Workspace securely pushed & exported.'); 
             DATA=[]; localStorage.removeItem('lx_b'); lastBackupSnapshot=''; drawGrid(); restoreBtn(); 
         }).catch(()=>{ 
-            isResolved = true; clearTimeout(timeout); showErrorModal(); restoreBtn(); 
+            clearTimeout(timeout);
+            if (settled) return;
+            settled = true;
+            showErrorModal(); restoreBtn(); 
         });
     }
 
