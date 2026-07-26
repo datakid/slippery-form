@@ -4,85 +4,94 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<title>LX Form Beta</title>
+<title>LX Ledger</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&family=Almarai:wght@400;500;700;800&display=swap">
 <script>
-    (function() {
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
-    })();
+(function() {
+    var stored = localStorage.getItem('lx_theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme = stored || (prefersDark ? 'dark' : 'light');
+})();
 </script>
 <style>
 
     :root {
-        color-scheme: dark;
-        --bg: #030509;
-        --surface: #0a0e17;
-        --surface-glass: rgba(10, 14, 23, 0.75);
-        --surface-hover: #131a28;
-        --border: rgba(255, 255, 255, 0.08);
-        --border-strong: rgba(255, 255, 255, 0.15);
-        --text-main: #f8fafc;
-        --text-muted: #8b9bb4;
-        --accent: #8b5cf6;
-        --accent-hover: #a78bfa;
-        --accent-grad: linear-gradient(135deg, #7c5cf6, #a855f7 55%, #d946ef);
-        --accent-glow: rgba(139, 92, 246, 0.15);
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --radius-sm: 8px;
-        --radius-md: 12px;
+        color-scheme: light;
+        --bg: #f6f5f0;
+        --surface: #ffffff;
+        --surface-2: #eeece3;
+        --border: rgba(38,36,28,0.10);
+        --border-soft: rgba(38,36,28,0.06);
+        --text-main: #2c2a24;
+        --text-muted: #8d8977;
+        --ink-fixed: #ffffff;
+        --accent: #7c8f6e;
+        --accent-strong: #647859;
+        --accent-glow: rgba(124,143,110,0.14);
+        --accent-2: #a97f78;
+        --accent-2-glow: rgba(169,127,120,0.14);
+        --warning: #b98a4e;
+        --warning-glow: rgba(185,138,78,0.14);
+        --danger: #b15c4e;
+        --danger-glow: rgba(177,92,78,0.12);
+        --foil: #b3b09f;
+        --radius-sm: 9px;
+        --radius-md: 13px;
         --radius-lg: 20px;
-        --radius-xl: 28px;
-        --font-en: 'Inter', system-ui, sans-serif;
-        --font-ar: 'Tajawal', sans-serif;
+        --radius-xl: 26px;
+        --font-en: 'Public Sans', system-ui, sans-serif;
+        --font-ar: 'Almarai', sans-serif;
+        --font-display: 'Fraunces', 'Iowan Old Style', serif;
         --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-        --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
-        --shadow-lg: 0 24px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
-        --shadow-glow: 0 8px 30px -6px rgba(139, 92, 246, 0.35);
+        --shadow-sm: 0 1px 2px rgba(40,35,20,0.05);
+        --shadow-lg: 0 18px 46px -14px rgba(40,35,20,0.16), 0 0 0 1px var(--border-soft);
         --focus-ring: 0 0 0 3px var(--accent-glow);
-        --bg-wash: radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
-                   radial-gradient(ellipse 900px 500px at 100% 0%, rgba(217, 70, 239, 0.08), transparent 55%);
+        --wash: radial-gradient(ellipse 1000px 480px at 18% -12%, rgba(124,143,110,0.07), transparent 62%);
     }
 
-    [data-theme="light"] {
-        color-scheme: light;
-        --bg: #f4f6f9;
-        --surface: #ffffff;
-        --surface-glass: rgba(255, 255, 255, 0.85);
-        --surface-hover: #f1f5f9;
-        --border: rgba(0, 0, 0, 0.08);
-        --border-strong: rgba(0, 0, 0, 0.15);
-        --text-main: #0f172a;
-        --text-muted: #64748b;
-        --accent-glow: rgba(139, 92, 246, 0.1);
-        --shadow-sm: 0 2px 6px rgba(0,0,0,0.04);
-        --shadow-lg: 0 20px 40px -8px rgba(0,0,0,0.1), 0 0 0 1px var(--border);
-        --shadow-glow: 0 8px 24px -6px rgba(139, 92, 246, 0.2);
-        --bg-wash: radial-gradient(ellipse 1200px 600px at 15% -10%, rgba(139, 92, 246, 0.06), transparent 60%),
-                   radial-gradient(ellipse 900px 500px at 100% 0%, rgba(217, 70, 239, 0.05), transparent 55%);
+    [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #1d1f19;
+        --surface: #262922;
+        --surface-2: #2e3128;
+        --border: rgba(232,229,217,0.09);
+        --border-soft: rgba(232,229,217,0.05);
+        --text-main: #ebe8dd;
+        --text-muted: #9a9686;
+        --ink-fixed: #14150f;
+        --accent: #93ab86;
+        --accent-strong: #a9c19b;
+        --accent-glow: rgba(147,171,134,0.16);
+        --accent-2: #c49b93;
+        --accent-2-glow: rgba(196,155,147,0.15);
+        --warning: #d1a468;
+        --warning-glow: rgba(209,164,104,0.15);
+        --danger: #cd7f70;
+        --danger-glow: rgba(205,127,112,0.14);
+        --foil: #7c7c6d;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.22);
+        --shadow-lg: 0 20px 50px -16px rgba(0,0,0,0.45), 0 0 0 1px var(--border-soft);
+        --wash: radial-gradient(ellipse 1000px 480px at 18% -12%, rgba(147,171,134,0.09), transparent 62%);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
     input:focus-visible, select:focus-visible, button:focus-visible { outline-offset: 1px; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    ::-webkit-scrollbar-thumb { background: var(--foil); border-radius: 10px; opacity: .4; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
     body {
         font-family: var(--font-en);
         background-color: var(--bg);
-        background-image: var(--bg-wash);
+        background-image: var(--wash);
         background-attachment: fixed;
         color: var(--text-main);
         height: 100vh;
@@ -93,6 +102,7 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
+        font-feature-settings: "tnum" 1, "lnum" 1;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -100,71 +110,86 @@
     }
 
     .hud-bar {
-        padding: 0.8rem 2rem;
-        background: var(--surface-glass);
-        backdrop-filter: blur(20px) saturate(150%);
-        -webkit-backdrop-filter: blur(20px) saturate(150%);
+        padding: 1.1rem 2rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid var(--border);
         z-index: 100;
         position: relative;
     }
-    .hud-bar::after {
-        content: '';
-        position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.35), transparent);
-        pointer-events: none;
-    }
+    .hud-bar::after { content: none; }
 
     .hud-left { display: flex; align-items: center; gap: 2rem; min-width: 0; }
-    .hud-right { display: flex; align-items: center; gap: 0.8rem; flex-shrink: 0; }
+    .hud-right { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
 
     .hud-title {
-        font-weight: 800;
-        font-size: 1.3rem;
-        background: var(--accent-grad);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -0.5px;
+        font-family: var(--font-display);
+        font-weight: 500;
+        font-size: 1.25rem;
+        color: var(--text-main);
+        letter-spacing: 0.2px;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .hud-title .mark {
+        font-family: var(--font-display);
+        font-weight: 500;
+        color: var(--accent-strong);
+        width: 34px; height: 34px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        font-size: 0.95rem;
+        background: var(--surface-2);
+    }
+    .hud-title .beta {
+        font-family: var(--font-en);
+        font-size: 0.62rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-left: -4px;
+        align-self: flex-start;
     }
 
-    .context-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .context-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .hud-item { position: relative; }
 
     .hud-pill {
-        padding: 0.5rem 0.9rem;
-        border-radius: var(--radius-md);
-        background: transparent;
-        border: 1px solid transparent;
+        padding: 0.55rem 1.1rem;
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+        border: 1px solid var(--border);
         color: var(--text-muted);
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-size: 0.82rem;
+        font-weight: 500;
         cursor: pointer;
         display: flex;
         align-items: center;
         gap: 6px;
-        transition: all 0.2s var(--ease-out);
+        transition: all 0.18s var(--ease-out);
         user-select: none;
         white-space: nowrap;
     }
 
-    .hud-pill:hover { background: var(--surface-hover); color: var(--text-main); }
-    .hud-pill.active { background: var(--surface); border: 1px solid var(--border); color: var(--text-main); box-shadow: var(--shadow-sm); }
-    .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.9rem; color: var(--accent); }
+    .hud-pill:hover { border-color: var(--foil); color: var(--text-main); background: var(--surface-2); }
+    .hud-pill.active { border-color: var(--accent); color: var(--text-main); background: var(--accent-glow); }
+    .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.88rem; color: var(--accent-strong); font-weight: 600; }
+    .hud-pill.flash-missing { animation: pillFlash .35s ease 2; border-color: var(--danger) !important; color: var(--danger) !important; }
+    @keyframes pillFlash { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
     .hud-dropdown {
         position: absolute;
         top: calc(100% + 10px);
         left: 50%;
-        transform: translateX(-50%) translateY(-10px) scale(0.95);
-        background: var(--surface-glass);
-        backdrop-filter: blur(24px) saturate(200%);
+        transform: translateX(-50%) translateY(-4px);
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        padding: 6px;
+        border-radius: var(--radius-lg);
+        padding: 8px;
         min-width: 220px;
         max-height: 300px;
         overflow-y: auto;
@@ -172,15 +197,15 @@
         opacity: 0;
         pointer-events: none;
         visibility: hidden;
-        transition: all 0.25s var(--ease-spring);
+        transition: all 0.2s var(--ease-out);
         z-index: 200;
     }
 
-    .hud-dropdown.show { opacity: 1; pointer-events: auto; visibility: visible; transform: translateX(-50%) translateY(0) scale(1); }
+    .hud-dropdown.show { opacity: 1; pointer-events: auto; visibility: visible; transform: translateX(-50%) translateY(0); }
 
     .drop-item {
-        padding: 0.6rem 0.8rem;
-        border-radius: var(--radius-sm);
+        padding: 0.65rem 0.9rem;
+        border-radius: var(--radius-md);
         cursor: pointer;
         font-family: var(--font-ar);
         font-weight: 600;
@@ -191,99 +216,133 @@
         color: var(--text-main);
         font-size: 0.95rem;
     }
-    .drop-item:hover { background: var(--accent-glow); color: var(--accent); transform: translateX(4px); }
-    .drop-item span { font-family: var(--font-en); color: var(--text-muted); font-size: 0.75rem; }
+    .drop-item:hover { background: var(--accent-glow); color: var(--accent-strong); }
+    .drop-item span { font-family: var(--font-en); color: var(--text-muted); font-size: 0.72rem; }
 
     .year-input-box {
         display: flex; gap: 8px; padding: 0.5rem;
-        border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-soft); margin-bottom: 0.5rem;
     }
     .year-input-box input {
-        flex: 1; background: var(--bg); border: 1px solid var(--border);
-        color: var(--text-main); padding: 0.4rem 0.8rem; border-radius: var(--radius-sm);
+        flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+        color: var(--text-main); padding: 0.4rem 0.9rem; border-radius: var(--radius-xl);
         font-family: var(--font-en); font-size: 0.9rem;
     }
     .year-input-box button {
-        background: var(--accent-grad); border: none; color: white;
-        padding: 0 0.8rem; border-radius: var(--radius-sm); cursor: pointer;
-        font-weight: 600; transition: transform 0.2s;
+        background: var(--accent); border: none; color: var(--ink-fixed);
+        padding: 0 1rem; border-radius: var(--radius-xl); cursor: pointer;
+        font-weight: 600; transition: background .15s ease;
     }
-    .year-input-box button:active { transform: scale(0.95); }
+    .year-input-box button:hover { background: var(--accent-strong); }
+    #year-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; }
+    .year-chip {
+        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500;
+        padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border);
+        cursor: pointer; color: var(--text-main); transition: all .15s ease;
+    }
+    .year-chip:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); }
 
     .workspace {
         flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto;
-        width: 100%; display: flex; flex-direction: column; gap: 1.5rem; min-height: 0;
+        width: 100%; display: flex; flex-direction: column; gap: 1.25rem; min-height: 0;
     }
 
     .report-header { display: none; }
 
     .omni-row {
-        display: flex; gap: 0.8rem; height: 56px; position: relative; z-index: 50;
-        background: var(--surface); padding: 6px; border-radius: var(--radius-lg);
+        display: flex; gap: 0.6rem; height: 58px; position: relative; z-index: 50;
+        background: var(--surface); padding: 6px; border-radius: var(--radius-xl);
         border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-        transition: box-shadow 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+        transition: box-shadow 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
     }
-    .omni-row:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow-sm), var(--focus-ring); }
+    .omni-row:focus-within { border-color: var(--accent); box-shadow: var(--shadow-sm), var(--focus-ring); }
 
     .omni-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
 
     .omni-input, .omni-unit, .omni-ctx, .qty-input {
-        height: 100%; width: 100%; padding: 0 1.2rem;
+        height: 100%; width: 100%; padding: 0 1.3rem;
         background: transparent; border: none;
         color: var(--text-main); font-family: var(--font-en); font-size: 1rem;
-        border-radius: var(--radius-md); transition: all 0.2s ease;
+        border-radius: var(--radius-lg); transition: all 0.15s ease;
     }
-    
+
     .cmd-trigger {
-        position: absolute; right: 12px; background: var(--surface-hover); color: var(--text-muted);
-        border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 0.75rem;
-        font-weight: 700; cursor: pointer; transition: all 0.2s; user-select: none;
+        position: absolute; right: 10px; background: var(--surface-2); color: var(--text-muted);
+        border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 5px 10px; font-size: 0.72rem;
+        font-weight: 600; cursor: pointer; transition: all 0.15s; user-select: none;
     }
-    .cmd-trigger:hover { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+    .cmd-trigger:hover { background: var(--accent-glow); color: var(--accent-strong); border-color: var(--accent); }
 
     .omni-input::placeholder, .qty-input::placeholder, .omni-unit::placeholder { color: var(--text-muted); }
-    .omni-wrapper::after { content: ''; position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--border); }
-    
-    .omni-unit { width: 160px; }
-    .omni-ctx { width: 200px; font-family: var(--font-ar); cursor: pointer; appearance: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='gray' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") no-repeat right 12px center; }
-    .qty-input { width: 160px; font-size: 1.2rem; font-weight: 700; text-align: center; }
+    .omni-wrapper::after { content: ''; position: absolute; right: 0; top: 22%; bottom: 22%; width: 1px; background: var(--border); }
 
-    .omni-input:focus, .omni-unit:focus, .omni-ctx:focus, .qty-input:focus { background: var(--surface-hover); }
+    .omni-unit { width: 150px; }
+    .omni-ctx { width: 190px; font-family: var(--font-ar); cursor: pointer; appearance: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='gray' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") no-repeat right 14px center; }
+    .qty-input { width: 130px; font-size: 1.1rem; font-weight: 600; text-align: center; }
+
+    .omni-input:focus, .omni-unit:focus, .omni-ctx:focus, .qty-input:focus { background: var(--surface-2); }
 
     .btn-enter {
-        height: 100%; padding: 0 2rem; border-radius: var(--radius-md); border: none;
-        background: var(--accent-grad); color: #fff; font-family: var(--font-en);
-        font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s var(--ease-spring);
-        box-shadow: 0 4px 15px var(--accent-glow); white-space: nowrap;
+        height: 100%; padding: 0 1.9rem; border-radius: var(--radius-lg); border: none;
+        background: var(--accent); color: var(--ink-fixed); font-family: var(--font-en);
+        font-weight: 600; font-size: 0.92rem; cursor: pointer;
+        transition: all 0.18s var(--ease-out); box-shadow: none; white-space: nowrap;
     }
-    .btn-enter:hover { filter: brightness(1.08); transform: scale(1.02); box-shadow: var(--shadow-glow); }
-    .btn-enter:active { transform: scale(0.96); }
+    .btn-enter:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-enter:active { transform: translateY(0); }
 
     .omni-results {
         position: absolute; top: calc(100% + 12px); left: 0; right: 0;
-        background: var(--surface-glass); backdrop-filter: blur(30px) saturate(200%);
+        background: var(--surface);
         border: 1px solid var(--border); border-radius: var(--radius-lg);
         box-shadow: var(--shadow-lg); max-height: 400px; overflow-y: auto;
-        padding: 8px; display: none; opacity: 0; transform: translateY(-10px);
-        transition: all 0.2s var(--ease-spring);
+        padding: 8px; display: none; opacity: 0; transform: translateY(-6px) scale(0.99);
+        transition: all 0.18s var(--ease-out);
         z-index: 1000;
     }
-    .omni-results.show { display: block; opacity: 1; transform: translateY(0); }
+    .omni-results::before { content: none; }
+    .omni-results.show { display: block; opacity: 1; transform: translateY(0) scale(1); }
 
     .res-item {
-        padding: 0.8rem 1rem; border-radius: var(--radius-md); cursor: pointer;
+        padding: 0.75rem 1rem; border-radius: var(--radius-md); cursor: pointer;
         display: flex; justify-content: space-between; align-items: center;
-        transition: all 0.15s ease; border: 1px solid transparent;
+        transition: all 0.15s ease; border: 1px solid transparent; margin-bottom: 2px;
     }
     .res-item:hover, .res-item.sel {
-        background: var(--accent-glow); border-color: rgba(139, 92, 246, 0.3);
-        transform: scale(0.99); padding-left: 1.5rem;
+        background: var(--accent-glow); border-color: transparent;
     }
     .res-type {
-        font-size: 0.65rem; padding: 0.3rem 0.6rem; border-radius: 6px;
-        background: var(--surface); color: var(--text-muted); font-weight: 700;
+        font-size: 0.62rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-xl);
+        background: var(--surface-2); color: var(--text-muted); font-weight: 600;
         text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; white-space: nowrap;
     }
+
+    .util-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .freq-strip { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 2px; }
+    .freq-strip::-webkit-scrollbar { height: 4px; }
+    .freq-empty { font-size: 0.78rem; color: var(--text-muted); font-style: italic; white-space: nowrap; padding: 4px 0; }
+    .stub-chip {
+        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500; white-space: nowrap;
+        padding: 7px 14px; border-radius: var(--radius-xl); border: 1px solid var(--border);
+        background: var(--surface); color: var(--text-main); cursor: pointer; transition: all .15s ease;
+        flex-shrink: 0;
+    }
+    .stub-chip:hover { border-color: var(--accent-2); color: var(--accent-2); background: var(--accent-2-glow); }
+    .util-actions { display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0; }
+    .filter-box {
+        display: flex; align-items: center; gap: 7px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 0 0.9rem; height: 38px;
+        color: var(--text-muted); transition: border-color .15s ease;
+    }
+    .filter-box:focus-within { border-color: var(--accent); color: var(--accent-strong); }
+    .filter-box input { border: none; background: transparent; color: var(--text-main); font-size: 0.85rem; width: 150px; height: 100%; font-family: var(--font-en); }
+    .filter-box input::placeholder { color: var(--text-muted); }
+    .btn-stub {
+        display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+        color: var(--text-main); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all .15s ease;
+    }
+    .btn-stub:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); }
 
     .grid-area {
         flex: 1; overflow-y: auto; overflow-x: auto; position: relative; background: var(--surface);
@@ -293,95 +352,118 @@
     .empty-state {
         position: absolute; inset: 0; display: flex; flex-direction: column;
         justify-content: center; align-items: center; color: var(--text-muted);
-        pointer-events: none; opacity: 0; animation: fadeIn 0.5s var(--ease-out) forwards;
+        pointer-events: none; opacity: 0; animation: fadeIn 0.6s var(--ease-out) forwards;
         padding: 2rem; text-align: center;
     }
-    .empty-state svg { padding: 18px; background: var(--surface-hover); border-radius: 50%; border: 1px solid var(--border); }
-    .empty-state h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+    .empty-state svg { padding: 18px; background: var(--surface-2); border-radius: 50%; }
+    .empty-state h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; color: var(--text-main); margin-top: 1.1rem; }
 
-    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 820px; }
     th {
-        text-align: left; padding: 1.2rem; color: var(--text-muted); font-size: 0.75rem;
-        text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
-        position: sticky; top: 0; background: var(--surface-glass);
-        backdrop-filter: blur(12px); z-index: 10; border-bottom: 1px solid var(--border);
+        text-align: left; padding: 1.1rem 1.3rem; color: var(--text-muted); font-size: 0.72rem;
+        text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; font-family: var(--font-en);
+        position: sticky; top: 0; background: var(--surface);
+        z-index: 10; border-bottom: 1px solid var(--border); cursor: default; user-select: none;
     }
-    tr.data-row { transition: all 0.2s ease; animation: slideIn 0.3s var(--ease-spring) forwards; }
-    tr.data-row:hover { background: var(--surface-hover); }
-    td { padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border-strong); vertical-align: middle; }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { color: var(--accent-strong); }
+    .sort-ind { font-size: 0.65rem; margin-left: 3px; color: var(--accent-strong); }
+    tr.data-row { transition: background .15s ease; animation: slideIn 0.3s var(--ease-out) forwards; }
+    tr.data-row:hover { background: var(--surface-2); }
+    td { padding: 0.8rem 1.3rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
 
     .cell-input {
-        background: var(--bg); border: 1px solid var(--border); color: var(--text-main);
-        font-size: 1.2rem; width: 160px; padding: 0.6rem; text-align: center;
-        border-radius: var(--radius-sm); font-weight: 700; transition: all 0.2s ease; font-family: var(--font-en);
+        background: var(--surface-2); border: 1px solid var(--border); color: var(--text-main);
+        font-size: 1.05rem; width: 140px; padding: 0.55rem; text-align: center;
+        border-radius: var(--radius-md); font-weight: 600; transition: all 0.15s ease; font-family: var(--font-en);
     }
-    .cell-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .cell-input.mono-num { font-variant-numeric: tabular-nums; }
+    .cell-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: var(--surface); }
+    .unit-static { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+    .core-tag { color: var(--accent-strong); font-weight: 600; font-size: 0.76rem; }
 
     .c-select {
-        background: var(--bg); color: var(--text-main); border: 1px solid var(--border);
-        padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-ar);
+        background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);
+        padding: 0.55rem 1rem; border-radius: var(--radius-md); font-family: var(--font-ar);
         font-size: 0.95rem; cursor: pointer; width: 100%; appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='gray' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; transition: all 0.2s ease;
+        background-repeat: no-repeat; background-position: right 10px center; transition: all 0.15s ease;
     }
     .c-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
     .c-select.req { border-color: var(--warning); color: var(--warning); }
 
     .pill-tag {
-        background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 4px 8px;
-        border-radius: 6px; font-size: 0.65rem; font-weight: 800; margin-left: 12px; letter-spacing: 0.5px;
+        background: var(--accent-2-glow); color: var(--accent-2); padding: 3px 9px;
+        border-radius: var(--radius-xl); font-size: 0.65rem; font-weight: 700;
+        margin-left: 10px; letter-spacing: 0.4px; display: inline-block;
     }
 
-    .btn-del {
+    .row-actions { display: flex; gap: 2px; justify-content: center; align-items: center; }
+    .btn-icon {
         background: transparent; color: var(--text-muted); border: none; cursor: pointer;
-        transition: all 0.2s var(--ease-spring); padding: 8px; border-radius: var(--radius-sm);
+        transition: all 0.15s var(--ease-out); padding: 7px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
     }
-    .btn-del:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); transform: scale(1.1) rotate(90deg); }
-
-    .bottom-dock { display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem; }
-    .dock-stats {
-        display: flex; gap: 1rem; align-items: center; background: var(--surface);
-        padding: 6px; border-radius: var(--radius-md); border: 1px solid var(--border);
+    .btn-icon:hover { color: var(--accent-2); background: var(--accent-2-glow); }
+    .btn-del {
+        background: transparent; color: var(--text-muted); border: none; cursor: pointer;
+        transition: all 0.15s var(--ease-out); padding: 7px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
     }
+    .btn-del:hover { color: var(--danger); background: var(--danger-glow); }
+
+    .bottom-dock { display: flex; justify-content: space-between; align-items: center; padding-top: 0.3rem; gap: 1rem; flex-wrap: wrap; }
+    .dock-stats {
+        display: flex; gap: 0.9rem; align-items: center; background: var(--surface);
+        padding: 6px 6px 6px 16px; border-radius: var(--radius-xl); border: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .stat-line { font-weight: 600; font-size: 0.85rem; }
+    .mono-note { font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; }
+    .dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--foil); flex-shrink: 0; }
 
     .btn-ghost {
-        background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem;
-        border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-        display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;
+        background: transparent; border: none; color: var(--text-muted); padding: 0.55rem 1rem;
+        border-radius: var(--radius-xl); font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+        display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem;
     }
-    .btn-ghost:hover { background: var(--surface-hover); color: var(--text-main); }
-    .btn-ghost.danger:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    .btn-ghost:hover { background: var(--surface-2); color: var(--text-main); }
+    .btn-ghost.danger:hover { color: var(--danger); background: var(--danger-glow); }
+    .btn-ghost.warn-ghost { color: var(--warning); border: 1px solid var(--border); }
+    .btn-ghost.warn-ghost:hover { background: var(--warning-glow); border-color: var(--warning); }
 
-    .action-btns { display: flex; gap: 1rem; }
+    .action-btns { display: flex; gap: 0.8rem; }
 
     .btn-hollow {
-        background: transparent; border: 1px solid var(--border-strong); color: var(--text-main);
-        padding: 0.8rem 1.5rem; border-radius: var(--radius-md); font-weight: 600;
-        cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; justify-content: center;
+        background: transparent; border: 1px solid var(--border); color: var(--text-main);
+        padding: 0.8rem 1.6rem; border-radius: var(--radius-xl); font-weight: 500; font-size: .88rem;
+        cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; gap: 8px; justify-content: center;
     }
-    .btn-hollow:hover { background: var(--surface-hover); border-color: var(--accent); transform: translateY(-2px); }
+    .btn-hollow:hover { background: var(--surface-2); border-color: var(--foil); }
 
     .btn-solid {
-        background: var(--success); color: #fff; border: none; padding: 0.8rem 1.5rem;
-        border-radius: var(--radius-md); font-weight: 700; cursor: pointer; justify-content: center;
-        transition: all 0.2s var(--ease-spring); display: flex; align-items: center; gap: 8px;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        background: var(--accent); color: var(--ink-fixed); border: none; padding: 0.8rem 1.7rem;
+        border-radius: var(--radius-xl); font-weight: 600; cursor: pointer; justify-content: center;
+        font-size: .9rem;
+        transition: all 0.18s var(--ease-out); display: flex; align-items: center; gap: 8px;
+        box-shadow: none;
     }
-    .btn-solid:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
-    .btn-solid:active { transform: translateY(0) scale(0.96); }
+    .btn-solid:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-solid:active { transform: translateY(0); }
+    .btn-solid.danger-solid { background: var(--danger); color: #fff; }
+    .btn-solid.danger-solid:hover { background: #9c4d41; }
 
     .modal-overlay {
-        position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center;
-        z-index: 9000; opacity: 0; pointer-events: none; visibility: hidden; transition: all 0.3s var(--ease-out); padding: 2rem;
+        position: fixed; inset: 0; background: rgba(30,28,20,0.35);
+        backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center;
+        z-index: 9000; opacity: 0; pointer-events: none; visibility: hidden; transition: all 0.25s var(--ease-out); padding: 2rem;
     }
+    [data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.5); }
     .modal-overlay.active { opacity: 1; pointer-events: auto; visibility: visible; }
 
     .modal-content {
-        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-        width: 100%; max-width: 1200px; padding: 0; box-shadow: var(--shadow-lg), 0 0 80px -20px rgba(139, 92, 246, 0.2);
-        transform: scale(0.95) translateY(20px); transition: all 0.4s var(--ease-spring);
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+        width: 100%; max-width: 1200px; padding: 0; box-shadow: var(--shadow-lg);
+        transform: scale(0.98) translateY(8px); transition: all 0.25s var(--ease-out);
         height: 85vh; max-height: 900px; display: flex; flex-direction: column; position: relative; overflow: hidden;
     }
     .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
@@ -389,99 +471,105 @@
     .views-wrapper { flex: 1; position: relative; overflow: hidden; display: flex; }
     .view-panel {
         position: absolute; inset: 0; display: flex; flex-direction: column;
-        opacity: 0; pointer-events: none; transform: translateX(30px); transition: all 0.4s var(--ease-spring);
+        opacity: 0; pointer-events: none; transform: translateX(16px); transition: all 0.3s var(--ease-out);
     }
     .view-panel.active { opacity: 1; pointer-events: auto; transform: translateX(0); z-index: 2; position: relative; width: 100%; }
-    .view-panel.exit { transform: translateX(-30px); z-index: 1; }
+    .view-panel.exit { transform: translateX(-16px); z-index: 1; }
 
-    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface-glass); }
-    .modal-body { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
-    .modal-footer { padding: 1.2rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; background: var(--surface-glass); }
+    .modal-header { padding: 1.6rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+    .modal-header h2 { font-family: var(--font-display); font-weight: 500; }
+    .modal-header .sub, .modal-body .sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+    .modal-body { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
+    .modal-footer { padding: 1.3rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; background: var(--surface); }
 
     .drop-zone {
-        border: 2px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 4rem 2rem;
-        text-align: center; cursor: pointer; transition: all 0.3s var(--ease-spring); background: var(--surface-hover);
+        border: 1.5px dashed var(--border); border-radius: var(--radius-lg); padding: 4rem 2rem;
+        text-align: center; cursor: pointer; transition: all 0.2s var(--ease-out); background: var(--surface-2);
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; margin: auto 0; flex: 1;
     }
-    .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-glow); transform: scale(1.01); }
-    
-    .dz-icon {
-        width: 80px; height: 80px; background: var(--surface); border-radius: 50%; display: flex; align-items: center;
-        justify-content: center; box-shadow: var(--shadow-sm); transition: transform 0.3s var(--ease-spring);
-    }
-    .drop-zone:hover .dz-icon, .drop-zone.drag .dz-icon { transform: translateY(-6px) scale(1.05); box-shadow: 0 10px 20px var(--accent-glow); }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
 
-    .file-tabs { display: flex; gap: 0.5rem; padding: 1rem 2rem 0; background: var(--surface-glass); overflow-x: auto; border-bottom: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+    .dz-icon {
+        width: 74px; height: 74px; background: var(--surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; transition: transform 0.2s var(--ease-out);
+    }
+    .drop-zone:hover .dz-icon, .drop-zone.drag .dz-icon { transform: translateY(-3px); border-color: var(--accent); }
+
+    .file-tabs { display: flex; gap: 0.4rem; padding: 1rem 2rem 0; background: var(--surface); overflow-x: auto; border-bottom: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
     .file-tabs::-webkit-scrollbar { display: none; }
-    .file-tab { padding: 0.6rem 1.2rem; background: var(--surface-hover); border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius-md) var(--radius-md) 0 0; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease; white-space: nowrap; }
+    .file-tab { padding: 0.6rem 1.2rem; background: var(--surface-2); border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius-md) var(--radius-md) 0 0; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; transition: all 0.15s ease; white-space: nowrap; }
     .file-tab.active { background: var(--surface); color: var(--text-main); border-color: var(--border); border-bottom-color: var(--surface); margin-bottom: -1px; }
     .file-tab .close-tab { color: var(--danger); opacity: 0.5; padding: 2px; transition: 0.2s; border-radius: 4px; display: flex; }
-    .file-tab .close-tab:hover { opacity: 1; background: rgba(239, 68, 68, 0.15); }
+    .file-tab .close-tab:hover { opacity: 1; background: var(--danger-glow); }
 
     .review-meta-bar {
-        display: flex; flex-wrap: wrap; gap: 0.8rem; background: var(--surface-hover); padding: 1rem;
-        border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem; align-items: center; flex-shrink: 0;
+        display: flex; flex-wrap: wrap; gap: 0.8rem; background: var(--surface-2); padding: 1rem;
+        border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 0; align-items: center; flex-shrink: 0;
     }
     .review-meta-bar > * { flex: 1; min-width: 140px; }
 
-    .review-table-container { flex: 1; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--surface); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); }
+    .review-table-container { flex: 1; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--surface); }
     .review-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
-    .review-table th { position: sticky; top: 0; background: var(--surface-hover); backdrop-filter: blur(16px); z-index: 10; padding: 1rem 1.2rem; font-size: 0.75rem; border-bottom: 1px solid var(--border-strong); color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-    .review-table td { padding: 0.6rem 1.2rem; border-bottom: 1px solid var(--border); transition: opacity 0.25s var(--ease-out); vertical-align: middle; }
+    .review-table th { position: sticky; top: 0; background: var(--surface-2); z-index: 10; padding: 1rem 1.2rem; font-size: 0.72rem; border-bottom: 1px solid var(--border); color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; }
+    .review-table td { padding: 0.55rem 1.2rem; border-bottom: 1px solid var(--border-soft); transition: opacity 0.2s var(--ease-out); vertical-align: middle; }
 
     .rev-inp, .qty-rev-inp {
         background: transparent; border: 1px solid transparent; color: var(--text-main); font-family: var(--font-en);
-        padding: 0.5rem; border-radius: var(--radius-sm); font-size: 0.95rem; outline: none; transition: all 0.2s var(--ease-out);
+        padding: 0.5rem; border-radius: var(--radius-sm); font-size: 0.95rem; outline: none; transition: all 0.15s var(--ease-out);
     }
-    .rev-inp:hover, .qty-rev-inp:hover { background: var(--surface-hover); border-color: var(--border); }
-    .rev-inp:focus, .qty-rev-inp:focus { background: var(--bg); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-    
-    .qty-rev-inp { text-align: center; font-size: 1.1rem; font-weight: 700; }
+    .rev-inp:hover, .qty-rev-inp:hover { background: var(--surface-2); border-color: var(--border); }
+    .rev-inp:focus, .qty-rev-inp:focus { background: var(--surface-2); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .qty-rev-inp { text-align: center; font-size: 1rem; font-weight: 600; }
 
     .status-badge {
-        padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
-        text-transform: uppercase; display: inline-block; white-space: nowrap; text-align: center; width: 100%; letter-spacing: 0.5px;
+        padding: 0.4rem 0.6rem; border-radius: var(--radius-xl); font-size: 0.68rem; font-weight: 600;
+        text-transform: uppercase; display: inline-block; white-space: nowrap; text-align: center; width: 100%; letter-spacing: 0.4px;
     }
-    .status-ok { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .status-dupe { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .status-err { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .status-skip { background: rgba(139, 155, 180, 0.15); color: var(--text-muted); border: 1px solid rgba(139, 155, 180, 0.3); }
+    .status-ok { background: var(--accent-glow); color: var(--accent-strong); }
+    .status-dupe { background: var(--warning-glow); color: var(--warning); }
+    .status-err { background: var(--danger-glow); color: var(--danger); }
+    .status-skip { background: var(--surface-2); color: var(--text-muted); }
 
-    .err { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important; }
-    .row-disabled { background: rgba(0,0,0,0.1); }
-    [data-theme="light"] .row-disabled { background: rgba(0,0,0,0.02); }
-    .row-disabled td { opacity: 0.4; }
-    .rev-checkbox { width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--accent); border-radius: 4px; }
+    .err { border-color: var(--danger) !important; box-shadow: 0 0 0 3px var(--danger-glow) !important; }
+    .row-disabled { background: rgba(0,0,0,0.04); }
+    [data-theme="dark"] .row-disabled { background: rgba(0,0,0,0.16); }
+    .row-disabled td { opacity: 0.45; }
+    .rev-checkbox { width: 1.15rem; height: 1.15rem; cursor: pointer; accent-color: var(--accent); border-radius: 3px; }
 
     .toast {
-        position: fixed; bottom: 40px; left: 50%; transform: translate(-50%, 100px) scale(0.9);
-        background: var(--text-main); color: var(--bg); padding: 0.8rem 1.5rem;
-        border-radius: 100px; box-shadow: var(--shadow-lg); font-weight: 700;
-        transition: all 0.4s var(--ease-spring); z-index: 9999; opacity: 0; display: flex; gap: 10px; align-items: center;
+        position: fixed; bottom: 40px; left: 50%; transform: translate(-50%, 90px);
+        background: var(--text-main); color: var(--bg); padding: 0.85rem 0.7rem 0.85rem 1.3rem;
+        border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); font-weight: 500;
+        transition: all 0.3s var(--ease-out); z-index: 9999; opacity: 0; display: flex; gap: 12px; align-items: center;
     }
-    .toast.show { transform: translate(-50%, 0) scale(1); opacity: 1; }
-    .toast.error-toast { background: var(--danger); color: white; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .toast.error-toast { background: var(--danger); color: #fff; }
+    .toast-action {
+        background: rgba(255,255,255,0.14); border: none; color: inherit; padding: 5px 12px;
+        border-radius: var(--radius-xl); font-weight: 600; cursor: pointer; font-size: .74rem;
+    }
 
     kbd {
-        background: var(--surface); border: 1px solid var(--border); border-bottom-width: 2px;
-        border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 0.75rem; color: var(--text-muted);
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 5px; padding: 2px 6px; font-family: var(--font-en); font-size: 0.75rem; color: var(--text-muted);
     }
 
-    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .spinner { animation: spin 1s linear infinite; }
 
     @media (max-width: 900px) {
-        .workspace { padding: 1rem; gap: 1rem; }
+        .workspace { padding: 1rem; gap: 0.9rem; }
         .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
         .hud-left { flex-direction: column; align-items: flex-start; gap: 1rem; width: 100%; }
         .hud-right { position: absolute; top: 1rem; right: 1rem; }
-        
+
         .context-group { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
         .context-group::-webkit-scrollbar { display: none; }
-        
-        .hud-dropdown { left: 0; transform: translateX(0) translateY(-10px); min-width: 200px; }
+
+        .hud-dropdown { left: 0; transform: translateX(0) translateY(-4px); min-width: 200px; }
         .hud-dropdown.show { transform: translateX(0) translateY(0); }
 
         .omni-row { flex-wrap: wrap; height: auto; padding: 12px; gap: 8px; }
@@ -490,6 +578,11 @@
         .omni-unit, .omni-ctx { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
         .qty-input, .btn-enter { width: calc(50% - 4px); height: 48px; margin-top: 0; }
         .qty-input { border: 1px solid var(--border); }
+
+        .util-bar { flex-direction: column; align-items: stretch; }
+        .util-actions { justify-content: space-between; }
+        .filter-box input { width: 100%; }
+        .filter-box { flex: 1; }
 
         .bottom-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
         .dock-stats { justify-content: center; flex-wrap: wrap; }
@@ -501,9 +594,9 @@
         .modal-header, .modal-body, .modal-footer { padding: 1rem; }
 
         th, td { padding: 0.8rem 0.6rem; }
-        .cell-input { width: 120px; font-size: 1rem; padding: 0.5rem; }
+        .cell-input { width: 110px; font-size: 1rem; padding: 0.5rem; }
         .c-select { font-size: 0.85rem; padding: 0.5rem; }
-        
+
         .toast { bottom: 20px; width: 90%; justify-content: center; text-align: center; font-size: 0.9rem; }
     }
 
@@ -515,7 +608,7 @@
 
     @media print {
         body { background: #fff !important; color: #000 !important; }
-        .hud-bar, .omni-row, .bottom-dock, .modal-overlay, .btn-del, th:last-child, td:last-child, .toast, .shortcuts-hint, .omni-results { display: none !important; }
+        .hud-bar, .omni-row, .util-bar, .bottom-dock, .modal-overlay, .btn-del, .btn-icon, th:last-child, td:last-child, .toast, .shortcuts-hint, .omni-results { display: none !important; }
         .workspace { padding: 0; } .grid-area { border: none; box-shadow: none; overflow: visible; }
         table { width: 100%; border-collapse: collapse; min-width: auto; } th, td { border: 1px solid #ddd; padding: 8px; color: #000 !important; }
         .report-header { display: block !important; text-align: right; direction: rtl; font-family: var(--font-ar); margin-bottom: 2rem; }
@@ -528,7 +621,7 @@
 
 <div class="hud-bar">
     <div class="hud-left">
-        <div class="hud-title">LX Form Beta</div>
+        <div class="hud-title"><span class="mark">LX</span>LEDGER<span class="beta">β</span></div>
         <div class="context-group">
             <div class="hud-item">
                 <div class="hud-pill" onclick="toggleHud('drop-year')">Year <span class="ar" id="txt-year"></span></div>
@@ -547,10 +640,10 @@
         </div>
     </div>
     <div class="hud-right">
-        <button class="btn-ghost" onclick="resetHUD()" title="Reset Filters" style="padding: 8px; border-radius: 50%;">
+        <button class="btn-ghost" onclick="resetHUD()" title="Clear header" style="padding: 8px; border-radius: 50%;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         </button>
-        <button class="btn-ghost" onclick="toggleTheme()" title="Toggle Theme" style="padding: 8px; border-radius: 50%;"><span id="theme-icon"></span></button>
+        <button class="btn-ghost" onclick="toggleTheme()" title="Toggle theme" style="padding: 8px; border-radius: 50%;"><span id="theme-icon"></span></button>
     </div>
 </div>
 
@@ -580,23 +673,37 @@
         <button class="btn-enter" onclick="processAdd()">Enter ↵</button>
     </div>
 
+    <div class="util-bar">
+        <div class="freq-strip" id="freq-strip"></div>
+        <div class="util-actions">
+            <div class="filter-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="grid-filter" placeholder="Filter ledger..." oninput="onGridFilter(this.value)">
+            </div>
+            <button class="btn-stub" onclick="openScaleTool()" title="Scale quantities">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                Scale
+            </button>
+        </div>
+    </div>
+
     <div class="grid-area" id="grid-container">
         <div class="empty-state" id="empty-state">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1.25rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            <h2>No entries yet</h2>
-            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Use the search bar to find or create items.</p>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <h2>No lines logged yet</h2>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Search a product above, or press / for commands.</p>
             <div class="shortcuts-hint" style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.7;">
-                <kbd>/</kbd> Commands &nbsp; <kbd>↑</kbd><kbd>↓</kbd> Navigate &nbsp; <kbd>Esc</kbd> Reset
+                <kbd>/</kbd> Commands &nbsp; <kbd>↑</kbd><kbd>↓</kbd> Navigate &nbsp; <kbd>Esc</kbd> Reset &nbsp; <kbd>⌘Z</kbd> Undo
             </div>
         </div>
         <table id="table" style="display:none;">
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th style="width:200px">Unit</th>
-                    <th style="width:240px">Context</th>
-                    <th style="width:180px;text-align:center;">Units Sold</th>
-                    <th style="width:80px;text-align:center;"></th>
+                    <th class="sortable" onclick="setSort('name')">Product <span class="sort-ind" id="sort-name"></span></th>
+                    <th style="width:190px">Unit</th>
+                    <th style="width:230px">Context</th>
+                    <th class="sortable" style="width:170px;text-align:center;" onclick="setSort('quantity')">Units Sold <span class="sort-ind" id="sort-qty"></span></th>
+                    <th style="width:90px;text-align:center;"></th>
                 </tr>
             </thead>
             <tbody id="grid"></tbody>
@@ -605,16 +712,19 @@
 
     <div class="bottom-dock">
         <div class="dock-stats">
-            <div style="font-weight: 700; padding: 0 10px;" id="stats-counter">Total Items: 0</div>
-            <div style="width: 1px; height: 16px; background: var(--border);"></div>
-            <button class="btn-ghost danger" onclick="resetData()" title="Reset Table"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Reset</button>
+            <div class="stat-line" id="stats-counter">0 lines · 0 units</div>
+            <div class="dot-sep"></div>
+            <span class="mono-note" id="last-saved"></span>
+            <div style="width: 1.5px; height: 16px; background: var(--border-strong);"></div>
+            <button class="btn-ghost danger" onclick="resetData()" title="Void ledger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Void</button>
             <button class="btn-ghost" onclick="saveSession()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save</button>
             <label class="btn-ghost" style="cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Load<input type="file" id="file-load" accept=".json" style="display:none;" onchange="if(this.files[0]) loadSession(this.files[0])"></label>
             <button class="btn-ghost" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print</button>
+            <button class="btn-ghost warn-ghost" id="sync-btn" style="display:none;" onclick="retryPendingQueue()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Sync <span id="sync-count"></span></button>
         </div>
         <div class="action-btns">
-            <button class="btn-hollow" onclick="openImport()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> Import File</button>
-            <button class="btn-solid" id="btn-submit" onclick="submitToDB()"><span id="submit-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span> <span id="submit-text">Submit & Export</span></button>
+            <button class="btn-hollow" onclick="openImport()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> Import CSV</button>
+            <button class="btn-solid" id="btn-submit" onclick="submitToDB()"><span id="submit-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span> <span id="submit-text">Push & Export</span></button>
         </div>
     </div>
 </div>
@@ -624,32 +734,36 @@
         <div class="modal-header">
             <div>
                 <h2 style="margin:0; font-size:1.4rem;">Keyboard Shortcuts</h2>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Work faster using keyboard controls.</p>
+                <p class="sub">Work faster using keyboard controls.</p>
             </div>
             <button class="btn-del" onclick="document.getElementById('shortcuts-modal').classList.remove('active')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
         <div class="modal-body" style="padding: 2rem;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
                 <span style="font-weight:600;">Command Menu</span>
                 <span><kbd>/</kbd></span>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
                 <span style="font-weight:600;">Show This Menu</span>
                 <span><kbd>/keyboard</kbd></span>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Advance / Submit Input</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
+                <span style="font-weight:600;">Advance / Log Line</span>
                 <span><kbd>Enter ↵</kbd></span>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
                 <span style="font-weight:600;">Move Up / Down Rows</span>
                 <span><kbd>↑</kbd> <kbd>↓</kbd></span>
             </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
                 <span style="font-weight:600;">Move Left / Right Cells</span>
                 <span><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
+                <span style="font-weight:600;">Undo Last Delete</span>
+                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between;">
                 <span style="font-weight:600;">Reset / Clear View</span>
@@ -665,8 +779,8 @@
             <div id="import-ui" class="view-panel active">
                 <div class="modal-header">
                     <div>
-                        <h2 style="margin:0; font-size:1.4rem;">Import Data</h2>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Headers Supported: year, month, pharmacy, name, unit, quantity, context</p>
+                        <h2 style="margin:0; font-size:1.4rem;">Import CSV</h2>
+                        <p class="sub">Headers Supported: year, month, pharmacy, name, unit, quantity, context</p>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button class="btn-ghost" onclick="exportCSVTemplate()">↓ Template</button>
@@ -676,23 +790,23 @@
                 <div class="modal-body">
                     <div class="drop-zone" id="dz" onclick="document.getElementById('file-in').click()">
                         <div class="dz-icon">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         </div>
                         <div>
-                            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Click or Drag CSV here</h3>
-                            <p style="color: var(--text-muted); font-size: 0.9rem;" id="import-status-text">Supports multiple files mapping to database.</p>
+                            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Click or Drag CSV Here</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;" id="import-status-text">Supports multiple files mapping to the ledger database.</p>
                         </div>
                         <input type="file" id="file-in" accept=".csv" multiple style="display:none;" onchange="if(this.files.length) handleFile(this.files)">
                     </div>
                 </div>
             </div>
-            
+
             <div id="review-ui" class="view-panel">
                 <div class="modal-header" style="flex-direction: column; align-items: stretch; padding: 0;">
                     <div style="padding: 1.5rem 2rem 0; display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <h2 style="margin:0; font-size:1.4rem;">Review & Push</h2>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Verify files independently. Validated data will be merged and pushed.</p>
+                            <p class="sub">Verify files independently. Validated rows will be merged and pushed.</p>
                         </div>
                         <button class="btn-del" onclick="closeImport()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
@@ -706,11 +820,11 @@
                         <select id="rev-region" class="c-select" onchange="updateRevPharm()"></select>
                         <select id="rev-pharmacy" class="c-select" onchange="syncMeta()"></select>
                     </div>
-                    <div id="overlap-warning" style="display:none; align-items:center; gap:10px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:var(--warning); padding:0.7rem 1rem; border-radius:var(--radius-md); margin-bottom:1rem; font-size:0.85rem; font-weight:600; flex-shrink:0;">
+                    <div id="overlap-warning" style="display:none; align-items:center; gap:10px; background:var(--warning-glow); border:1.5px solid var(--warning); color:var(--warning); padding:0.7rem 1rem; border-radius:var(--radius-md); margin:1rem 0 0; font-size:0.85rem; font-weight:600; flex-shrink:0;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                         <span id="overlap-warning-text"></span>
                     </div>
-                    <div class="review-table-container">
+                    <div class="review-table-container" style="margin-top:1rem;">
                         <table class="review-table">
                             <thead><tr><th style="width:50px;text-align:center"><input type="checkbox" id="rev-chk-all" class="rev-checkbox" title="Select / deselect all rows" onchange="toggleAllRows(this.checked)"></th><th>Product Name</th><th style="width:180px">Unit</th><th style="width:200px">Context</th><th style="width:120px;text-align:center">Qty</th><th style="width:120px;text-align:center">Status</th></tr></thead>
                             <tbody id="review-tbody"></tbody>
@@ -726,32 +840,80 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="scale-modal" style="z-index: 10500;">
+    <div class="modal-content" style="max-width: 440px; height: auto; padding: 0;">
+        <div class="modal-header">
+            <div>
+                <h2 style="margin:0; font-size:1.3rem;">Scale Quantities</h2>
+                <p class="sub">Applies to the lines currently visible below the filter.</p>
+            </div>
+            <button class="btn-del" onclick="closeScaleTool()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                <button class="btn-stub" onclick="setScaleFactor(2)">×2</button>
+                <button class="btn-stub" onclick="setScaleFactor(0.5)">×0.5</button>
+                <button class="btn-stub" onclick="setScaleFactor(1.1)">+10%</button>
+                <button class="btn-stub" onclick="setScaleFactor(0.9)">-10%</button>
+            </div>
+            <input type="number" id="scale-factor" step="0.01" placeholder="Custom factor, e.g. 1.25" class="cell-input mono-num" style="width:100%;" oninput="updateScalePreview()">
+            <div class="mono-note" id="scale-preview" style="font-size:0.8rem;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-hollow" onclick="closeScaleTool()">Cancel</button>
+            <button class="btn-solid" onclick="applyScale()">Apply</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal" style="z-index: 10600;">
+    <div class="modal-content" style="max-width: 420px; height: auto; padding: 0;">
+        <div class="modal-body" style="padding: 2rem;">
+            <h2 id="confirm-title" style="font-family:var(--font-display); text-transform:uppercase; letter-spacing:0.5px; font-size:1.3rem;"></h2>
+            <p id="confirm-desc" class="sub" style="margin-top:0.6rem;"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-hollow" onclick="closeConfirm()">Cancel</button>
+            <button class="btn-solid danger-solid" onclick="runConfirm()"><span id="confirm-action-label"></span></button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="status-modal" style="z-index: 99999;">
     <div class="modal-content" style="max-width: 450px; text-align: center; padding: 3rem 2rem; align-items: center; border-radius: var(--radius-lg); height: auto;">
         <div id="status-icon"></div>
-        <h2 id="status-title" style="margin: 1.5rem 0 0.5rem; font-size: 1.8rem;"></h2>
+        <h2 id="status-title" style="margin: 1.5rem 0 0.5rem; font-size: 1.8rem; font-family: var(--font-display); text-transform: uppercase;"></h2>
         <p id="status-desc" style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;"></p>
         <button class="btn-solid" id="status-btn" onclick="document.getElementById('status-modal').classList.remove('active')" style="width: 100%; justify-content: center; padding: 1rem;">Acknowledge</button>
     </div>
 </div>
 
-<div class="toast" id="toast"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span id="toast-msg"></span></div>
+<div class="toast" id="toast"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span id="toast-msg"></span><button class="toast-action" id="toast-action" style="display:none;"></button></div>
 
 <script>
     let STATE = { year: new Date().getFullYear().toString(), month: null, class: null, region: null, pharmacy: null };
     let DATA = [];
+    let ID_SEQ = Date.now();
     let IMPORT_FILES = [];
     let activeFileId = null;
+    let gridFilter = '';
+    let sortKey = null, sortDir = 1;
+    let undoStack = [];
     const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
-    function getYearRange() { const y = new Date().getFullYear(); return { min: y - 1, max: 2099 }; }
+    const jsEsc = s => String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    function getYearBounds() { return { min: 2000, max: 2100 }; }
+    function getRecentYears() { const y = new Date().getFullYear(); const arr = []; for(let i=y-3;i<=y+1;i++) arr.push(i); return arr; }
+    function getSelectYears() { const y = new Date().getFullYear(); const arr = []; for(let i=y-8;i<=y+1;i++) arr.push(i); return arr; }
     function normalizeAr(str) {
         return (str || '').toLowerCase()
             .replace(/[\u064B-\u065F\u0670]/g, '')
             .replace(/[أإآ]/g, 'ا')
             .replace(/ى/g, 'ي')
             .replace(/ة/g, 'ه')
-            .replace(/ث/g, 'ت');
+            .replace(/ث/g, 'ت')
+            .trim();
     }
+    function lineKey(name, unit, context) { return `${name}`.toLowerCase()+'|'+`${unit}`.toLowerCase()+'|'+`${context}`.toLowerCase(); }
     const CONTEXTS = ["قرار لجنة", "حكم قضائي", "شئون طبية", "داخل اللستة"];
     const DIC = {
         months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
@@ -795,20 +957,31 @@
     window.addEventListener('drop', e => e.preventDefault());
 
     let lastBackupSnapshot = '';
+    let lastSavedAt = null;
+    function touchLastSaved() { lastSavedAt = Date.now(); renderLastSaved(); }
+    function renderLastSaved() {
+        const el = document.getElementById('last-saved');
+        if(!el) return;
+        if(!lastSavedAt) { el.textContent = ''; return; }
+        let s = Math.round((Date.now()-lastSavedAt)/1000);
+        el.textContent = s < 3 ? 'synced' : s < 60 ? `synced ${s}s ago` : `synced ${Math.round(s/60)}m ago`;
+    }
+    setInterval(renderLastSaved, 4000);
     function saveLocalBackup() {
         if(!DATA.length && !STATE.pharmacy) return;
         const snapshot = JSON.stringify({ state: STATE, data: DATA });
         if(snapshot === lastBackupSnapshot) return;
         localStorage.setItem('lx_b', snapshot);
         lastBackupSnapshot = snapshot;
+        touchLastSaved();
     }
-    function loadLocalBackup() { try { const b = localStorage.getItem('lx_b'); if(b) { const p = JSON.parse(b); if(p.state) STATE = {...STATE, ...p.state}; if(p.data) DATA = p.data; lastBackupSnapshot = JSON.stringify({ state: STATE, data: DATA }); updateHudUI(); drawGrid(); showToast('Session Recovered'); } } catch(e) {} }
+    function migrateIds() { DATA.forEach(d => { if(d.id == null) d.id = ++ID_SEQ; }); }
+    function loadLocalBackup() { try { const b = localStorage.getItem('lx_b'); if(b) { const p = JSON.parse(b); if(p.state) STATE = {...STATE, ...p.state}; if(p.data) DATA = p.data; migrateIds(); lastBackupSnapshot = JSON.stringify({ state: STATE, data: DATA }); updateHudUI(); drawGrid(); showToast('Recovered your last session'); } } catch(e) {} }
     window.addEventListener('beforeunload', e => { if(DATA.length) { e.preventDefault(); e.returnValue=''; } });
 
     function buildHudMenus() {
         const ySugg = document.getElementById('year-suggestions'), mDrop = document.getElementById('drop-month'), cDrop = document.getElementById('drop-class'), rDrop = document.getElementById('drop-region');
-        const yr = getYearRange();
-        { let opts = []; for(let i=yr.min; i<=yr.max; i++) opts.push(`<div class="drop-item" onclick="setHud('year', '${i}')">${i}</div>`); ySugg.innerHTML += opts.join(''); }
+        getRecentYears().forEach(y => ySugg.innerHTML += `<div class="year-chip" onclick="setHud('year', '${y}')">${y}</div>`);
         DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
         Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" onclick="setHud('class', '${k}')">${v}</div>`);
         Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" onclick="setHud('region', '${k}')">${v}</div>`);
@@ -816,7 +989,7 @@
 
     function applyCustomYear() {
         const val = parseInt(document.getElementById('custom-year-input').value.trim());
-        const yr = getYearRange();
+        const yr = getYearBounds();
         if(val && !isNaN(val) && val >= yr.min && val <= yr.max) { setHud('year', val.toString()); }
         else { showToast(`Enter a valid year between ${yr.min} and ${yr.max}`, 'error'); }
     }
@@ -843,12 +1016,28 @@
         document.getElementById('print-class').textContent = DIC.classes[STATE.class] || ''; document.getElementById('print-region').textContent = DIC.regions[STATE.region] || ''; document.getElementById('print-pharmacy').textContent = STATE.pharmacy || ''; let mIdx = DIC.months.en.indexOf(STATE.month); document.getElementById('print-month').textContent = mIdx >= 0 ? DIC.months.ar[mIdx] : '';
     }
 
+    function flashMissingHud() {
+        ['year','month','class','region','pharmacy'].forEach(k => {
+            if(!STATE[k]) {
+                const pill = document.getElementById(`txt-${k}`).closest('.hud-pill');
+                pill.classList.add('flash-missing');
+                setTimeout(() => pill.classList.remove('flash-missing'), 900);
+            }
+        });
+    }
+
     document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show')); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); });
-    
+
     document.addEventListener('keydown', e => {
         if(e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
-        if(e.key === 'Escape') { dom.omni.value=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false; document.querySelectorAll('.hud-dropdown').forEach(d=>d.classList.remove('show')); omniFields.forEach(f=>f.blur()); }
-        
+        if((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); undoLastDelete(); }
+        if(e.key === 'Escape') {
+            dom.omni.value=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false;
+            document.querySelectorAll('.hud-dropdown').forEach(d=>d.classList.remove('show'));
+            ['scale-modal','confirm-modal','shortcuts-modal'].forEach(id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); });
+            omniFields.forEach(f=>f.blur());
+        }
+
         const isGridInput = e.target.classList.contains('cell-input') || e.target.classList.contains('qty-rev-inp') || e.target.classList.contains('rev-inp');
         if(isGridInput && ['ArrowUp', 'ArrowDown'].includes(e.key)) {
             e.preventDefault();
@@ -866,14 +1055,33 @@
 
     function showShortcutsModal() { document.getElementById('shortcuts-modal').classList.add('active'); }
 
+    let pendingConfirmAction = null;
+    function openConfirm(title, desc, label, action) {
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-desc').textContent = desc;
+        document.getElementById('confirm-action-label').textContent = label;
+        pendingConfirmAction = action;
+        document.getElementById('confirm-modal').classList.add('active');
+    }
+    function closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); pendingConfirmAction = null; }
+    function runConfirm() { if(pendingConfirmAction) pendingConfirmAction(); closeConfirm(); }
+
     function resetData() {
-        if(!confirm('Clear all table items?')) return;
-        DATA = []; drawGrid(); localStorage.removeItem('lx_b'); showToast('Data Cleared');
+        if(!DATA.length) { showToast('Ledger is already empty'); return; }
+        openConfirm('Void the ledger?', 'This clears every line in your current workspace. The header filters stay put.', 'Void it', () => {
+            DATA = []; drawGrid(); localStorage.removeItem('lx_b'); lastBackupSnapshot=''; showToast('Ledger voided');
+        });
+    }
+
+    function resetAllHard() {
+        openConfirm('Wipe everything?', 'Clears the ledger and resets Year, Month, Class, Region and Pharmacy.', 'Wipe it', () => {
+            DATA = []; localStorage.removeItem('lx_b'); lastBackupSnapshot=''; resetHUD(); drawGrid(); showToast('Full reset');
+        });
     }
 
     function resetHUD() {
         STATE = { year: new Date().getFullYear().toString(), month: null, class: null, region: null, pharmacy: null };
-        updateHudUI(); saveLocalBackup(); showToast('Filters Reset');
+        updateHudUI(); saveLocalBackup(); showToast('Header cleared');
     }
 
     function triggerCmd() {
@@ -884,7 +1092,14 @@
         let terms = normalizeAr(sq).trim().split(/\s+/).filter(Boolean);
         let scored = SEARCH_IDX.map(obj => {
             let target = obj._t, score = 0, matchedTokens = 0;
-            for (let t of terms) { if(target.includes(t)) { score += t.length * 2; matchedTokens++; if(target.startsWith(t)) score += 5; } else { let i = 0; for(let j = 0; j < target.length; j++) { if(t[i] === target[j]) i++; if(i === t.length) break; } if(i === t.length) { score += t.length; matchedTokens++; } } }
+            for (let t of terms) {
+                if(target.includes(t)) { score += t.length * 2; matchedTokens++; if(target.startsWith(t)) score += 5; }
+                else {
+                    let i = 0, startPos = -1, endPos = -1;
+                    for(let j = 0; j < target.length; j++) { if(t[i] === target[j]) { if(startPos < 0) startPos = j; i++; endPos = j; } if(i === t.length) break; }
+                    if(i === t.length) { let span = endPos - startPos + 1; let tightness = t.length / span; score += t.length * tightness; matchedTokens++; }
+                }
+            }
             return { item: obj, score, matchedTokens };
         });
         let filtered = scored.filter(s => s.matchedTokens === terms.length);
@@ -900,7 +1115,11 @@
         filters: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`,
         trash: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
         boom: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
-        help: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+        help: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+        undo: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 7"></path></svg>`,
+        theme: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`,
+        scale: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>`,
+        search: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`
     };
 
     dom.omni.addEventListener('input', e => {
@@ -926,16 +1145,20 @@
         if (qLow.startsWith('/') && !isCmdAdd) {
             dom.res.innerHTML = ''; resList = [];
             const CMDS = [
-                { keys: ['/save', 'save'], icon: SVG_ICONS.save, label: 'Save Session', act: saveSession, color: 'var(--success)' },
+                { keys: ['/save', 'save'], icon: SVG_ICONS.save, label: 'Save Session', act: saveSession, color: 'var(--accent-2)' },
                 { keys: ['/load', 'load'], icon: SVG_ICONS.load, label: 'Load Session', act: () => document.getElementById('file-load').click(), color: 'var(--accent)' },
                 { keys: ['/print', 'print'], icon: SVG_ICONS.print, label: 'Print Report', act: () => window.print(), color: 'var(--text-muted)' },
-                { keys: ['/import', 'import'], icon: SVG_ICONS.import, label: 'Import File', act: openImport, color: 'var(--warning)' },
+                { keys: ['/import', 'import'], icon: SVG_ICONS.import, label: 'Import CSV', act: openImport, color: 'var(--warning)' },
+                { keys: ['/scale', 'scale'], icon: SVG_ICONS.scale, label: 'Scale Quantities', act: openScaleTool, color: 'var(--accent)' },
+                { keys: ['/filter', 'filter'], icon: SVG_ICONS.search, label: 'Filter Ledger', act: () => { dom.omni.value=''; dom.res.classList.remove('show'); document.getElementById('grid-filter').focus(); }, color: 'var(--accent-2)' },
+                { keys: ['/undo', 'undo'], icon: SVG_ICONS.undo, label: 'Undo Last Delete', act: undoLastDelete, color: 'var(--accent-2)' },
+                { keys: ['/theme', 'theme'], icon: SVG_ICONS.theme, label: 'Toggle Theme', act: toggleTheme, color: 'var(--accent)' },
                 { keys: ['/keyboard', 'keyboard'], icon: SVG_ICONS.help, label: 'Keyboard Shortcuts', act: showShortcutsModal, color: 'var(--accent)' },
                 { keys: ['/reset filters', 'reset filters'], icon: SVG_ICONS.filters, label: 'Reset Filters', act: resetHUD, color: 'var(--warning)' },
                 { keys: ['/reset data', 'reset data'], icon: SVG_ICONS.trash, label: 'Reset Data', act: resetData, color: 'var(--danger)' },
-                { keys: ['/reset all', 'reset all'], icon: SVG_ICONS.boom, label: 'Reset All', act: () => { resetData(); resetHUD(); }, color: 'var(--danger)' }
+                { keys: ['/reset all', 'reset all'], icon: SVG_ICONS.boom, label: 'Reset All', act: resetAllHard, color: 'var(--danger)' }
             ];
-            
+
             let matchedCmds = CMDS.filter(c => c.keys.some(k => k.startsWith(qLow) || qLow.startsWith(k)));
             if (qLow === '/' || qLow === '/reset') matchedCmds = qLow === '/reset' ? CMDS.filter(c => c.label.toLowerCase().includes('reset')) : CMDS;
 
@@ -977,11 +1200,11 @@
 
         dom.res.innerHTML = ''; resList = [];
         let isYear = /^\d{4}$/.test(q.trim());
-        const omniYr = getYearRange();
+        const omniYr = getYearBounds();
         if (isYear && parseInt(q.trim()) >= omniYr.min && parseInt(q.trim()) <= omniYr.max && !isCmdAdd) {
             const yDiv = document.createElement('div'); yDiv.className = 'res-item';
             yDiv.innerHTML = `<div>📅 Set Year: <strong>${q.trim()}</strong></div><span class="res-type" style="background:var(--accent);color:#fff;border:none;">Year</span>`;
-            yDiv.onclick = () => { setHud('year', q.trim()); dom.omni.value=''; dom.res.classList.remove('show'); showToast('Year Set'); };
+            yDiv.onclick = () => { setHud('year', q.trim()); dom.omni.value=''; dom.res.classList.remove('show'); showToast('Year set'); };
             dom.res.appendChild(yDiv); resList.push(yDiv);
         }
 
@@ -989,7 +1212,7 @@
         let exactMatch = false;
         let isIdMatch = false;
         let highConfidence = false;
-        
+
         if (searchResults.length > 0) {
             let topItem = searchResults[0].item;
             let qL = normalizeAr(sq);
@@ -1006,10 +1229,10 @@
                 const div = document.createElement('div'); div.className = 'res-item';
                 if (idx === 0 && !exactMatch && sq.length > 2 && r.item.t === 'product') {
                     div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent); border-color:var(--accent);">Suggest</span>`;
-                } else { 
-                    div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type">${r.item.t}</span>`; 
+                } else {
+                    div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type">${r.item.t}</span>`;
                 }
-                div.onclick = () => applyOmni(r.item); 
+                div.onclick = () => applyOmni(r.item);
                 dom.res.appendChild(div); resList.push(div);
             });
         };
@@ -1034,10 +1257,10 @@
             }
         }
 
-        if (resList.length > 0) { 
-            dom.res.classList.add('show'); selIdx = 0; hi(); 
-        } else { 
-            dom.res.classList.remove('show'); 
+        if (resList.length > 0) {
+            dom.res.classList.add('show'); selIdx = 0; hi();
+        } else {
+            dom.res.classList.remove('show');
         }
     }
 
@@ -1049,16 +1272,16 @@
                 else processAdd();
                 return;
             }
-            
+
             let isCustom = !dom.unit.disabled;
-            
+
             if (e.target === dom.omni) {
                 if (isCustom) dom.unit.focus(); else dom.qty.focus();
             } else if (e.target === dom.unit) {
-                if (!dom.unit.value.trim()) { showToast('Enter Unit', 'error'); return; }
+                if (!dom.unit.value.trim()) { showToast('Enter a unit', 'error'); return; }
                 dom.ctx.focus();
             } else if (e.target === dom.ctx) {
-                if (!dom.ctx.value) { showToast('Select Context', 'error'); return; }
+                if (!dom.ctx.value) { showToast('Select a context', 'error'); return; }
                 dom.qty.focus();
             } else if (e.target === dom.qty) {
                 processAdd();
@@ -1076,12 +1299,12 @@
 
     function applyOmni(item) {
         dom.res.classList.remove('show');
-        if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value=''; showToast('Pharmacy Linked'); }
-        else if(item.t === 'month') { setHud('month', item.val); dom.omni.value=''; showToast('Month Linked'); }
-        else if(item.t === 'class') { setHud('class', item.val); dom.omni.value=''; showToast('Class Linked'); }
-        else if(item.t === 'region') { setHud('region', item.val); dom.omni.value=''; showToast('Region Linked'); }
+        if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value=''; showToast('Pharmacy linked'); }
+        else if(item.t === 'month') { setHud('month', item.val); dom.omni.value=''; showToast('Month linked'); }
+        else if(item.t === 'class') { setHud('class', item.val); dom.omni.value=''; showToast('Class linked'); }
+        else if(item.t === 'region') { setHud('region', item.val); dom.omni.value=''; showToast('Region linked'); }
         else if(item.t === 'custom') {
-            if(!item.txt) { dom.omni.value = '/add '; dom.omni.focus(); showToast('Type product name'); return; }
+            if(!item.txt) { dom.omni.value = '/add '; dom.omni.dispatchEvent(new Event('input')); dom.omni.focus(); return; }
             dom.omni.value = item.txt;
             dom.omni.dataset.raw = JSON.stringify(item);
             dom.unit.value = '';
@@ -1091,50 +1314,77 @@
             dom.unit.focus();
         }
         else {
-            dom.omni.value = item.txt; 
+            dom.omni.value = item.txt;
             dom.omni.dataset.raw = JSON.stringify(item);
-            dom.unit.value = item.u||''; 
-            dom.ctx.value = ''; 
-            dom.unit.disabled = true; 
+            dom.unit.value = item.u||'';
+            dom.ctx.value = '';
+            dom.unit.disabled = true;
             dom.ctx.disabled = true;
             dom.qty.focus();
         }
     }
 
-    function updateItemContext(idx, newContext) {
+    function findDataIndex(id) { return DATA.findIndex(d => d.id === id); }
+
+    function updateItemContext(id, newContext) {
+        let idx = findDataIndex(id); if(idx < 0) return;
         let item = DATA[idx];
-        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === item.unit.toLowerCase() && d.context.toLowerCase() === newContext.toLowerCase());
+        let dupIdx = DATA.findIndex((d, i2) => i2 !== idx && d.isCustom === item.isCustom && lineKey(d.name,d.unit,d.context) === lineKey(item.name,item.unit,newContext));
         if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); } else { item.context = newContext; }
         drawGrid(); saveLocalBackup();
     }
-    
-    function updateItemUnit(idx, newUnit) {
+
+    function updateItemUnit(id, newUnit) {
+        let idx = findDataIndex(id); if(idx < 0) return;
         let item = DATA[idx];
         let nL = item.name.toLowerCase().trim();
         let uL = newUnit.toLowerCase().trim();
         let exactSysMatch = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL && x.u.toLowerCase() === uL);
-        
+
         if (exactSysMatch) {
             item.isCustom = false; item.name = exactSysMatch.txt; item.unit = exactSysMatch.u; item.context = ''; item.raw = exactSysMatch.raw;
         } else {
             item.unit = newUnit;
         }
-        let dupIdx = DATA.findIndex((d, i) => i !== idx && d.isCustom === item.isCustom && d.name.toLowerCase() === item.name.toLowerCase() && d.unit.toLowerCase() === item.unit.toLowerCase() && d.context.toLowerCase() === item.context.toLowerCase());
+        let dupIdx = DATA.findIndex((d, i2) => i2 !== idx && d.isCustom === item.isCustom && lineKey(d.name,d.unit,d.context) === lineKey(item.name,item.unit,item.context));
         if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); }
         drawGrid(); saveLocalBackup();
     }
-    
-    function updateItemQuantity(idx, val) { DATA[idx].quantity = Math.max(1, parseInt(val) || 1); drawGrid(); saveLocalBackup(); }
-    function deleteItem(idx) { DATA.splice(idx, 1); drawGrid(); saveLocalBackup(); }
+
+    function updateItemQuantity(id, val) { let idx = findDataIndex(id); if(idx < 0) return; DATA[idx].quantity = Math.max(1, parseInt(val) || 1); drawGrid(); saveLocalBackup(); }
+
+    function deleteItem(id) {
+        let idx = findDataIndex(id); if(idx < 0) return;
+        let [removed] = DATA.splice(idx, 1);
+        undoStack.push({ item: removed, index: idx });
+        if(undoStack.length > 5) undoStack.shift();
+        drawGrid(); saveLocalBackup();
+        showToast(`Removed ${removed.name}`, 'normal', 'Undo', undoLastDelete);
+    }
+
+    function undoLastDelete() {
+        let last = undoStack.pop();
+        if(!last) { showToast('Nothing to undo'); return; }
+        let pos = Math.min(last.index, DATA.length);
+        DATA.splice(pos, 0, last.item);
+        drawGrid(); saveLocalBackup(); showToast(`Restored ${last.item.name}`);
+    }
+
+    function cloneItem(id) {
+        let idx = findDataIndex(id); if(idx < 0) return;
+        let copy = { ...DATA[idx], id: ++ID_SEQ };
+        DATA.splice(idx, 0, copy);
+        drawGrid(); saveLocalBackup(); showToast('Line cloned');
+    }
 
     function processAdd() {
-        const text = dom.omni.value.trim(); 
-        let qty = Math.max(1, parseInt(dom.qty.value) || 0); 
+        const text = dom.omni.value.trim();
+        let qty = Math.max(1, parseInt(dom.qty.value) || 0);
         if(!text) return;
-        
+
         let obj = null;
         try { obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : null; } catch(e){}
-        
+
         let cName = text;
         if (text.toLowerCase().startsWith('/add ') || text.toLowerCase().startsWith('/custom ')) {
             cName = text.replace(/^\/(add|custom)\s+/i, '').trim();
@@ -1159,54 +1409,123 @@
         let nL = targetName.toLowerCase();
         let uL = targetUnit.toLowerCase();
         let exactSysMatch = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL && x.u.toLowerCase() === uL);
-        
-        let isCustom = !exactSysMatch; 
+
+        let isCustom = !exactSysMatch;
         let wasIntendedCustom = obj && obj.t === 'custom';
 
-        let name = exactSysMatch ? exactSysMatch.txt : targetName; 
-        let unit = exactSysMatch ? exactSysMatch.u : targetUnit; 
-        let context = exactSysMatch ? '' : (obj && obj.ctx ? obj.ctx : parsedCtx); 
+        let name = exactSysMatch ? exactSysMatch.txt : targetName;
+        let unit = exactSysMatch ? exactSysMatch.u : targetUnit;
+        let context = exactSysMatch ? '' : (obj && obj.ctx ? obj.ctx : parsedCtx);
         let raw = exactSysMatch ? exactSysMatch.raw : `${name}|${unit}`;
-        
-        if(isCustom && (!unit || !context)) { (!unit ? dom.unit : dom.ctx).focus(); showToast('Complete custom item fields', 'error'); return; }
-        if(qty <= 0) { dom.qty.focus(); showToast('Enter valid quantity', 'error'); return; }
-        
+
+        if(isCustom && (!unit || !context)) { (!unit ? dom.unit : dom.ctx).focus(); showToast('Complete the Unit and Context for this line', 'error'); return; }
+        if(qty <= 0) { dom.qty.focus(); showToast('Enter a valid quantity', 'error'); return; }
+
         if (wasIntendedCustom && exactSysMatch) {
-            showToast('Matched with core system item.', 'normal');
+            showToast('Matched with a System Core item');
         }
 
-        let exIdx = DATA.findIndex(d => d.isCustom === isCustom && d.name.toLowerCase() === name.toLowerCase() && d.unit.toLowerCase() === unit.toLowerCase() && d.context.toLowerCase() === context.toLowerCase());
-        
-        if(exIdx >= 0) { DATA[exIdx].quantity += qty; } 
-        else { DATA.unshift({ raw, name, unit, quantity: qty, isCustom, context }); }
-        
-        dom.omni.value=''; dom.qty.value=''; dom.unit.value=''; dom.ctx.value=''; 
-        dom.unit.disabled=false; dom.ctx.disabled=false; 
+        let exIdx = DATA.findIndex(d => d.isCustom === isCustom && lineKey(d.name,d.unit,d.context) === lineKey(name,unit,context));
+
+        if(exIdx >= 0) { DATA[exIdx].quantity += qty; }
+        else { DATA.unshift({ id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }); }
+
+        bumpFrequency(name, unit);
+
+        dom.omni.value=''; dom.qty.value=''; dom.unit.value=''; dom.ctx.value='';
+        dom.unit.disabled=false; dom.ctx.disabled=false;
         dom.omni.dataset.raw=''; dom.omni.focus();
-        drawGrid(); 
-        document.getElementById('grid-container').scrollTop = 0; 
+        drawGrid();
+        document.getElementById('grid-container').scrollTop = 0;
         saveLocalBackup();
+    }
+
+    function loadFreq() { try { return JSON.parse(localStorage.getItem('lx_freq') || '{}'); } catch(e) { return {}; } }
+    function bumpFrequency(name, unit) {
+        if(!name) return;
+        let f = loadFreq();
+        let key = `${name}|||${unit || ''}`;
+        f[key] = (f[key] || 0) + 1;
+        localStorage.setItem('lx_freq', JSON.stringify(f));
+        renderFrequentChips();
+    }
+    function renderFrequentChips() {
+        const strip = document.getElementById('freq-strip');
+        if(!strip) return;
+        let f = loadFreq();
+        let arr = Object.entries(f).sort((a,b) => b[1]-a[1]).slice(0, 10);
+        if(!arr.length) { strip.innerHTML = `<span class="freq-empty">Frequent lines will show up here as you log them</span>`; return; }
+        strip.innerHTML = arr.map(([key]) => {
+            let [name, unit] = key.split('|||');
+            return `<button class="stub-chip" onclick="quickAdd('${jsEsc(name)}','${jsEsc(unit||'')}')">${esc(name)}</button>`;
+        }).join('');
+    }
+    function quickAdd(name, unit) {
+        let match = SEARCH_IDX.find(x => x.t === 'product' && x.txt === name && x.u === unit);
+        if(match) { applyOmni(match); }
+        else { applyOmni({ t: 'custom', txt: name, ctx: '' }); dom.unit.value = unit || ''; }
+    }
+
+    function onGridFilter(v) { gridFilter = v; drawGrid(); }
+
+    function setSort(key) {
+        if(sortKey === key) { sortDir = sortDir === 1 ? -1 : (sortDir === -1 ? 0 : 1); if(sortDir === 0) sortKey = null; }
+        else { sortKey = key; sortDir = 1; }
+        drawGrid();
+    }
+
+    function updateSortIndicators() {
+        document.getElementById('sort-name').textContent = sortKey === 'name' ? (sortDir === 1 ? '▲' : '▼') : '';
+        document.getElementById('sort-qty').textContent = sortKey === 'quantity' ? (sortDir === 1 ? '▲' : '▼') : '';
+    }
+
+    function getViewRows() {
+        let rows = DATA;
+        if(gridFilter.trim()) {
+            let nf = normalizeAr(gridFilter);
+            rows = rows.filter(d => normalizeAr(`${d.name} ${d.unit} ${d.context}`).includes(nf));
+        }
+        if(sortKey) {
+            rows = rows.slice().sort((a,b) => {
+                if(sortKey === 'quantity') return (a.quantity - b.quantity) * sortDir;
+                return normalizeAr(a.name).localeCompare(normalizeAr(b.name)) * sortDir;
+            });
+        }
+        return rows;
     }
 
     function drawGrid() {
         let activeId = document.activeElement ? document.activeElement.id : null;
-        dom.grid.innerHTML = ''; const empty = document.getElementById('empty-state'), tbl = document.getElementById('table');
+        const view = getViewRows();
+        dom.grid.innerHTML = '';
+        const empty = document.getElementById('empty-state'), tbl = document.getElementById('table');
         if(DATA.length) { empty.style.display = 'none'; tbl.style.display = 'table'; } else { empty.style.display = 'flex'; tbl.style.display = 'none'; }
-        document.getElementById('stats-counter').textContent = `Total Items: ${DATA.length}`;
-        DATA.forEach((d, i) => {
-            const tr = document.createElement('tr'); tr.className = 'data-row';
-            let ctxHtml = `<span style="color:var(--text-muted);font-weight:600">System Core</span>`, unitHtml = `<span style="color:var(--text-muted);font-weight:700">${esc(d.unit)||'-'}</span>`;
-            if(d.isCustom) {
-                ctxHtml = `<select id="grid-ctx-${i}" class="c-select cell-input ${!d.context?'req':''}" onchange="updateItemContext(${i}, this.value)"><option value="">Select Category</option><option value="قرار لجنة" ${d.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${d.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${d.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${d.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select>`;
-                unitHtml = `<input id="grid-unit-${i}" type="text" class="cell-input" style="width:100%" value="${esc(d.unit)||''}" onchange="updateItemUnit(${i}, this.value)">`;
-            }
-            tr.innerHTML = `<td><strong style="font-size:1.05rem">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
-                <td>${unitHtml}</td>
-                <td>${ctxHtml}</td>
-                <td style="text-align:center"><input id="grid-qty-${i}" type="number" class="cell-input" min="1" value="${d.quantity}" onchange="updateItemQuantity(${i}, this.value)"></td>
-                <td style="text-align:center"><button class="btn-del" onclick="deleteItem(${i})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></td>`;
-            dom.grid.appendChild(tr);
-        });
+        const totalUnits = DATA.reduce((s,d) => s + d.quantity, 0);
+        document.getElementById('stats-counter').textContent = gridFilter.trim() ? `${view.length} / ${DATA.length} lines · ${totalUnits} units` : `${DATA.length} lines · ${totalUnits} units`;
+        updateSortIndicators();
+
+        if(!view.length && DATA.length) {
+            dom.grid.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2.5rem;color:var(--text-muted);">No lines match "${esc(gridFilter)}"</td></tr>`;
+        } else {
+            view.forEach(d => {
+                const tr = document.createElement('tr'); tr.className = 'data-row';
+                let ctxHtml = `<span class="core-tag">System Core</span>`, unitHtml = `<span class="unit-static">${esc(d.unit)||'-'}</span>`;
+                if(d.isCustom) {
+                    ctxHtml = `<select id="grid-ctx-${d.id}" class="c-select cell-input ${!d.context?'req':''}" onchange="updateItemContext(${d.id}, this.value)"><option value="">Select Category</option><option value="قرار لجنة" ${d.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${d.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${d.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${d.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select>`;
+                    unitHtml = `<input id="grid-unit-${d.id}" type="text" class="cell-input" style="width:100%" value="${esc(d.unit)||''}" onchange="updateItemUnit(${d.id}, this.value)">`;
+                }
+                tr.innerHTML = `<td><strong style="font-size:1.02rem">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
+                    <td>${unitHtml}</td>
+                    <td>${ctxHtml}</td>
+                    <td style="text-align:center"><input id="grid-qty-${d.id}" type="number" class="cell-input mono-num" min="1" value="${d.quantity}" onchange="updateItemQuantity(${d.id}, this.value)"></td>
+                    <td style="text-align:center" class="row-actions">
+                        <button class="btn-icon" onclick="cloneItem(${d.id})" title="Clone line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        <button class="btn-del" onclick="deleteItem(${d.id})" title="Remove line"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </td>`;
+                dom.grid.appendChild(tr);
+            });
+        }
+
         if(activeId) {
             setTimeout(() => {
                 let el = document.getElementById(activeId);
@@ -1220,6 +1539,30 @@
         }
     }
 
+    function openScaleTool() {
+        document.getElementById('scale-factor').value = '';
+        updateScalePreview();
+        document.getElementById('scale-modal').classList.add('active');
+    }
+    function closeScaleTool() { document.getElementById('scale-modal').classList.remove('active'); }
+    function setScaleFactor(f) { document.getElementById('scale-factor').value = f; updateScalePreview(); }
+    function updateScalePreview() {
+        let f = parseFloat(document.getElementById('scale-factor').value);
+        const view = getViewRows();
+        const prev = document.getElementById('scale-preview');
+        if(!f || isNaN(f) || !view.length) { prev.textContent = `${view.length} visible line(s) will be affected.`; return; }
+        prev.textContent = `${view.length} visible line(s) · e.g. ${view[0].quantity} -> ${Math.max(1, Math.round(view[0].quantity*f))}`;
+    }
+    function applyScale() {
+        let f = parseFloat(document.getElementById('scale-factor').value);
+        if(!f || isNaN(f) || f <= 0) { showToast('Enter a valid factor', 'error'); return; }
+        const view = getViewRows();
+        const ids = new Set(view.map(d => d.id));
+        DATA.forEach(d => { if(ids.has(d.id)) d.quantity = Math.max(1, Math.round(d.quantity*f)); });
+        drawGrid(); saveLocalBackup(); closeScaleTool();
+        showToast(`Scaled ${ids.size} line(s) by ×${f}`);
+    }
+
     function switchView(id) {
         document.querySelectorAll('.view-panel').forEach(p => {
             if (p.classList.contains('active')) { p.classList.remove('active'); p.classList.add('exit'); }
@@ -1229,35 +1572,35 @@
         tgt.classList.remove('exit'); tgt.classList.add('active');
     }
 
-    function openImport() { 
+    function openImport() {
         document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('exit', 'active'));
         document.getElementById('import-ui').classList.add('active');
-        document.getElementById('import-modal').classList.add('active'); 
+        document.getElementById('import-modal').classList.add('active');
     }
-    
-    function closeImport() { 
-        document.getElementById('import-modal').classList.remove('active'); 
-        setTimeout(() => { 
-            document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null; 
-            document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to database.'; 
+
+    function closeImport() {
+        document.getElementById('import-modal').classList.remove('active');
+        setTimeout(() => {
+            document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null;
+            document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to the ledger database.';
             const dzIcon = document.querySelector('#dz .dz-icon'); if(dzIcon) dzIcon.innerHTML = ORIGINAL_DZ_ICON;
             const dzEl = document.getElementById('dz'); if(dzEl) dzEl.style.pointerEvents = '';
-        }, 400); 
+        }, 400);
     }
-    
+
     function exportCSVTemplate() {
         const bom = "\uFEFF"; const csvContent = "year,month,pharmacy,name,unit,quantity,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
-        const link = document.createElement("a"); link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(bom + csvContent)); link.setAttribute("download", "LX_Form_Template.csv");
+        const link = document.createElement("a"); link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(bom + csvContent)); link.setAttribute("download", "LX_Ledger_Template.csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
     const dz = document.getElementById('dz');
-    dz.addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect='copy'; dz.classList.add('drag'); }); 
+    dz.addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect='copy'; dz.classList.add('drag'); });
     dz.addEventListener('dragleave', e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); });
     dz.addEventListener('drop', e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files); });
 
-    const ORIGINAL_DZ_ICON = `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
-    const SPINNER_DZ_ICON = `<svg class="spinner" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+    const ORIGINAL_DZ_ICON = `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+    const SPINNER_DZ_ICON = `<svg class="spinner" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
 
     function handleFile(fileList) {
         if(!fileList || !fileList.length) return;
@@ -1274,9 +1617,9 @@
         let parseWarnings = [];
         let emptyFiles = [];
         let newFileIds = [];
-        
+
         ['year','month','class','region'].forEach(k=>{let s=document.getElementById(`rev-${k}`); s.innerHTML='<option value="">'+k+'</option>';});
-        { const yr = getYearRange(); let opts = []; for(let i=yr.min; i<=yr.max; i++) opts.push(`<option value="${i}">${i}</option>`); document.getElementById('rev-year').innerHTML += opts.join(''); }
+        getSelectYears().forEach(y => document.getElementById('rev-year').innerHTML += `<option value="${y}">${y}</option>`);
         DIC.months.en.forEach((m,i)=>document.getElementById('rev-month').innerHTML+=`<option value="${m}">${DIC.months.ar[i]}</option>`);
         Object.entries(DIC.classes).forEach(([k,v])=>document.getElementById('rev-class').innerHTML+=`<option value="${k}">${v}</option>`);
         Object.entries(DIC.regions).forEach(([k,v])=>document.getElementById('rev-region').innerHTML+=`<option value="${k}">${v}</option>`);
@@ -1289,8 +1632,6 @@
                     if(!res.data.length) { emptyFiles.push(f.name); processed++; if(processed === files.length) finishBatch(); return; }
 
                     let meta = { year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy };
-                    // Fill each meta field independently the first time it's seen, instead of locking
-                    // all fields to whatever the first metadata-bearing row happened to contain.
                     let metaFilled = { year: !!meta.year, month: !!meta.month, pharmacy: !!meta.pharmacy };
                     let stagingMap = new Map();
                     res.data.forEach((r, i) => {
@@ -1298,10 +1639,13 @@
                             if(!metaFilled.year && r.year) { meta.year = r.year.trim(); metaFilled.year = true; }
                             if(!metaFilled.month && r.month) { meta.month = r.month.trim(); metaFilled.month = true; }
                             if(!metaFilled.pharmacy && r.pharmacy) {
-                                let pName = r.pharmacy.trim();
+                                let pRaw = r.pharmacy.trim();
+                                let pNorm = normalizeAr(pRaw);
+                                let pIdLower = pRaw.toLowerCase();
+                                findPharm:
                                 for(let c in PHARM) for(let rgn in PHARM[c]) {
-                                    let fObj = PHARM[c][rgn].find(x=>x.n===pName||x.id===pName);
-                                    if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; metaFilled.pharmacy = true; }
+                                    let fObj = PHARM[c][rgn].find(x => normalizeAr(x.n) === pNorm || x.id.toLowerCase() === pIdLower);
+                                    if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; metaFilled.pharmacy = true; break findPharm; }
                                 }
                             }
                         }
@@ -1314,12 +1658,12 @@
                         let uL = safeUnit.toLowerCase();
                         let exactSysMatch = SEARCH_IDX.find(x => x.t === 'product' && x.txt.toLowerCase() === nL && x.u.toLowerCase() === uL);
                         let isSystem = !!exactSysMatch;
-                        
+
                         let name = isSystem ? exactSysMatch.txt : safeName;
                         let unit = isSystem ? exactSysMatch.u : safeUnit;
                         let ctx = isSystem ? '' : safeContext;
                         let rawId = isSystem ? exactSysMatch.raw : '';
-                        
+
                         let key = (isSystem ? rawId : `${name}|${unit}|${ctx}`).toLowerCase();
                         if(!name) key = 'empty_'+i;
                         if(stagingMap.has(key)) {
@@ -1344,7 +1688,7 @@
             if(parseWarnings.length) notes.push(`Parsing issues in: ${parseWarnings.join(', ')}`);
             if(notes.length) showToast(notes.join(' — '), 'error');
             if(!IMPORT_FILES.length) {
-                document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to database.';
+                document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to the ledger database.';
                 document.querySelector('#dz .dz-icon').innerHTML = ORIGINAL_DZ_ICON;
                 document.getElementById('dz').style.pointerEvents = '';
                 return;
@@ -1382,7 +1726,7 @@
             let chips = '';
             if (c.err) chips += `<span style="color:var(--danger);font-weight:800;">${c.err} err</span>`;
             if (c.dupe) chips += `${chips?' · ':''}<span style="color:var(--warning);font-weight:800;">${c.dupe} dup</span>`;
-            if (c.ready) chips += `${chips?' · ':''}<span style="color:var(--success);font-weight:800;">${c.ready} ok</span>`;
+            if (c.ready) chips += `${chips?' · ':''}<span style="color:var(--accent-2);font-weight:800;">${c.ready} ok</span>`;
             div.innerHTML = `<span>${esc(f.name)}</span>${chips ? `<span style="font-size:0.7rem;opacity:0.85;">${chips}</span>` : ''} <span class="close-tab" onclick="event.stopPropagation(); removeFile('${f.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`;
             div.onclick = () => switchActiveFile(f.id);
             tc.appendChild(div);
@@ -1490,7 +1834,7 @@
         const overlapping = f.rows.filter(s => s.checked && gridKeys.has(`${s.name}|${s.unit}|${s.isSystem ? '' : s.context}`.toLowerCase()));
         if (overlapping.length) {
             banner.style.display = 'flex';
-            document.getElementById('overlap-warning-text').textContent = `${overlapping.length} item(s) in this file (e.g. "${overlapping[0].name}") already exist in your open workspace for this pharmacy/month. Importing will create separate DB entries rather than merging — clear or submit your workspace first if you want them combined.`;
+            document.getElementById('overlap-warning-text').textContent = `${overlapping.length} item(s) in this file (e.g. "${overlapping[0].name}") already exist in your open workspace for this pharmacy/month. Importing will create separate DB entries rather than merging — clear or push your workspace first if you want them combined.`;
         } else {
             banner.style.display = 'none';
         }
@@ -1509,12 +1853,12 @@
             let valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
             let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
             let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Merged' : 'Ready')));
-            
+
             tb.innerHTML += `
             <tr class="${trCls}">
                 <td style="text-align:center;"><input id="rev-chk-${i}" type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="updateStg(${i}, 'chk', this.checked)"></td>
-                <td><input id="rev-name-${i}" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent);' : ''}"></td>
-                <td><input id="rev-unit-${i}" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent);' : ''}"></td>
+                <td><input id="rev-name-${i}" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
+                <td><input id="rev-unit-${i}" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
                 <td><select id="rev-ctx-${i}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;${s.isSystem ? ' opacity:0.4;' : ''}" onchange="updateStg(${i}, 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
                 <td style="text-align:center;"><input id="rev-qty-${i}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg(${i}, 'qty', this.value)" style="width:100%;"></td>
                 <td style="text-align:center;"><span class="status-badge ${statCls}">${statTxt}</span></td>
@@ -1528,7 +1872,7 @@
             allChk.checked = checkedCount > 0 && checkedCount === f.rows.length;
             allChk.indeterminate = checkedCount > 0 && checkedCount < f.rows.length;
         }
-        
+
         if (activeEl) {
             setTimeout(() => {
                 let el = document.getElementById(activeEl);
@@ -1544,19 +1888,55 @@
 
     function showErrorModal() {
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-        document.getElementById('status-title').textContent = 'Submission Failed / Offline!'; document.getElementById('status-title').style.color = 'var(--danger)';
-        document.getElementById('status-desc').innerHTML = 'Network or database error.<br><strong style="color:var(--text-main)">Don\'t worry!</strong> Your data was automatically downloaded as CSV and JSON backups. It will try to sync later if connection returns.';
+        document.getElementById('status-title').textContent = 'Push Failed — Offline'; document.getElementById('status-title').style.color = 'var(--danger)';
+        document.getElementById('status-desc').innerHTML = 'The database could not be reached.<br><strong style="color:var(--text-main)">Your data is safe.</strong> It was downloaded as a CSV/JSON backup and queued to sync automatically once you\'re back online.';
         document.getElementById('status-btn').style.background = 'var(--surface-hover)'; document.getElementById('status-btn').style.color = 'var(--text-main)';
         document.getElementById('status-modal').classList.add('active');
     }
 
     function showSuccessModal(msg) {
-        document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-        document.getElementById('status-title').textContent = 'Success!'; document.getElementById('status-title').style.color = 'var(--success)';
+        document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        document.getElementById('status-title').textContent = 'Pushed'; document.getElementById('status-title').style.color = 'var(--accent-2)';
         document.getElementById('status-desc').textContent = msg;
-        document.getElementById('status-btn').style.background = 'var(--success)'; document.getElementById('status-btn').style.color = 'white';
+        document.getElementById('status-btn').style.background = 'var(--accent-2)'; document.getElementById('status-btn').style.color = 'var(--ink-fixed)';
         document.getElementById('status-modal').classList.add('active');
     }
+
+    function loadPendingQueue() { try { return JSON.parse(localStorage.getItem('lx_pending') || '[]'); } catch(e) { return []; } }
+    function savePendingQueue(q) { localStorage.setItem('lx_pending', JSON.stringify(q)); renderPendingBadge(); }
+    function queuePending(payload, label) { let q = loadPendingQueue(); q.push({ id: Date.now()+Math.random(), label, payload, ts: new Date().toISOString() }); savePendingQueue(q); }
+    function renderPendingBadge() {
+        let q = loadPendingQueue();
+        const btn = document.getElementById('sync-btn');
+        if(!btn) return;
+        if(q.length) { btn.style.display = 'inline-flex'; document.getElementById('sync-count').textContent = q.length; }
+        else btn.style.display = 'none';
+    }
+    function pushBatchToFirebase(payload) {
+        if(typeof firebase === 'undefined') return Promise.reject(new Error('offline'));
+        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
+        let updates = {};
+        payload.forEach(item => { let k = firebase.database().ref().child('pharmacyData').push().key; updates[k] = item; });
+        return firebase.database().ref('pharmacyData').update(updates);
+    }
+    let isRetryingQueue = false;
+    function retryPendingQueue() {
+        if(isRetryingQueue) return;
+        let q = loadPendingQueue();
+        if(!q.length) return;
+        isRetryingQueue = true;
+        const entry = q[0];
+        pushBatchToFirebase(entry.payload).then(() => {
+            let q2 = loadPendingQueue(); q2.shift(); savePendingQueue(q2);
+            showToast(`Synced pending batch (${entry.label})`);
+            isRetryingQueue = false;
+            if(q2.length) retryPendingQueue();
+        }).catch(() => {
+            isRetryingQueue = false;
+            showToast('Still offline — will retry automatically.', 'error');
+        });
+    }
+    window.addEventListener('online', retryPendingQueue);
 
     let isPushingImport = false;
     function confirmReview() {
@@ -1578,7 +1958,7 @@
                 showToast(`Please fix highlighted errors in file: ${f.name}`, 'error');
                 return;
             }
-            
+
             let mergedRows = new Map();
             activeRows.forEach(s => {
                 let n = s.isSystem ? s.name : s.name.trim(), u = s.isSystem ? s.unit : s.unit.trim(), isCustom = !s.isSystem, ctx = s.isSystem ? '' : s.context;
@@ -1593,47 +1973,38 @@
         }
 
         if(!payload.length) { showToast('No active items to import across files.', 'error'); return; }
-        
-        const btn = document.getElementById('btn-confirm-import'); const origTxt = btn.textContent; isPushingImport = true; btn.disabled = true; btn.textContent = 'Submitting...';
-        exportPayload(payload, '_ImportBatch');
-        
-        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
-        
-        let updates = {};
-        payload.forEach(item => {
-            let newKey = firebase.database().ref().child('pharmacyData').push().key;
-            updates[newKey] = item;
-        });
 
-        // settled = we've already told the user an outcome. timedOut = that outcome was the
-        // "assumed failed" timeout path, so a late real success/error doesn't show a 2nd conflicting modal.
+        const btn = document.getElementById('btn-confirm-import'); const origTxt = btn.textContent; isPushingImport = true; btn.disabled = true; btn.textContent = 'Pushing...';
+        exportPayload(payload, '_ImportBatch');
+
         let settled = false, timedOut = false;
         const restoreConfirmBtn = () => { isPushingImport = false; btn.disabled = false; btn.textContent = origTxt; };
-        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; showErrorModal(); restoreConfirmBtn(); } }, 8000);
-        
-        firebase.database().ref('pharmacyData').update(updates).then(() => { 
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; queuePending(payload, 'Import batch'); showErrorModal(); restoreConfirmBtn(); } }, 8000);
+
+        pushBatchToFirebase(payload).then(() => {
             clearTimeout(timeout);
-            if (timedOut) { showToast('Import actually completed after the earlier timeout — no need to resubmit.'); closeImport(); return; }
+            if (timedOut) { showToast('Import actually completed after the earlier timeout — check the Sync queue before resubmitting.'); closeImport(); return; }
             if (settled) return;
             settled = true;
-            showSuccessModal('Batch Imported & Submitted successfully to DB.' + (skippedFiles.length ? ` (Skipped, no active rows: ${skippedFiles.join(', ')})` : '')); 
-            closeImport(); restoreConfirmBtn(); 
-        }).catch(() => { 
+            showSuccessModal('Batch imported and pushed to the ledger database.' + (skippedFiles.length ? ` (Skipped, no active rows: ${skippedFiles.join(', ')})` : ''));
+            closeImport(); restoreConfirmBtn();
+        }).catch(() => {
             clearTimeout(timeout);
             if (settled) return;
             settled = true;
-            showErrorModal(); restoreConfirmBtn(); 
+            queuePending(payload, 'Import batch');
+            showErrorModal(); restoreConfirmBtn();
         });
     }
 
     function saveSession() {
         const sessionPayload = JSON.stringify({ state: STATE, data: DATA }, null, 2);
         const link = document.createElement('a'); link.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(sessionPayload)); link.setAttribute('download', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Session Saved Locally");
+        document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Saved a local copy");
     }
-    
+
     function loadSession(file) {
-        if(!file) return; const reader = new FileReader(); reader.onload = e => { try { const s = JSON.parse(e.target.result); if(s.state) STATE={...STATE,...s.state}; if(s.data) DATA=s.data; updateHudUI(); drawGrid(); showToast('Session Loaded'); saveLocalBackup(); } catch(err){} }; reader.readAsText(file); document.getElementById('file-load').value='';
+        if(!file) return; const reader = new FileReader(); reader.onload = e => { try { const s = JSON.parse(e.target.result); if(s.state) STATE={...STATE,...s.state}; if(s.data) DATA=s.data; migrateIds(); updateHudUI(); drawGrid(); showToast('Session loaded'); saveLocalBackup(); } catch(err){} }; reader.readAsText(file); document.getElementById('file-load').value='';
     }
 
     const THEME_ICONS = {
@@ -1641,8 +2012,25 @@
         light: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>'
     };
     function syncThemeIcon() { const el = document.getElementById('theme-icon'); if(el) el.innerHTML = THEME_ICONS[document.documentElement.dataset.theme] || THEME_ICONS.dark; }
-    function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; syncThemeIcon(); }
-    let toastTimeout; function showToast(msg, type='normal') { const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent = msg; if(type==='error') t.classList.add('error-toast'); else t.classList.remove('error-toast'); t.classList.add('show'); clearTimeout(toastTimeout); toastTimeout = setTimeout(()=>t.classList.remove('show'), 3000); }
+    function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('lx_theme', root.dataset.theme); syncThemeIcon(); }
+    let toastTimeout;
+    function showToast(msg, type='normal', actionLabel=null, actionFn=null) {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-msg').textContent = msg;
+        const actionSlot = document.getElementById('toast-action');
+        if(actionLabel && actionFn) {
+            actionSlot.style.display = 'inline-flex';
+            actionSlot.textContent = actionLabel;
+            actionSlot.onclick = () => { actionFn(); t.classList.remove('show'); };
+        } else {
+            actionSlot.style.display = 'none';
+            actionSlot.onclick = null;
+        }
+        type==='error' ? t.classList.add('error-toast') : t.classList.remove('error-toast');
+        t.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(()=>t.classList.remove('show'), actionLabel ? 6000 : 3000);
+    }
 
     function exportPayload(p, suffix = '') {
         const jsonLink = document.createElement('a'); jsonLink.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2))); jsonLink.setAttribute("download", `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.json`); document.body.appendChild(jsonLink); jsonLink.click(); document.body.removeChild(jsonLink);
@@ -1654,49 +2042,45 @@
     let isSubmittingData = false;
     function submitToDB() {
         if(isSubmittingData) return;
-        if(!STATE.year||!STATE.month||!STATE.class||!STATE.region||!STATE.pharmacy) { showToast('Please complete all HUD fields.', 'error'); return; }
-        if(!DATA.length) { showToast('Add items to submit.', 'error'); return; }
-        if(DATA.some(d => d.isCustom && (!d.context || !d.unit.trim()))) { showToast('Enter Unit and Context for all EXT items.', 'error'); return; }
-        
+        if(!STATE.year||!STATE.month||!STATE.class||!STATE.region||!STATE.pharmacy) { flashMissingHud(); showToast('Complete the ledger header first.', 'error'); return; }
+        if(!DATA.length) { showToast('Nothing logged to push yet.', 'error'); return; }
+        if(DATA.some(d => d.isCustom && (!d.context || !d.unit.trim()))) { showToast('Every EXT line needs a Unit and Context.', 'error'); return; }
+
         const btn = document.getElementById('btn-submit'); const txt = document.getElementById('submit-text'); const icon = document.getElementById('submit-icon');
         const origIcon = icon.outerHTML; const origTxt = txt.textContent; isSubmittingData = true; btn.disabled = true;
-        icon.outerHTML=`<svg id="submit-icon" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`; 
-        txt.textContent='Submitting...';
+        icon.outerHTML=`<svg id="submit-icon" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>`;
+        txt.textContent='Pushing...';
 
         const p = DATA.map(d=>({ year:STATE.year, month:STATE.month, class:STATE.class, region:STATE.region, pharmacy:STATE.pharmacy, name:d.isCustom?`${d.name} (${d.context})`:d.name, unit:d.unit, unitSold:d.quantity, method:d.isCustom?'new':'old', category:d.context, ts:new Date().toISOString() }));
         exportPayload(p);
 
         const restoreBtn = () => { isSubmittingData = false; btn.disabled = false; document.getElementById('submit-icon').outerHTML = origIcon; txt.textContent = origTxt; };
-        if(!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://plan-b-d4c36-default-rtdb.firebaseio.com" });
-        
-        let updates = {};
-        p.forEach(item => {
-            let newKey = firebase.database().ref().child('pharmacyData').push().key;
-            updates[newKey] = item;
-        });
 
-        // settled = we've already told the user an outcome. timedOut = that outcome was the
-        // "assumed failed" timeout path, so a late real success/error doesn't show a 2nd conflicting modal
-        // and — critically — doesn't silently wipe DATA out from under a user who already re-entered it.
         let settled = false, timedOut = false;
-        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; showErrorModal(); restoreBtn(); } }, 8000);
-        
-        firebase.database().ref('pharmacyData').update(updates).then(()=>{ 
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; queuePending(p, 'Workspace batch'); showErrorModal(); restoreBtn(); } }, 8000);
+
+        pushBatchToFirebase(p).then(()=>{
             clearTimeout(timeout);
-            if (timedOut) { showToast('Earlier submission actually went through — your workspace was NOT auto-cleared, please check for duplicates before resubmitting.'); return; }
+            if (timedOut) { showToast('Went through after all — check the Sync queue for the duplicate before resubmitting.'); return; }
             if (settled) return;
             settled = true;
-            showSuccessModal('Workspace securely pushed & exported.'); 
-            DATA=[]; localStorage.removeItem('lx_b'); lastBackupSnapshot=''; drawGrid(); restoreBtn(); 
-        }).catch(()=>{ 
+            showSuccessModal('Workspace pushed and exported.');
+            DATA=[]; localStorage.removeItem('lx_b'); lastBackupSnapshot=''; drawGrid(); restoreBtn();
+        }).catch(()=>{
             clearTimeout(timeout);
             if (settled) return;
             settled = true;
-            showErrorModal(); restoreBtn(); 
+            queuePending(p, 'Workspace batch');
+            showErrorModal(); restoreBtn();
         });
     }
 
-    window.onload = () => { buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); dom.omni.focus(); setInterval(saveLocalBackup, 30000); };
+    window.onload = () => {
+        buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); renderFrequentChips(); renderPendingBadge();
+        dom.omni.focus();
+        setInterval(saveLocalBackup, 30000);
+        setTimeout(retryPendingQueue, 1500);
+    };
 </script>
 </body>
 </html>
