@@ -332,11 +332,12 @@
     .filter-box {
         display: flex; align-items: center; gap: 7px; background: var(--surface);
         border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 0 0.9rem; height: 38px;
-        color: var(--text-muted); transition: border-color .15s ease;
+        color: var(--text-muted); transition: border-color .15s ease, box-shadow .15s ease;
     }
-    .filter-box:focus-within { border-color: var(--accent); color: var(--accent-strong); }
+    .filter-box:focus-within { border-color: var(--accent); color: var(--accent-strong); box-shadow: var(--focus-ring); }
     .filter-box input { border: none; background: transparent; color: var(--text-main); font-size: 0.85rem; width: 150px; height: 100%; font-family: var(--font-en); }
     .filter-box input::placeholder { color: var(--text-muted); }
+    .filter-box input:focus-visible { outline: none; }
     .btn-stub {
         display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem;
         background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
@@ -1578,7 +1579,13 @@
         document.getElementById('import-modal').classList.add('active');
     }
 
-    function closeImport() {
+    function hasStagedImportRows() { return IMPORT_FILES.some(f => f.rows && f.rows.length); }
+
+    function closeImport(skipConfirm) {
+        if(!skipConfirm && hasStagedImportRows()) {
+            openConfirm('Discard this import?', 'You have staged CSV rows that haven\'t been pushed yet. Closing now will discard them.', 'Discard', () => closeImport(true));
+            return;
+        }
         document.getElementById('import-modal').classList.remove('active');
         setTimeout(() => {
             document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null;
