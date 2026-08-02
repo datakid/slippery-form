@@ -278,6 +278,32 @@
 
     .omni-unit { width: 150px; }
     .omni-ctx { width: 190px; font-family: var(--font-ar); cursor: pointer; appearance: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='gray' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E") no-repeat right 14px center; }
+
+    .ctx-native-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; background: none !important; }
+
+    .omni-ctx-wrap { position: relative; width: 190px; height: 100%; }
+    .omni-ctx-trigger {
+        height: 100%; width: 100%; padding: 0 1.3rem; border: none; cursor: pointer;
+        background: transparent; color: var(--text-muted); font-family: var(--font-en); font-size: 0.95rem;
+        border-radius: var(--radius-lg); transition: all 0.15s ease;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left;
+    }
+    .omni-ctx-trigger:hover, .omni-ctx-wrap.open .omni-ctx-trigger { background: var(--surface-2); }
+    .omni-ctx-trigger .ctx-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .omni-ctx-trigger.filled .ctx-label { color: var(--text-main); font-family: var(--font-ar); font-weight: 600; }
+    .omni-ctx-trigger .ctx-caret { flex-shrink: 0; color: var(--text-muted); transition: transform 0.15s var(--ease-out); }
+    .omni-ctx-wrap.open .ctx-caret { transform: rotate(180deg); }
+    .omni-ctx-wrap.disabled .omni-ctx-trigger { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .omni-ctx-menu {
+        position: absolute; top: calc(100% + 10px); left: 0; right: 0;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+        padding: 8px; box-shadow: var(--shadow-lg); max-height: 260px; overflow-y: auto;
+        opacity: 0; pointer-events: none; visibility: hidden; transform: translateY(-4px);
+        transition: all 0.2s var(--ease-out); z-index: 200;
+    }
+    .omni-ctx-wrap.open .omni-ctx-menu { opacity: 1; pointer-events: auto; visibility: visible; transform: translateY(0); }
+    .omni-ctx-menu .drop-item.sel { background: var(--accent-glow); color: var(--accent-strong); }
     .qty-input { width: 130px; font-size: 1.1rem; font-weight: 600; text-align: center; }
 
     .omni-input:focus, .omni-unit:focus, .omni-ctx:focus, .qty-input:focus { background: var(--surface-2); }
@@ -576,7 +602,7 @@
         .omni-row { flex-wrap: wrap; height: auto; padding: 12px; gap: 8px; }
         .omni-wrapper { width: 100%; flex: none; border-bottom: none; padding-bottom: 0; }
         .omni-wrapper::after { display: none; }
-        .omni-unit, .omni-ctx { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
+        .omni-unit, .omni-ctx-wrap { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
         .qty-input, .btn-enter { width: calc(50% - 4px); height: 48px; margin-top: 0; }
         .qty-input { border: 1px solid var(--border); }
 
@@ -663,13 +689,26 @@
             <div class="omni-results" id="omni-res"></div>
         </div>
         <input type="text" class="omni-unit" id="omni-unit" placeholder="Unit" autocomplete="off">
-        <select class="omni-ctx" id="omni-ctx">
-            <option value="">Context...</option>
-            <option value="قرار لجنة">قرار لجنة</option>
-            <option value="حكم قضائي">حكم قضائي</option>
-            <option value="شئون طبية">شئون طبية</option>
-            <option value="داخل اللستة">داخل اللستة</option>
-        </select>
+        <div class="omni-ctx-wrap" id="omni-ctx-wrap">
+            <button type="button" class="omni-ctx-trigger" id="omni-ctx-trigger" onclick="toggleCtxMenu(event)">
+                <span class="ctx-label" id="omni-ctx-label">Context...</span>
+                <svg class="ctx-caret" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 11L3 6h10z"/></svg>
+            </button>
+            <select class="omni-ctx ctx-native-hidden" id="omni-ctx" tabindex="-1">
+                <option value="">Context...</option>
+                <option value="قرار لجنة">قرار لجنة</option>
+                <option value="حكم قضائي">حكم قضائي</option>
+                <option value="شئون طبية">شئون طبية</option>
+                <option value="داخل اللستة">داخل اللستة</option>
+            </select>
+            <div class="omni-ctx-menu" id="omni-ctx-menu">
+                <div class="drop-item" data-val="" onclick="selectCtxOption('')">Context...</div>
+                <div class="drop-item" data-val="قرار لجنة" onclick="selectCtxOption('قرار لجنة')">قرار لجنة</div>
+                <div class="drop-item" data-val="حكم قضائي" onclick="selectCtxOption('حكم قضائي')">حكم قضائي</div>
+                <div class="drop-item" data-val="شئون طبية" onclick="selectCtxOption('شئون طبية')">شئون طبية</div>
+                <div class="drop-item" data-val="داخل اللستة" onclick="selectCtxOption('داخل اللستة')">داخل اللستة</div>
+            </div>
+        </div>
         <input type="number" class="qty-input" id="qty" placeholder="Qty" min="1">
         <button class="btn-enter" onclick="processAdd()">Enter ↵</button>
     </div>
@@ -951,6 +990,47 @@
     const fuse = new Fuse(SEARCH_IDX, { keys: ['_t'], threshold: 0.5, includeScore: true, ignoreLocation: true });
     const dom = { omni: document.getElementById('omni'), unit: document.getElementById('omni-unit'), ctx: document.getElementById('omni-ctx'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
     const omniFields = [dom.omni, dom.unit, dom.ctx, dom.qty];
+
+    function syncCtxUI() {
+        const wrap = document.getElementById('omni-ctx-wrap');
+        const label = document.getElementById('omni-ctx-label');
+        const trigger = document.getElementById('omni-ctx-trigger');
+        if(!wrap || !label || !trigger) return;
+        const val = dom.ctx.value;
+        label.textContent = val || 'Context...';
+        trigger.classList.toggle('filled', !!val);
+        wrap.classList.toggle('disabled', dom.ctx.disabled);
+        highlightCtxSelected();
+    }
+    function highlightCtxSelected() {
+        const val = dom.ctx.value;
+        document.querySelectorAll('#omni-ctx-menu .drop-item').forEach(d => d.classList.toggle('sel', (d.dataset.val || '') === val));
+    }
+    function openCtxMenu() {
+        const wrap = document.getElementById('omni-ctx-wrap');
+        if(!wrap || wrap.classList.contains('disabled')) return;
+        wrap.classList.add('open');
+        highlightCtxSelected();
+    }
+    function closeCtxMenu() {
+        const wrap = document.getElementById('omni-ctx-wrap');
+        if(wrap) wrap.classList.remove('open');
+    }
+    function toggleCtxMenu(e) {
+        if(e) e.stopPropagation();
+        const wrap = document.getElementById('omni-ctx-wrap');
+        if(!wrap || wrap.classList.contains('disabled')) return;
+        if(wrap.classList.contains('open')) closeCtxMenu(); else openCtxMenu();
+    }
+    function selectCtxOption(val) {
+        dom.ctx.value = val;
+        syncCtxUI();
+        closeCtxMenu();
+        if(!dom.ctx.disabled) dom.qty.focus();
+    }
+    dom.ctx.addEventListener('focus', openCtxMenu);
+    dom.ctx.addEventListener('change', syncCtxUI);
+    dom.ctx.addEventListener('input', syncCtxUI);
     let selIdx = -1, resList = [];
     let omniDebounceTimer = null;
 
@@ -1027,7 +1107,7 @@
         });
     }
 
-    document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show')); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); });
+    document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show')); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); if(!e.target.closest('.omni-ctx-wrap')) closeCtxMenu(); });
 
     document.addEventListener('keydown', e => {
         if(e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
@@ -1037,6 +1117,7 @@
             document.querySelectorAll('.hud-dropdown').forEach(d=>d.classList.remove('show'));
             ['scale-modal','confirm-modal','shortcuts-modal'].forEach(id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); });
             omniFields.forEach(f=>f.blur());
+            closeCtxMenu(); syncCtxUI();
         }
 
         const isGridInput = e.target.classList.contains('cell-input') || e.target.classList.contains('qty-rev-inp') || e.target.classList.contains('rev-inp');
@@ -1124,7 +1205,7 @@
     };
 
     dom.omni.addEventListener('input', e => {
-        const q = e.target.value; dom.unit.disabled = false; dom.ctx.disabled = false; dom.omni.dataset.raw = '';
+        const q = e.target.value; dom.unit.disabled = false; dom.ctx.disabled = false; dom.omni.dataset.raw = ''; syncCtxUI();
         clearTimeout(omniDebounceTimer);
         if(!q) { dom.res.classList.remove('show'); return; }
         omniDebounceTimer = setTimeout(() => runOmniSearch(q), 90);
@@ -1323,6 +1404,7 @@
             dom.ctx.disabled = true;
             dom.qty.focus();
         }
+        syncCtxUI();
     }
 
     function findDataIndex(id) { return DATA.findIndex(d => d.id === id); }
@@ -1435,7 +1517,7 @@
 
         dom.omni.value=''; dom.qty.value=''; dom.unit.value=''; dom.ctx.value='';
         dom.unit.disabled=false; dom.ctx.disabled=false;
-        dom.omni.dataset.raw=''; dom.omni.focus();
+        dom.omni.dataset.raw=''; dom.omni.focus(); syncCtxUI();
         drawGrid();
         document.getElementById('grid-container').scrollTop = 0;
         saveLocalBackup();
@@ -2083,7 +2165,7 @@
     }
 
     window.onload = () => {
-        buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); renderFrequentChips(); renderPendingBadge();
+        buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); renderFrequentChips(); renderPendingBadge(); syncCtxUI();
         dom.omni.focus();
         setInterval(saveLocalBackup, 30000);
         setTimeout(retryPendingQueue, 1500);
