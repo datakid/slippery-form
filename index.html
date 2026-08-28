@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>LX Ledger</title>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
@@ -27,7 +27,7 @@
         --border: rgba(38,36,28,0.10);
         --border-soft: rgba(38,36,28,0.06);
         --text-main: #2c2a24;
-        --text-muted: #8d8977;
+        --text-muted: #6f6c5d;
         --ink-fixed: #ffffff;
         --accent: #7c8f6e;
         --accent-strong: #647859;
@@ -79,6 +79,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    input, select, option, textarea, td, th, button, .stub-chip, .drop-item, .year-chip, .status-badge, .res-item, .file-tab span:first-child { unicode-bidi: plaintext; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
     input:focus-visible, select:focus-visible, button:focus-visible { outline-offset: 1px; }
     ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -93,6 +94,7 @@
         background-attachment: fixed;
         color: var(--text-main);
         height: 100vh;
+        height: 100dvh;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -164,6 +166,7 @@
         color: var(--text-muted);
         font-size: 0.82rem;
         font-weight: 500;
+        font-family: inherit;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -302,6 +305,7 @@
     }
     .omni-ctx-wrap.open .omni-ctx-menu { opacity: 1; pointer-events: auto; visibility: visible; transform: translateY(0); }
     .omni-ctx-menu .drop-item.sel { background: var(--accent-glow); color: var(--accent-strong); }
+    .omni-ctx-menu .drop-item.active-opt { outline: 2px solid var(--accent-2); outline-offset: -2px; }
     .qty-input { width: 130px; font-size: 1.1rem; font-weight: 600; text-align: center; }
 
     .omni-input:focus, .omni-unit:focus, .omni-ctx:focus, .qty-input:focus { background: var(--surface-2); }
@@ -352,6 +356,10 @@
         flex-shrink: 0;
     }
     .stub-chip:hover { border-color: var(--accent-2); color: var(--accent-2); background: var(--accent-2-glow); }
+    .chip-group { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .chip-side-btn { font-size: 0.7rem; line-height: 1; padding: 6px 6px; border-radius: var(--radius-xl); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; flex-shrink: 0; opacity: 0.6; transition: all .15s ease; }
+    .chip-side-btn:hover { color: var(--accent-2); border-color: var(--accent-2); opacity: 1; }
+    .chip-side-btn.pinned { color: var(--accent-2); border-color: var(--accent-2); opacity: 1; }
     .util-actions { display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0; }
     .filter-box {
         display: flex; align-items: center; gap: 7px; background: var(--surface);
@@ -477,6 +485,11 @@
     .btn-solid.danger-solid { background: var(--danger); color: #fff; }
     .btn-solid.danger-solid:hover { background: #9c4d41; }
 
+    #status-modal .modal-content.variant-ok #status-title { color: var(--accent-2); }
+    #status-modal .modal-content.variant-ok #status-btn { background: var(--accent-2); color: var(--ink-fixed); }
+    #status-modal .modal-content.variant-err #status-title { color: var(--danger); }
+    #status-modal .modal-content.variant-err #status-btn { background: var(--surface-2); color: var(--text-main); }
+
     .modal-overlay {
         position: fixed; inset: 0; background: rgba(30,28,20,0.35);
         backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center;
@@ -562,13 +575,17 @@
     .row-disabled td { opacity: 0.45; }
     .rev-checkbox { width: 1.15rem; height: 1.15rem; cursor: pointer; accent-color: var(--accent); border-radius: 3px; }
 
+    .toast-stack {
+        position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+        z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
+    }
     .toast {
-        position: fixed; bottom: 40px; left: 50%; transform: translate(-50%, 90px);
+        position: relative; pointer-events: auto;
         background: var(--text-main); color: var(--bg); padding: 0.85rem 0.7rem 0.85rem 1.3rem;
         border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); font-weight: 500;
-        transition: all 0.3s var(--ease-out); z-index: 9999; opacity: 0; display: flex; gap: 12px; align-items: center;
+        transition: all 0.3s var(--ease-out); opacity: 0; transform: translateY(12px); display: flex; gap: 12px; align-items: center;
     }
-    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error-toast { background: var(--danger); color: #fff; }
     .toast-action {
         background: rgba(255,255,255,0.14); border: none; color: inherit; padding: 5px 12px;
@@ -622,7 +639,8 @@
         .cell-input { width: 110px; font-size: 1rem; padding: 0.5rem; }
         .c-select { font-size: 0.85rem; padding: 0.5rem; }
 
-        .toast { bottom: 20px; width: 90%; justify-content: center; text-align: center; font-size: 0.9rem; }
+        .toast-stack { bottom: 20px; width: 90%; }
+        .toast { justify-content: center; text-align: center; font-size: 0.9rem; }
     }
 
     @media (max-width: 480px) {
@@ -633,7 +651,7 @@
 
     @media print {
         body { background: #fff !important; color: #000 !important; }
-        .hud-bar, .omni-row, .util-bar, .bottom-dock, .modal-overlay, .btn-del, .btn-icon, th:last-child, td:last-child, .toast, .shortcuts-hint, .omni-results { display: none !important; }
+        .hud-bar, .omni-row, .util-bar, .bottom-dock, .modal-overlay, .btn-del, .btn-icon, th:last-child, td:last-child, .toast-stack, .shortcuts-hint, .omni-results { display: none !important; }
         .workspace { padding: 0; } .grid-area { border: none; box-shadow: none; overflow: visible; }
         table { width: 100%; border-collapse: collapse; min-width: auto; } th, td { border: 1px solid #ddd; padding: 8px; color: #000 !important; }
         .report-header { display: block !important; text-align: right; direction: rtl; font-family: var(--font-ar); margin-bottom: 2rem; }
@@ -649,8 +667,8 @@
         <div class="hud-title"><span class="mark">LX</span>LEDGER<span class="beta">β</span></div>
         <div class="context-group">
             <div class="hud-item">
-                <div class="hud-pill" onclick="toggleHud('drop-year')">Year <span class="ar" id="txt-year"></span></div>
-                <div class="hud-dropdown" id="drop-year">
+                <button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-year" onclick="toggleHud('drop-year')">Year <span class="ar" id="txt-year"></span></button>
+                <div class="hud-dropdown" id="drop-year" role="menu" aria-label="Year">
                     <div class="year-input-box">
                         <input type="number" id="custom-year-input" placeholder="Type year...">
                         <button onclick="applyCustomYear()">Set</button>
@@ -658,10 +676,10 @@
                     <div id="year-suggestions"></div>
                 </div>
             </div>
-            <div class="hud-item"><div class="hud-pill" onclick="toggleHud('drop-month')">Month <span class="ar" id="txt-month"></span></div><div class="hud-dropdown" id="drop-month"></div></div>
-            <div class="hud-item"><div class="hud-pill" onclick="toggleHud('drop-class')">Class <span class="ar" id="txt-class"></span></div><div class="hud-dropdown" id="drop-class"></div></div>
-            <div class="hud-item"><div class="hud-pill" onclick="toggleHud('drop-region')">Region <span class="ar" id="txt-region"></span></div><div class="hud-dropdown" id="drop-region"></div></div>
-            <div class="hud-item"><div class="hud-pill" onclick="toggleHud('drop-pharmacy')">Pharmacy <span class="ar" id="txt-pharmacy"></span></div><div class="hud-dropdown" id="drop-pharmacy"></div></div>
+            <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-month" onclick="toggleHud('drop-month')">Month <span class="ar" id="txt-month"></span></button><div class="hud-dropdown" id="drop-month" role="menu" aria-label="Month"></div></div>
+            <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-class" onclick="toggleHud('drop-class')">Class <span class="ar" id="txt-class"></span></button><div class="hud-dropdown" id="drop-class" role="menu" aria-label="Class"></div></div>
+            <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-region" onclick="toggleHud('drop-region')">Region <span class="ar" id="txt-region"></span></button><div class="hud-dropdown" id="drop-region" role="menu" aria-label="Region"></div></div>
+            <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-pharmacy" onclick="toggleHud('drop-pharmacy')">Pharmacy <span class="ar" id="txt-pharmacy"></span></button><div class="hud-dropdown" id="drop-pharmacy" role="menu" aria-label="Pharmacy"></div></div>
         </div>
     </div>
     <div class="hud-right">
@@ -688,23 +706,23 @@
         </div>
         <input type="text" class="omni-unit" id="omni-unit" placeholder="Unit" autocomplete="off">
         <div class="omni-ctx-wrap" id="omni-ctx-wrap">
-            <button type="button" class="omni-ctx-trigger" id="omni-ctx-trigger" onclick="toggleCtxMenu(event)">
+            <button type="button" class="omni-ctx-trigger" id="omni-ctx-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="omni-ctx-menu" onclick="toggleCtxMenu(event)">
                 <span class="ctx-label" id="omni-ctx-label">Context...</span>
                 <svg class="ctx-caret" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 11L3 6h10z"/></svg>
             </button>
-            <select class="omni-ctx ctx-native-hidden" id="omni-ctx" tabindex="-1">
+            <select class="omni-ctx ctx-native-hidden" id="omni-ctx" tabindex="-1" aria-hidden="true">
                 <option value="">Context...</option>
                 <option value="قرار لجنة">قرار لجنة</option>
                 <option value="حكم قضائي">حكم قضائي</option>
                 <option value="شئون طبية">شئون طبية</option>
                 <option value="داخل اللستة">داخل اللستة</option>
             </select>
-            <div class="omni-ctx-menu" id="omni-ctx-menu">
-                <div class="drop-item" data-val="" onclick="selectCtxOption('')">Context...</div>
-                <div class="drop-item" data-val="قرار لجنة" onclick="selectCtxOption('قرار لجنة')">قرار لجنة</div>
-                <div class="drop-item" data-val="حكم قضائي" onclick="selectCtxOption('حكم قضائي')">حكم قضائي</div>
-                <div class="drop-item" data-val="شئون طبية" onclick="selectCtxOption('شئون طبية')">شئون طبية</div>
-                <div class="drop-item" data-val="داخل اللستة" onclick="selectCtxOption('داخل اللستة')">داخل اللستة</div>
+            <div class="omni-ctx-menu" id="omni-ctx-menu" role="listbox" aria-label="Context">
+                <div class="drop-item" id="ctx-opt-0" role="option" aria-selected="false" data-val="" onclick="selectCtxOption('')">Context...</div>
+                <div class="drop-item" id="ctx-opt-1" role="option" aria-selected="false" data-val="قرار لجنة" onclick="selectCtxOption('قرار لجنة')">قرار لجنة</div>
+                <div class="drop-item" id="ctx-opt-2" role="option" aria-selected="false" data-val="حكم قضائي" onclick="selectCtxOption('حكم قضائي')">حكم قضائي</div>
+                <div class="drop-item" id="ctx-opt-3" role="option" aria-selected="false" data-val="شئون طبية" onclick="selectCtxOption('شئون طبية')">شئون طبية</div>
+                <div class="drop-item" id="ctx-opt-4" role="option" aria-selected="false" data-val="داخل اللستة" onclick="selectCtxOption('داخل اللستة')">داخل اللستة</div>
             </div>
         </div>
         <input type="number" class="qty-input" id="qty" placeholder="Qty" min="1">
@@ -774,7 +792,7 @@
                 <h2 style="margin:0; font-size:1.4rem;">Keyboard Shortcuts</h2>
                 <p class="sub">Work faster using keyboard controls.</p>
             </div>
-            <button class="btn-del" onclick="document.getElementById('shortcuts-modal').classList.remove('active')">
+            <button class="btn-del" onclick="closeModal('shortcuts-modal')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -862,7 +880,13 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                         <span id="overlap-warning-text"></span>
                     </div>
-                    <div class="review-table-container" style="margin-top:1rem;">
+                    <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
+                        <div class="filter-box" style="height:34px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="review-filter" placeholder="Filter rows..." oninput="onReviewFilter(this.value)" style="width:160px;">
+                        </div>
+                    </div>
+                    <div class="review-table-container">
                         <table class="review-table">
                             <thead><tr><th style="width:50px;text-align:center"><input type="checkbox" id="rev-chk-all" class="rev-checkbox" title="Select / deselect all rows" onchange="toggleAllRows(this.checked)"></th><th>Product Name</th><th style="width:180px">Unit</th><th style="width:200px">Context</th><th style="width:120px;text-align:center">Qty</th><th style="width:120px;text-align:center">Status</th></tr></thead>
                             <tbody id="review-tbody"></tbody>
@@ -922,11 +946,11 @@
         <div id="status-icon"></div>
         <h2 id="status-title" style="margin: 1.5rem 0 0.5rem; font-size: 1.8rem; font-family: var(--font-display); text-transform: uppercase;"></h2>
         <p id="status-desc" style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;"></p>
-        <button class="btn-solid" id="status-btn" onclick="document.getElementById('status-modal').classList.remove('active')" style="width: 100%; justify-content: center; padding: 1rem;">Acknowledge</button>
+        <button class="btn-solid" id="status-btn" onclick="closeModal('status-modal')" style="width: 100%; justify-content: center; padding: 1rem;">Acknowledge</button>
     </div>
 </div>
 
-<div class="toast" id="toast"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span id="toast-msg"></span><button class="toast-action" id="toast-action" style="display:none;"></button></div>
+<div class="toast-stack" id="toast-stack" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <script>
     let STATE = { year: new Date().getFullYear().toString(), month: null, class: null, region: null, pharmacy: null };
@@ -938,7 +962,6 @@
     let sortKey = null, sortDir = 1;
     let undoStack = [];
     const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
-    const jsEsc = s => String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     function getYearBounds() { return { min: 2000, max: 2100 }; }
     function getRecentYears() { const y = new Date().getFullYear(); const arr = []; for(let i=y-3;i<=y+1;i++) arr.push(i); return arr; }
     function getSelectYears() { const y = new Date().getFullYear(); const arr = []; for(let i=y-8;i<=y+1;i++) arr.push(i); return arr; }
@@ -951,7 +974,7 @@
             .replace(/ث/g, 'ت')
             .trim();
     }
-    function lineKey(name, unit, context) { return `${name}`.toLowerCase()+'|'+`${unit}`.toLowerCase()+'|'+`${context}`.toLowerCase(); }
+    function lineKey(name, unit, context) { return normalizeAr(name)+'|'+normalizeAr(unit)+'|'+normalizeAr(context); }
     const CONTEXTS = ["قرار لجنة", "حكم قضائي", "شئون طبية", "داخل اللستة"];
     const DIC = {
         months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
@@ -986,8 +1009,9 @@
     SEARCH_IDX.forEach(o => { o._t = normalizeAr(`${o.txt} ${o.val||''} ${o.id||''} ${o.kw||''}`); });
 
     const fuse = new Fuse(SEARCH_IDX, { keys: ['_t'], threshold: 0.5, includeScore: true, ignoreLocation: true });
-    const dom = { omni: document.getElementById('omni'), unit: document.getElementById('omni-unit'), ctx: document.getElementById('omni-ctx'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
-    const omniFields = [dom.omni, dom.unit, dom.ctx, dom.qty];
+    const dom = { omni: document.getElementById('omni'), unit: document.getElementById('omni-unit'), ctx: document.getElementById('omni-ctx'), ctxTrigger: document.getElementById('omni-ctx-trigger'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
+    const omniFields = [dom.omni, dom.unit, dom.ctxTrigger, dom.qty];
+    function focusCtxField() { if(dom.ctx.disabled) return; dom.ctxTrigger.focus(); openCtxMenu(); }
 
     function syncCtxUI() {
         const wrap = document.getElementById('omni-ctx-wrap');
@@ -997,22 +1021,42 @@
         const val = dom.ctx.value;
         label.textContent = val || 'Context...';
         trigger.classList.toggle('filled', !!val);
+        trigger.setAttribute('aria-disabled', dom.ctx.disabled ? 'true' : 'false');
         wrap.classList.toggle('disabled', dom.ctx.disabled);
         highlightCtxSelected();
     }
+    function ctxOptions() { return Array.from(document.querySelectorAll('#omni-ctx-menu .drop-item')); }
+    function setCtxActive(idx, scrollIntoView) {
+        const opts = ctxOptions();
+        if(!opts.length) return;
+        idx = Math.max(0, Math.min(opts.length - 1, idx));
+        opts.forEach((d, i) => { d.classList.toggle('active-opt', i === idx); d.setAttribute('aria-selected', i === idx ? 'true' : 'false'); });
+        const trigger = document.getElementById('omni-ctx-trigger');
+        if(trigger && opts[idx]) trigger.setAttribute('aria-activedescendant', opts[idx].id);
+        if(scrollIntoView && opts[idx]) opts[idx].scrollIntoView({block:'nearest'});
+    }
     function highlightCtxSelected() {
         const val = dom.ctx.value;
-        document.querySelectorAll('#omni-ctx-menu .drop-item').forEach(d => d.classList.toggle('sel', (d.dataset.val || '') === val));
+        const opts = ctxOptions();
+        opts.forEach(d => d.classList.toggle('sel', (d.dataset.val || '') === val));
+        let idx = opts.findIndex(d => (d.dataset.val || '') === val);
+        setCtxActive(idx >= 0 ? idx : 0, false);
     }
     function openCtxMenu() {
         const wrap = document.getElementById('omni-ctx-wrap');
-        if(!wrap || wrap.classList.contains('disabled')) return;
+        if(!wrap || wrap.classList.contains('disabled') || wrap.classList.contains('open')) return;
+        const trigger = document.activeElement;
         wrap.classList.add('open');
+        document.getElementById('omni-ctx-trigger').setAttribute('aria-expanded', 'true');
         highlightCtxSelected();
+        layerStack.push({ id: 'omni-ctx-menu', trigger, close: () => { closeCtxMenu(); if(trigger && trigger.focus) { try { trigger.focus(); } catch(e) {} } } });
     }
     function closeCtxMenu() {
         const wrap = document.getElementById('omni-ctx-wrap');
         if(wrap) wrap.classList.remove('open');
+        const trigger = document.getElementById('omni-ctx-trigger');
+        if(trigger) trigger.setAttribute('aria-expanded', 'false');
+        layerStack = layerStack.filter(l => l.id !== 'omni-ctx-menu');
     }
     function toggleCtxMenu(e) {
         if(e) e.stopPropagation();
@@ -1026,7 +1070,29 @@
         closeCtxMenu();
         if(!dom.ctx.disabled) dom.qty.focus();
     }
-    dom.ctx.addEventListener('focus', openCtxMenu);
+    function ctxTriggerKeydown(e) {
+        const wrap = document.getElementById('omni-ctx-wrap');
+        if(!wrap || wrap.classList.contains('disabled')) return;
+        const isOpen = wrap.classList.contains('open');
+        const opts = ctxOptions();
+        let idx = opts.findIndex(d => d.classList.contains('active-opt'));
+        if(idx < 0) idx = 0;
+        if(e.key === 'ArrowDown') { e.preventDefault(); if(!isOpen) openCtxMenu(); else setCtxActive(idx + 1, true); }
+        else if(e.key === 'ArrowUp') { e.preventDefault(); if(!isOpen) openCtxMenu(); else setCtxActive(idx - 1, true); }
+        else if(e.key === 'Home' && isOpen) { e.preventDefault(); setCtxActive(0, true); }
+        else if(e.key === 'End' && isOpen) { e.preventDefault(); setCtxActive(opts.length - 1, true); }
+        else if(e.key === 'Enter') {
+            if(isOpen) { e.preventDefault(); e.stopImmediatePropagation(); if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
+            else { e.preventDefault(); } // suppress the button's native click-to-open so this falls through to handleKey's existing Enter-to-advance flow instead
+        }
+        else if(e.key === ' ' && isOpen) { e.preventDefault(); e.stopImmediatePropagation(); if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
+        else if(e.key.length === 1 && isOpen && /\S/.test(e.key)) {
+            const nk = normalizeAr(e.key);
+            const match = opts.findIndex(d => normalizeAr(d.textContent).trim().startsWith(nk));
+            if(match >= 0) { e.preventDefault(); setCtxActive(match, true); }
+        }
+    }
+    document.getElementById('omni-ctx-trigger').addEventListener('keydown', ctxTriggerKeydown);
     dom.ctx.addEventListener('change', syncCtxUI);
     dom.ctx.addEventListener('input', syncCtxUI);
     let selIdx = -1, resList = [];
@@ -1043,7 +1109,7 @@
         if(!el) return;
         if(!lastSavedAt) { el.textContent = ''; return; }
         let s = Math.round((Date.now()-lastSavedAt)/1000);
-        el.textContent = s < 3 ? 'synced' : s < 60 ? `synced ${s}s ago` : `synced ${Math.round(s/60)}m ago`;
+        el.textContent = s < 3 ? 'saved locally' : s < 60 ? `saved locally · ${s}s ago` : `saved locally · ${Math.round(s/60)}m ago`;
     }
     setInterval(renderLastSaved, 4000);
     function saveLocalBackup() {
@@ -1054,16 +1120,27 @@
         lastBackupSnapshot = snapshot;
         touchLastSaved();
     }
-    function migrateIds() { DATA.forEach(d => { if(d.id == null) d.id = ++ID_SEQ; }); }
+    function migrateIds() {
+        DATA.forEach(d => { if(d.id == null) d.id = ++ID_SEQ; });
+        let maxId = DATA.reduce((m, d) => (typeof d.id === 'number' && d.id > m) ? d.id : m, ID_SEQ);
+        ID_SEQ = Math.max(ID_SEQ, maxId);
+    }
     function loadLocalBackup() { try { const b = localStorage.getItem('lx_b'); if(b) { const p = JSON.parse(b); if(p.state) STATE = {...STATE, ...p.state}; if(p.data) DATA = p.data; migrateIds(); lastBackupSnapshot = JSON.stringify({ state: STATE, data: DATA }); updateHudUI(); drawGrid(); showToast('Recovered your last session'); } } catch(e) {} }
-    window.addEventListener('beforeunload', e => { if(DATA.length) { e.preventDefault(); e.returnValue=''; } });
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') saveLocalBackup(); });
+    window.addEventListener('pagehide', () => saveLocalBackup());
+    window.addEventListener('beforeunload', e => {
+        if(!DATA.length) return;
+        const snapshot = JSON.stringify({ state: STATE, data: DATA });
+        if(snapshot === lastBackupSnapshot) return;
+        e.preventDefault(); e.returnValue = '';
+    });
 
     function buildHudMenus() {
         const ySugg = document.getElementById('year-suggestions'), mDrop = document.getElementById('drop-month'), cDrop = document.getElementById('drop-class'), rDrop = document.getElementById('drop-region');
-        getRecentYears().forEach(y => ySugg.innerHTML += `<div class="year-chip" onclick="setHud('year', '${y}')">${y}</div>`);
-        DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
-        Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" onclick="setHud('class', '${k}')">${v}</div>`);
-        Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" onclick="setHud('region', '${k}')">${v}</div>`);
+        getRecentYears().forEach(y => ySugg.innerHTML += `<div class="year-chip" role="menuitem" tabindex="-1" onclick="setHud('year', '${y}')">${y}</div>`);
+        DIC.months.en.forEach((m, i) => mDrop.innerHTML += `<div class="drop-item" role="menuitem" tabindex="-1" onclick="setHud('month', '${m}')">${DIC.months.ar[i]}</div>`);
+        Object.entries(DIC.classes).forEach(([k,v]) => cDrop.innerHTML += `<div class="drop-item" role="menuitem" tabindex="-1" onclick="setHud('class', '${k}')">${v}</div>`);
+        Object.entries(DIC.regions).forEach(([k,v]) => rDrop.innerHTML += `<div class="drop-item" role="menuitem" tabindex="-1" onclick="setHud('region', '${k}')">${v}</div>`);
     }
 
     function applyCustomYear() {
@@ -1073,21 +1150,74 @@
         else { showToast(`Enter a valid year between ${yr.min} and ${yr.max}`, 'error'); }
     }
 
+    function getHudMenuItems(dropdown) { return dropdown ? Array.from(dropdown.querySelectorAll('[role="menuitem"]')) : []; }
+
+    function setHudRoving(dropdown, idx, moveFocus) {
+        const items = getHudMenuItems(dropdown);
+        if(!items.length) return;
+        idx = Math.max(0, Math.min(items.length - 1, idx));
+        items.forEach((it, i) => { it.tabIndex = i === idx ? 0 : -1; });
+        if(moveFocus) items[idx].focus();
+    }
+
+    let hudTypeAheadBuffer = '', hudTypeAheadTimer = null;
+    function handleHudDropdownKeydown(e) {
+        const dropdown = e.currentTarget;
+        const items = getHudMenuItems(dropdown);
+        if(!items.length) return;
+        let idx = items.indexOf(document.activeElement);
+        if(idx < 0) idx = 0;
+        if(e.key === 'ArrowDown') { e.preventDefault(); setHudRoving(dropdown, idx + 1, true); }
+        else if(e.key === 'ArrowUp') { e.preventDefault(); setHudRoving(dropdown, idx - 1, true); }
+        else if(e.key === 'Home') { e.preventDefault(); setHudRoving(dropdown, 0, true); }
+        else if(e.key === 'End') { e.preventDefault(); setHudRoving(dropdown, items.length - 1, true); }
+        else if(e.key === 'Enter' || e.key === ' ') { if(document.activeElement && document.activeElement.getAttribute('role') === 'menuitem') { e.preventDefault(); document.activeElement.click(); } }
+        else if(e.key.length === 1 && /\S/.test(e.key)) {
+            clearTimeout(hudTypeAheadTimer);
+            hudTypeAheadBuffer += e.key.toLowerCase();
+            hudTypeAheadTimer = setTimeout(() => hudTypeAheadBuffer = '', 600);
+            const nk = normalizeAr(hudTypeAheadBuffer);
+            const match = items.findIndex(it => normalizeAr(it.textContent).trim().startsWith(nk));
+            if(match >= 0) { e.preventDefault(); setHudRoving(dropdown, match, true); }
+        }
+    }
+    document.querySelectorAll('.hud-dropdown').forEach(d => d.addEventListener('keydown', handleHudDropdownKeydown));
+
+    function openHudDropdown(id) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const trigger = document.activeElement;
+        el.classList.add('show');
+        const pillBtn = el.previousElementSibling;
+        if(pillBtn && pillBtn.classList && pillBtn.classList.contains('hud-pill')) pillBtn.setAttribute('aria-expanded', 'true');
+        layerStack.push({ id, trigger, close: () => { closeHudDropdown(id); if(trigger && trigger.focus) { try { trigger.focus(); } catch(err) {} } } });
+        if(id === 'drop-year') { document.getElementById('custom-year-input').focus(); setHudRoving(el, 0, false); }
+        else { setHudRoving(el, 0, true); }
+    }
+
+    function closeHudDropdown(id) {
+        const el = document.getElementById(id);
+        if(!el || !el.classList.contains('show')) return;
+        el.classList.remove('show');
+        const pillBtn = el.previousElementSibling;
+        if(pillBtn && pillBtn.classList && pillBtn.classList.contains('hud-pill')) pillBtn.setAttribute('aria-expanded', 'false');
+        layerStack = layerStack.filter(l => l.id !== id);
+    }
+
     function toggleHud(id) {
-        document.querySelectorAll('.hud-dropdown').forEach(d => { if(d.id !== id) d.classList.remove('show'); });
+        document.querySelectorAll('.hud-dropdown.show').forEach(d => { if(d.id !== id) closeHudDropdown(d.id); });
         if(id === 'drop-pharmacy') buildPharmMenu();
         const el = document.getElementById(id);
-        el.classList.toggle('show');
-        if(id === 'drop-year' && el.classList.contains('show')) document.getElementById('custom-year-input').focus();
+        if(el.classList.contains('show')) closeHudDropdown(id); else openHudDropdown(id);
     }
 
     function buildPharmMenu() {
         const d = document.getElementById('drop-pharmacy'); d.innerHTML = '';
         if(!STATE.class || !STATE.region) { d.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Select Class & Region</div>`; return; }
-        PHARM[STATE.class][STATE.region].forEach(p => d.innerHTML += `<div class="drop-item" onclick="setHud('pharmacy', '${p.n}')">${p.n} <span>${p.id}</span></div>`);
+        PHARM[STATE.class][STATE.region].forEach(p => d.innerHTML += `<div class="drop-item" role="menuitem" tabindex="-1" onclick="setHud('pharmacy', '${p.n}')">${p.n} <span>${p.id}</span></div>`);
     }
 
-    function setHud(key, val) { STATE[key] = val; if(key === 'class' || key === 'region') STATE.pharmacy = null; updateHudUI(); document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show')); saveLocalBackup(); }
+    function setHud(key, val) { STATE[key] = val; if(key === 'class' || key === 'region') STATE.pharmacy = null; updateHudUI(); document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); saveLocalBackup(); }
 
     function updateHudUI() {
         const upd = (id, val, dict) => { const el = document.getElementById(`txt-${id}`).parentNode; const span = document.getElementById(`txt-${id}`); if(val) { el.classList.add('active'); span.textContent = dict ? dict[val] || val : val; } else { el.classList.remove('active'); span.textContent = 'Set'; } };
@@ -1105,17 +1235,16 @@
         });
     }
 
-    document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown').forEach(d => d.classList.remove('show')); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); if(!e.target.closest('.omni-ctx-wrap')) closeCtxMenu(); });
+    document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); if(!e.target.closest('.omni-ctx-wrap')) closeCtxMenu(); });
 
     document.addEventListener('keydown', e => {
         if(e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
         if((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); undoLastDelete(); }
         if(e.key === 'Escape') {
+            if(popTopLayer()) { e.preventDefault(); return; }
             dom.omni.value=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false;
-            document.querySelectorAll('.hud-dropdown').forEach(d=>d.classList.remove('show'));
-            ['scale-modal','confirm-modal','shortcuts-modal'].forEach(id => { const m = document.getElementById(id); if(m) m.classList.remove('active'); });
             omniFields.forEach(f=>f.blur());
-            closeCtxMenu(); syncCtxUI();
+            syncCtxUI();
         }
 
         const isGridInput = e.target.classList.contains('cell-input') || e.target.classList.contains('qty-rev-inp') || e.target.classList.contains('rev-inp');
@@ -1133,7 +1262,53 @@
         }
     });
 
-    function showShortcutsModal() { document.getElementById('shortcuts-modal').classList.add('active'); }
+    let layerStack = [];
+
+    function trapFocus(e, container) {
+        if(e.key !== 'Tab') return;
+        const focusables = container.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if(!focusables.length) return;
+        const first = focusables[0], last = focusables[focusables.length - 1];
+        if(e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+
+    function openModal(id, customClose) {
+        const modal = document.getElementById(id);
+        if(!modal) return;
+        const trigger = document.activeElement;
+        modal.classList.add('active');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        const content = modal.querySelector('.modal-content') || modal;
+        const focusables = content.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if(!content.hasAttribute('tabindex')) content.tabIndex = -1;
+        const focusTarget = focusables[0] || content;
+        setTimeout(() => focusTarget.focus(), 0);
+        const trapHandler = e => trapFocus(e, content);
+        modal._trapHandler = trapHandler;
+        modal.addEventListener('keydown', trapHandler);
+        layerStack.push({ id, trigger, close: customClose || (() => closeModal(id)) });
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if(!modal) return;
+        modal.classList.remove('active');
+        if(modal._trapHandler) { modal.removeEventListener('keydown', modal._trapHandler); modal._trapHandler = null; }
+        const entry = layerStack.find(l => l.id === id);
+        layerStack = layerStack.filter(l => l.id !== id);
+        if(entry && entry.trigger && entry.trigger.focus) { try { entry.trigger.focus(); } catch(err) {} }
+    }
+
+    function popTopLayer() {
+        const top = layerStack[layerStack.length - 1];
+        if(!top) return false;
+        top.close();
+        return true;
+    }
+
+    function showShortcutsModal() { openModal('shortcuts-modal'); }
 
     let pendingConfirmAction = null;
     function openConfirm(title, desc, label, action) {
@@ -1141,9 +1316,9 @@
         document.getElementById('confirm-desc').textContent = desc;
         document.getElementById('confirm-action-label').textContent = label;
         pendingConfirmAction = action;
-        document.getElementById('confirm-modal').classList.add('active');
+        openModal('confirm-modal', closeConfirm);
     }
-    function closeConfirm() { document.getElementById('confirm-modal').classList.remove('active'); pendingConfirmAction = null; }
+    function closeConfirm() { closeModal('confirm-modal'); pendingConfirmAction = null; }
     function runConfirm() { if(pendingConfirmAction) pendingConfirmAction(); closeConfirm(); }
 
     function resetData() {
@@ -1359,8 +1534,8 @@
                 if (isCustom) dom.unit.focus(); else dom.qty.focus();
             } else if (e.target === dom.unit) {
                 if (!dom.unit.value.trim()) { showToast('Enter a unit', 'error'); return; }
-                dom.ctx.focus();
-            } else if (e.target === dom.ctx) {
+                focusCtxField();
+            } else if (e.target === dom.ctxTrigger) {
                 if (!dom.ctx.value) { showToast('Select a context', 'error'); return; }
                 dom.qty.focus();
             } else if (e.target === dom.qty) {
@@ -1375,7 +1550,7 @@
     };
     omniFields.forEach(f => f.addEventListener('keydown', handleKey));
 
-    function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) resList[selIdx].classList.add('sel'); }
+    function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) { resList[selIdx].classList.add('sel'); resList[selIdx].scrollIntoView({block:'nearest'}); } }
 
     function applyOmni(item) {
         dom.res.classList.remove('show');
@@ -1411,7 +1586,18 @@
         let idx = findDataIndex(id); if(idx < 0) return;
         let item = DATA[idx];
         let dupIdx = DATA.findIndex((d, i2) => i2 !== idx && d.isCustom === item.isCustom && lineKey(d.name,d.unit,d.context) === lineKey(item.name,item.unit,newContext));
-        if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); } else { item.context = newContext; }
+        if(dupIdx >= 0) {
+            item.context = newContext;
+            DATA[dupIdx].quantity += item.quantity;
+            let survivorId = DATA[dupIdx].id;
+            DATA.splice(idx, 1);
+            undoStack.push({ type: 'merge', item: item, index: idx, survivorId: survivorId, mergedQty: item.quantity });
+            if(undoStack.length > 5) undoStack.shift();
+            drawGrid(); saveLocalBackup();
+            showToast(`Merged into an existing line`, 'normal', 'Undo', undoLastDelete);
+            return;
+        }
+        item.context = newContext;
         drawGrid(); saveLocalBackup();
     }
 
@@ -1428,7 +1614,16 @@
             item.unit = newUnit;
         }
         let dupIdx = DATA.findIndex((d, i2) => i2 !== idx && d.isCustom === item.isCustom && lineKey(d.name,d.unit,d.context) === lineKey(item.name,item.unit,item.context));
-        if(dupIdx >= 0) { DATA[dupIdx].quantity += item.quantity; DATA.splice(idx, 1); }
+        if(dupIdx >= 0) {
+            DATA[dupIdx].quantity += item.quantity;
+            let survivorId = DATA[dupIdx].id;
+            DATA.splice(idx, 1);
+            undoStack.push({ type: 'merge', item: item, index: idx, survivorId: survivorId, mergedQty: item.quantity });
+            if(undoStack.length > 5) undoStack.shift();
+            drawGrid(); saveLocalBackup();
+            showToast(`Merged into an existing line`, 'normal', 'Undo', undoLastDelete);
+            return;
+        }
         drawGrid(); saveLocalBackup();
     }
 
@@ -1437,7 +1632,7 @@
     function deleteItem(id) {
         let idx = findDataIndex(id); if(idx < 0) return;
         let [removed] = DATA.splice(idx, 1);
-        undoStack.push({ item: removed, index: idx });
+        undoStack.push({ type: 'delete', item: removed, index: idx });
         if(undoStack.length > 5) undoStack.shift();
         drawGrid(); saveLocalBackup();
         showToast(`Removed ${removed.name}`, 'normal', 'Undo', undoLastDelete);
@@ -1446,6 +1641,10 @@
     function undoLastDelete() {
         let last = undoStack.pop();
         if(!last) { showToast('Nothing to undo'); return; }
+        if(last.type === 'merge') {
+            let survivor = DATA.find(d => d.id === last.survivorId);
+            if(survivor) survivor.quantity = Math.max(1, survivor.quantity - last.mergedQty);
+        }
         let pos = Math.min(last.index, DATA.length);
         DATA.splice(pos, 0, last.item);
         drawGrid(); saveLocalBackup(); showToast(`Restored ${last.item.name}`);
@@ -1460,7 +1659,8 @@
 
     function processAdd() {
         const text = dom.omni.value.trim();
-        let qty = Math.max(1, parseInt(dom.qty.value) || 0);
+        const qtyRaw = dom.qty.value.trim();
+        let qty = /^-?\d+$/.test(qtyRaw) ? parseInt(qtyRaw, 10) : NaN;
         if(!text) return;
 
         let obj = null;
@@ -1499,8 +1699,8 @@
         let context = exactSysMatch ? '' : (obj && obj.ctx ? obj.ctx : parsedCtx);
         let raw = exactSysMatch ? exactSysMatch.raw : `${name}|${unit}`;
 
-        if(isCustom && (!unit || !context)) { (!unit ? dom.unit : dom.ctx).focus(); showToast('Complete the Unit and Context for this line', 'error'); return; }
-        if(qty <= 0) { dom.qty.focus(); showToast('Enter a valid quantity', 'error'); return; }
+        if(isCustom && (!unit || !context)) { if(!unit) dom.unit.focus(); else focusCtxField(); showToast('Complete the Unit and Context for this line', 'error'); return; }
+        if(!Number.isInteger(qty) || qty <= 0) { dom.qty.focus(); dom.qty.select(); showToast('Enter a valid quantity', 'error'); return; }
 
         if (wasIntendedCustom && exactSysMatch) {
             showToast('Matched with a System Core item');
@@ -1521,26 +1721,66 @@
         saveLocalBackup();
     }
 
-    function loadFreq() { try { return JSON.parse(localStorage.getItem('lx_freq') || '{}'); } catch(e) { return {}; } }
+    function loadFreq() {
+        let raw; try { raw = JSON.parse(localStorage.getItem('lx_freq') || '{}'); } catch(e) { raw = {}; }
+        let f = {};
+        Object.entries(raw).forEach(([k, v]) => { f[k] = (typeof v === 'number') ? { count: v, pinned: false } : { count: v.count || 0, pinned: !!v.pinned }; });
+        return f;
+    }
+    function saveFreq(f) {
+        const FREQ_CAP = 50;
+        let entries = Object.entries(f);
+        let pinned = entries.filter(([,v]) => v.pinned);
+        let unpinned = entries.filter(([,v]) => !v.pinned).sort((a,b) => b[1].count - a[1].count).slice(0, FREQ_CAP);
+        let pruned = {};
+        pinned.concat(unpinned).forEach(([k,v]) => pruned[k] = v);
+        localStorage.setItem('lx_freq', JSON.stringify(pruned));
+    }
     function bumpFrequency(name, unit) {
         if(!name) return;
         let f = loadFreq();
         let key = `${name}|||${unit || ''}`;
-        f[key] = (f[key] || 0) + 1;
-        localStorage.setItem('lx_freq', JSON.stringify(f));
+        if(!f[key]) f[key] = { count: 0, pinned: false };
+        f[key].count++;
+        saveFreq(f);
+        renderFrequentChips();
+    }
+    function toggleFreqPin(key) {
+        let f = loadFreq();
+        if(f[key]) { f[key].pinned = !f[key].pinned; saveFreq(f); renderFrequentChips(); }
+    }
+    function forgetFreq(key) {
+        let f = loadFreq();
+        delete f[key];
+        saveFreq(f);
         renderFrequentChips();
     }
     function renderFrequentChips() {
         const strip = document.getElementById('freq-strip');
         if(!strip) return;
         let f = loadFreq();
-        let arr = Object.entries(f).sort((a,b) => b[1]-a[1]).slice(0, 10);
+        let entries = Object.entries(f);
+        let pinned = entries.filter(([,v]) => v.pinned).sort((a,b) => b[1].count - a[1].count);
+        let rest = entries.filter(([,v]) => !v.pinned).sort((a,b) => b[1].count - a[1].count);
+        let arr = pinned.concat(rest).slice(0, 10);
         if(!arr.length) { strip.innerHTML = `<span class="freq-empty">Frequent lines will show up here as you log them</span>`; return; }
-        strip.innerHTML = arr.map(([key]) => {
+        strip.innerHTML = arr.map(([key, v]) => {
             let [name, unit] = key.split('|||');
-            return `<button class="stub-chip" onclick="quickAdd('${jsEsc(name)}','${jsEsc(unit||'')}')">${esc(name)}</button>`;
+            return `<span class="chip-group">
+                <button type="button" class="stub-chip" dir="auto" data-freq-action="add" data-freq-name="${esc(name)}" data-freq-unit="${esc(unit||'')}">${v.pinned ? '📌 ' : ''}${esc(name)}</button>
+                <button type="button" class="chip-side-btn ${v.pinned?'pinned':''}" data-freq-action="pin" data-freq-key="${esc(key)}" title="${v.pinned ? 'Unpin' : 'Pin'}">📌</button>
+                <button type="button" class="chip-side-btn" data-freq-action="forget" data-freq-key="${esc(key)}" title="Forget this line">✕</button>
+            </span>`;
         }).join('');
     }
+    document.getElementById('freq-strip').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-freq-action]');
+        if(!btn) return;
+        const action = btn.dataset.freqAction;
+        if(action === 'add') quickAdd(btn.dataset.freqName, btn.dataset.freqUnit);
+        else if(action === 'pin') toggleFreqPin(btn.dataset.freqKey);
+        else if(action === 'forget') forgetFreq(btn.dataset.freqKey);
+    });
     function quickAdd(name, unit) {
         let match = SEARCH_IDX.find(x => x.t === 'product' && x.txt === name && x.u === unit);
         if(match) { applyOmni(match); }
@@ -1590,12 +1830,12 @@
         } else {
             view.forEach(d => {
                 const tr = document.createElement('tr'); tr.className = 'data-row';
-                let ctxHtml = `<span class="core-tag">System Core</span>`, unitHtml = `<span class="unit-static">${esc(d.unit)||'-'}</span>`;
+                let ctxHtml = `<span class="core-tag">System Core</span>`, unitHtml = `<span class="unit-static" dir="auto">${esc(d.unit)||'-'}</span>`;
                 if(d.isCustom) {
                     ctxHtml = `<select id="grid-ctx-${d.id}" class="c-select cell-input ${!d.context?'req':''}" onchange="updateItemContext(${d.id}, this.value)"><option value="">Select Category</option><option value="قرار لجنة" ${d.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${d.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${d.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${d.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select>`;
-                    unitHtml = `<input id="grid-unit-${d.id}" type="text" class="cell-input" style="width:100%" value="${esc(d.unit)||''}" onchange="updateItemUnit(${d.id}, this.value)">`;
+                    unitHtml = `<input id="grid-unit-${d.id}" type="text" dir="auto" class="cell-input" style="width:100%" value="${esc(d.unit)||''}" onchange="updateItemUnit(${d.id}, this.value)">`;
                 }
-                tr.innerHTML = `<td><strong style="font-size:1.02rem">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
+                tr.innerHTML = `<td><strong style="font-size:1.02rem" dir="auto">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
                     <td>${unitHtml}</td>
                     <td>${ctxHtml}</td>
                     <td style="text-align:center"><input id="grid-qty-${d.id}" type="number" class="cell-input mono-num" min="1" value="${d.quantity}" onchange="updateItemQuantity(${d.id}, this.value)"></td>
@@ -1623,9 +1863,9 @@
     function openScaleTool() {
         document.getElementById('scale-factor').value = '';
         updateScalePreview();
-        document.getElementById('scale-modal').classList.add('active');
+        openModal('scale-modal', closeScaleTool);
     }
-    function closeScaleTool() { document.getElementById('scale-modal').classList.remove('active'); }
+    function closeScaleTool() { closeModal('scale-modal'); }
     function setScaleFactor(f) { document.getElementById('scale-factor').value = f; updateScalePreview(); }
     function updateScalePreview() {
         let f = parseFloat(document.getElementById('scale-factor').value);
@@ -1656,7 +1896,7 @@
     function openImport() {
         document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('exit', 'active'));
         document.getElementById('import-ui').classList.add('active');
-        document.getElementById('import-modal').classList.add('active');
+        openModal('import-modal', () => closeImport());
     }
 
     function hasStagedImportRows() { return IMPORT_FILES.some(f => f.rows && f.rows.length); }
@@ -1666,9 +1906,10 @@
             openConfirm('Discard this import?', 'You have staged CSV rows that haven\'t been pushed yet. Closing now will discard them.', 'Discard', () => closeImport(true));
             return;
         }
-        document.getElementById('import-modal').classList.remove('active');
+        closeModal('import-modal');
         setTimeout(() => {
-            document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null;
+            document.getElementById('file-in').value=''; IMPORT_FILES=[]; activeFileId=null; reviewFilter='';
+            const revFilterEl = document.getElementById('review-filter'); if(revFilterEl) revFilterEl.value = '';
             document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to the ledger database.';
             const dzIcon = document.querySelector('#dz .dz-icon'); if(dzIcon) dzIcon.innerHTML = ORIGINAL_DZ_ICON;
             const dzEl = document.getElementById('dz'); if(dzEl) dzEl.style.pointerEvents = '';
@@ -1679,6 +1920,89 @@
         const bom = "\uFEFF"; const csvContent = "year,month,pharmacy,name,unit,quantity,context\n2024,January,ادكو طلاب,Ambroxol,10 T,50,\n2024,January,ادكو طلاب,Custom Product,Box,20,داخل اللستة\n";
         const link = document.createElement("a"); link.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(bom + csvContent)); link.setAttribute("download", "LX_Ledger_Template.csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function coerceMonth(raw) {
+        if(!raw) return '';
+        let s = raw.toString().trim();
+        if(!s) return '';
+        let sLow = s.toLowerCase();
+        let idx = DIC.months.en.findIndex(m => m.toLowerCase() === sLow);
+        if(idx < 0 && sLow.length >= 3) idx = DIC.months.en.findIndex(m => m.toLowerCase().startsWith(sLow));
+        if(idx < 0 && /^\d{1,2}$/.test(s)) { let n = parseInt(s, 10); if(n >= 1 && n <= 12) idx = n - 1; }
+        if(idx < 0) idx = DIC.months.ar.findIndex(m => m === s || normalizeAr(m) === normalizeAr(s));
+        return idx >= 0 ? DIC.months.en[idx] : '';
+    }
+
+    function resolvePharmacy(raw) {
+        let pRaw = (raw || '').toString().trim();
+        if(!pRaw) return null;
+        let pNorm = normalizeAr(pRaw);
+        let pIdLower = pRaw.toLowerCase();
+        for(let c in PHARM) for(let rgn in PHARM[c]) {
+            let byId = PHARM[c][rgn].find(x => x.id.toLowerCase() === pIdLower);
+            if(byId) return { class: c, region: rgn, pharmacy: byId.n, ambiguous: false };
+        }
+        let nameMatches = [];
+        for(let c in PHARM) for(let rgn in PHARM[c]) {
+            PHARM[c][rgn].forEach(x => { if(normalizeAr(x.n) === pNorm) nameMatches.push({ class: c, region: rgn, pharmacy: x.n }); });
+        }
+        if(nameMatches.length === 1) return { ...nameMatches[0], ambiguous: false };
+        if(nameMatches.length > 1) return { ambiguous: true };
+        return null;
+    }
+
+    function ensureYearOption(sel, year) {
+        if(!year) return;
+        let has = Array.from(sel.options).some(o => o.value === String(year));
+        if(!has) { let opt = document.createElement('option'); opt.value = year; opt.textContent = year; sel.appendChild(opt); }
+    }
+
+    function stagingKey(s) { return (s.isSystem ? s.rawId : `${s.name.trim()}|${s.unit.trim()}|${s.context}`).toLowerCase(); }
+
+    function dedupe(fRows) {
+        let groups = {};
+        fRows.forEach(s => {
+            if(!s.checked || !s.name.trim() || s.mergedInto || s.keepSeparate) return;
+            let k = stagingKey(s);
+            (groups[k] = groups[k] || []).push(s);
+        });
+        let mergedGroups = 0;
+        Object.values(groups).forEach(arr => {
+            if(arr.length <= 1) return;
+            let survivor = arr[0];
+            for(let j = 1; j < arr.length; j++) {
+                let dup = arr[j];
+                survivor.quantity += (dup.quantity || 0);
+                dup.mergedInto = survivor.id;
+            }
+            mergedGroups++;
+        });
+        return mergedGroups;
+    }
+
+    function summarize(rows) {
+        let ready = 0, dupe = 0, err = 0, skip = 0;
+        rows.forEach(s => {
+            if(s.mergedInto) return;
+            if(!s.checked) { skip++; return; }
+            const valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
+            if(!valid) err++;
+            else if(rows.some(r => r.mergedInto === s.id)) dupe++;
+            else ready++;
+        });
+        return { ready, dupe, err, skip };
+    }
+
+    function unmergeStg(id) {
+        let f = IMPORT_FILES.find(x => x.id === activeFileId); if(!f) return;
+        let dup = f.rows.find(r => r.id === id); if(!dup || !dup.mergedInto) return;
+        let survivor = f.rows.find(r => r.id === dup.mergedInto);
+        if(survivor) survivor.quantity = Math.max(0, survivor.quantity - (dup.quantity || 0));
+        dup.mergedInto = null;
+        dup.keepSeparate = true;
+        dup.checked = true;
+        renderReview();
     }
 
     const dz = document.getElementById('dz');
@@ -1694,16 +2018,31 @@
         let allFiles = Array.from(fileList);
         let files = allFiles.filter(f => /\.csv$/i.test(f.name));
         let rejected = allFiles.length - files.length;
-        if(!files.length) { showToast(rejected ? `Only .csv files are supported (${rejected} rejected).` : 'No files selected.', 'error'); return; }
+
+        let existingKeys = new Set(IMPORT_FILES.map(f => f.sourceKey));
+        let dupeNames = [];
+        files = files.filter(f => {
+            let key = `${f.name}|${f.size}`;
+            if(existingKeys.has(key)) { dupeNames.push(f.name); return false; }
+            existingKeys.add(key);
+            return true;
+        });
+
+        if(!files.length) {
+            let msg = rejected ? `Only .csv files are supported (${rejected} rejected).` : (dupeNames.length ? `Already added: ${dupeNames.join(', ')}` : 'No files selected.');
+            showToast(msg, 'error');
+            return;
+        }
 
         document.getElementById('import-status-text').textContent = `Processing ${files.length} file(s)...`;
         document.querySelector('#dz .dz-icon').innerHTML = SPINNER_DZ_ICON;
         document.getElementById('dz').style.pointerEvents = 'none';
-        IMPORT_FILES = [];
         let processed = 0;
         let parseWarnings = [];
         let emptyFiles = [];
+        let ambiguousFileNames = [];
         let newFileIds = [];
+        let batchFinished = false;
 
         ['year','month','class','region'].forEach(k=>{let s=document.getElementById(`rev-${k}`); s.innerHTML='<option value="">'+k+'</option>';});
         getSelectYears().forEach(y => document.getElementById('rev-year').innerHTML += `<option value="${y}">${y}</option>`);
@@ -1711,31 +2050,83 @@
         Object.entries(DIC.classes).forEach(([k,v])=>document.getElementById('rev-class').innerHTML+=`<option value="${k}">${v}</option>`);
         Object.entries(DIC.regions).forEach(([k,v])=>document.getElementById('rev-region').innerHTML+=`<option value="${k}">${v}</option>`);
 
+        function finishBatch() {
+            if(batchFinished) return;
+            batchFinished = true;
+            clearTimeout(watchdog);
+            let notes = [];
+            if(rejected) notes.push(`${rejected} non-CSV file(s) skipped`);
+            if(dupeNames.length) notes.push(`Already added, skipped: ${dupeNames.join(', ')}`);
+            if(emptyFiles.length) notes.push(`${emptyFiles.length} file(s) had no data rows: ${emptyFiles.join(', ')}`);
+            if(ambiguousFileNames.length) notes.push(`Pharmacy name is ambiguous across classes — set it manually for: ${ambiguousFileNames.join(', ')}`);
+            if(parseWarnings.length) notes.push(`Parsing issues in: ${parseWarnings.join(', ')}`);
+            if(notes.length) showToast(notes.join(' — '), 'error');
+            if(!newFileIds.length) {
+                if(!IMPORT_FILES.length) {
+                    document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to the ledger database.';
+                    document.querySelector('#dz .dz-icon').innerHTML = ORIGINAL_DZ_ICON;
+                    document.getElementById('dz').style.pointerEvents = '';
+                } else {
+                    document.getElementById('dz').style.pointerEvents = '';
+                    document.querySelector('#dz .dz-icon').innerHTML = ORIGINAL_DZ_ICON;
+                    openReviewScreen(activeFileId);
+                }
+                return;
+            }
+            openReviewScreen(newFileIds[0]);
+        }
+
+        const watchdog = setTimeout(() => {
+            if(!batchFinished) { parseWarnings.push('one or more files did not finish parsing in time'); finishBatch(); }
+        }, 15000);
+
         files.forEach((f, idx) => {
             Papa.parse(f, {
                 header: true, skipEmptyLines: true,
+                transformHeader: h => {
+                    let clean = (h || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, '');
+                    const aliases = { product: 'name', item: 'name', qty: 'quantity', units: 'quantity', unitssold: 'quantity', category: 'context' };
+                    return aliases[clean] || clean;
+                },
+                error: err => {
+                    parseWarnings.push(`${f.name} (failed to parse${err && err.message ? ': ' + err.message : ''})`);
+                    processed++;
+                    if(processed === files.length) finishBatch();
+                },
                 complete: res => {
                     if(res.errors && res.errors.length) parseWarnings.push(`${f.name} (${res.errors.length} row issue${res.errors.length>1?'s':''})`);
                     if(!res.data.length) { emptyFiles.push(f.name); processed++; if(processed === files.length) finishBatch(); return; }
 
-                    let meta = { year: STATE.year, month: STATE.month, class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy };
-                    let metaFilled = { year: !!meta.year, month: !!meta.month, pharmacy: !!meta.pharmacy };
-                    let stagingMap = new Map();
+                    let groups = new Map();
                     res.data.forEach((r, i) => {
-                        if(!(metaFilled.year && metaFilled.month && metaFilled.pharmacy)) {
-                            if(!metaFilled.year && r.year) { meta.year = r.year.trim(); metaFilled.year = true; }
-                            if(!metaFilled.month && r.month) { meta.month = r.month.trim(); metaFilled.month = true; }
-                            if(!metaFilled.pharmacy && r.pharmacy) {
-                                let pRaw = r.pharmacy.trim();
-                                let pNorm = normalizeAr(pRaw);
-                                let pIdLower = pRaw.toLowerCase();
-                                findPharm:
-                                for(let c in PHARM) for(let rgn in PHARM[c]) {
-                                    let fObj = PHARM[c][rgn].find(x => normalizeAr(x.n) === pNorm || x.id.toLowerCase() === pIdLower);
-                                    if(fObj) { meta.class=c; meta.region=rgn; meta.pharmacy=fObj.n; metaFilled.pharmacy = true; break findPharm; }
-                                }
-                            }
+                        let rowYear = ((r.year||'').toString().trim()) || STATE.year || '';
+                        let rowMonthRaw = (r.month||'').toString().trim();
+                        let rowMonth = rowMonthRaw ? (coerceMonth(rowMonthRaw) || rowMonthRaw) : (STATE.month || '');
+                        let rowPharmacyRaw = (r.pharmacy||'').toString().trim();
+
+                        let resolved = null, pharmacyAmbiguous = false;
+                        if(rowPharmacyRaw) {
+                            let r2 = resolvePharmacy(rowPharmacyRaw);
+                            if(r2 && r2.ambiguous) pharmacyAmbiguous = true; else resolved = r2;
+                        } else if(STATE.pharmacy && STATE.class && STATE.region) {
+                            resolved = { class: STATE.class, region: STATE.region, pharmacy: STATE.pharmacy };
                         }
+
+                        let phKey = pharmacyAmbiguous ? `ambiguous:${normalizeAr(rowPharmacyRaw)}` : (resolved ? `${resolved.class}|${resolved.region}|${resolved.pharmacy}`.toLowerCase() : (rowPharmacyRaw ? `raw:${normalizeAr(rowPharmacyRaw)}` : ''));
+                        let tupleKey = `${rowYear}||${rowMonth}||${phKey}`;
+
+                        if(!groups.has(tupleKey)) {
+                            groups.set(tupleKey, {
+                                meta: {
+                                    year: rowYear, month: rowMonth,
+                                    class: resolved ? resolved.class : '', region: resolved ? resolved.region : '',
+                                    pharmacy: resolved ? resolved.pharmacy : '',
+                                    pharmacyAmbiguous: pharmacyAmbiguous, pharmacyRaw: rowPharmacyRaw
+                                },
+                                stagingMap: new Map()
+                            });
+                        }
+                        let grp = groups.get(tupleKey);
 
                         let safeName = (r.name||'').trim();
                         let safeUnit = (r.unit||'').trim();
@@ -1753,35 +2144,30 @@
 
                         let key = (isSystem ? rawId : `${name}|${unit}|${ctx}`).toLowerCase();
                         if(!name) key = 'empty_'+i;
-                        if(stagingMap.has(key)) {
-                            let ex = stagingMap.get(key); ex.quantity += parseInt(r.quantity||r.qty)||0; ex.merged = true;
+                        if(grp.stagingMap.has(key)) {
+                            let ex = grp.stagingMap.get(key); ex.quantity += parseInt(r.quantity)||0;
                         } else {
-                            stagingMap.set(key, { id: Date.now()+i, name: name, unit: unit, quantity: parseInt(r.quantity||r.qty)||0, context: ctx, isSystem: isSystem, rawId: rawId, merged: false, checked: true });
+                            grp.stagingMap.set(key, { name: name, unit: unit, quantity: parseInt(r.quantity)||0, context: ctx, isSystem: isSystem, rawId: rawId, mergedInto: null, keepSeparate: false, checked: true });
                         }
                     });
-                    let newId = 'f_'+IMPORT_FILES.length+'_'+idx+'_'+Date.now();
-                    IMPORT_FILES.push({ id: newId, name: f.name, meta: meta, rows: Array.from(stagingMap.values()) });
-                    newFileIds.push(newId);
+
+                    let groupEntries = Array.from(groups.values());
+                    let multi = groupEntries.length > 1;
+                    groupEntries.forEach((grp, gi) => {
+                        if(grp.meta.pharmacyAmbiguous && ambiguousFileNames.indexOf(f.name) < 0) ambiguousFileNames.push(f.name);
+                        let newId = 'f_'+idx+'_'+gi+'_'+Date.now()+'_'+Math.round(Math.random()*1e6);
+                        let label = multi ? `${f.name} — ${grp.meta.pharmacy || grp.meta.pharmacyRaw || (grp.meta.year+'/'+(grp.meta.month||'?'))}` : f.name;
+                        let fileRows = Array.from(grp.stagingMap.values()).map((s, ri) => ({ ...s, id: `${newId}_r${ri}` }));
+                        dedupe(fileRows);
+                        IMPORT_FILES.push({ id: newId, name: label, sourceKey: `${f.name}|${f.size}`, meta: grp.meta, rows: fileRows });
+                        newFileIds.push(newId);
+                    });
+
                     processed++;
                     if(processed === files.length) finishBatch();
                 }
             });
         });
-
-        function finishBatch() {
-            let notes = [];
-            if(rejected) notes.push(`${rejected} non-CSV file(s) skipped`);
-            if(emptyFiles.length) notes.push(`${emptyFiles.length} file(s) had no data rows: ${emptyFiles.join(', ')}`);
-            if(parseWarnings.length) notes.push(`Parsing issues in: ${parseWarnings.join(', ')}`);
-            if(notes.length) showToast(notes.join(' — '), 'error');
-            if(!IMPORT_FILES.length) {
-                document.getElementById('import-status-text').textContent = 'Supports multiple files mapping to the ledger database.';
-                document.querySelector('#dz .dz-icon').innerHTML = ORIGINAL_DZ_ICON;
-                document.getElementById('dz').style.pointerEvents = '';
-                return;
-            }
-            openReviewScreen(newFileIds[0]);
-        }
     }
 
     function openReviewScreen(preferFileId) {
@@ -1793,14 +2179,7 @@
     }
 
     function fileStatusCounts(f) {
-        checkStagingDuplicates(f.rows);
-        let ready = 0, dupe = 0, err = 0, skip = 0;
-        f.rows.forEach(s => {
-            if (!s.checked) { skip++; return; }
-            const valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
-            if (!valid) err++; else if (s.merged) dupe++; else ready++;
-        });
-        return { ready, dupe, err, skip };
+        return summarize(f.rows);
     }
 
     function renderFileTabs() {
@@ -1831,7 +2210,10 @@
         activeFileId = fId;
         renderFileTabs();
         let f = IMPORT_FILES.find(x => x.id === fId);
-        document.getElementById('rev-year').value = f.meta.year || '';
+        if(!f) return;
+        let selYear = document.getElementById('rev-year');
+        ensureYearOption(selYear, f.meta.year);
+        selYear.value = f.meta.year || '';
         document.getElementById('rev-month').value = f.meta.month || '';
         document.getElementById('rev-class').value = f.meta.class || '';
         document.getElementById('rev-region').value = f.meta.region || '';
@@ -1862,10 +2244,11 @@
 
     function validateMetaBar() { ['year','month','class','region','pharmacy'].forEach(k=>{ let el = document.getElementById(`rev-${k}`); if(!el.value) el.classList.add('req'); else el.classList.remove('req'); }); }
 
-    function updateStg(i, type, val) {
+    function updateStg(id, type, val) {
         let f = IMPORT_FILES.find(x => x.id === activeFileId);
-        let s = f.rows[i];
-        if (type === 'chk') s.checked = val;
+        let s = f.rows.find(r => r.id === id);
+        if(!s) return;
+        if (type === 'chk') { s.checked = val; if(val) s.keepSeparate = false; }
         else if (type === 'qty') s.quantity = Math.max(1, parseInt(val) || 1);
         else if (type === 'ctx') s.context = val;
         else {
@@ -1881,34 +2264,19 @@
                 s.rawId = exactSysMatch.raw;
                 s.context = '';
             }
+            s.keepSeparate = false;
         }
+        let mergedGroups = dedupe(f.rows);
+        if(mergedGroups) showToast(`Merged ${mergedGroups} duplicate row(s)`);
         renderReview();
-    }
-
-    function checkStagingDuplicates(fRows) {
-        let keys = {};
-        fRows.forEach((s, i) => {
-            s.merged = false; if(!s.checked || !s.name.trim()) return;
-            let k = (s.isSystem ? s.rawId : `${s.name.trim()}|${s.unit.trim()}|${s.context}`).toLowerCase();
-            if(!keys[k]) keys[k] = []; keys[k].push(i);
-        });
-        let toRemove = [];
-        let mergedGroups = 0;
-        Object.values(keys).forEach(arr => {
-            if(arr.length <= 1) return;
-            let first = fRows[arr[0]];
-            for(let j = 1; j < arr.length; j++) { first.quantity += (fRows[arr[j]].quantity || 0); toRemove.push(arr[j]); }
-            first.merged = true;
-            mergedGroups++;
-        });
-        if(toRemove.length) toRemove.sort((a,b)=>b-a).forEach(idx => fRows.splice(idx, 1));
-        return mergedGroups;
     }
 
     function toggleAllRows(checked) {
         let f = IMPORT_FILES.find(x => x.id === activeFileId);
         if(!f) return;
-        f.rows.forEach(s => s.checked = checked);
+        f.rows.forEach(s => { if(!s.mergedInto) { s.checked = checked; if(checked) s.keepSeparate = false; } });
+        let mergedGroups = dedupe(f.rows);
+        if(mergedGroups) showToast(`Merged ${mergedGroups} duplicate row(s)`);
         renderReview();
     }
 
@@ -1918,7 +2286,7 @@
         const sameTarget = m.year === STATE.year && m.month === STATE.month && m.class === STATE.class && m.region === STATE.region && m.pharmacy === STATE.pharmacy;
         if (!sameTarget || !DATA.length) { banner.style.display = 'none'; return; }
         const gridKeys = new Set(DATA.map(d => `${d.name}|${d.unit}|${d.isCustom ? d.context : ''}`.toLowerCase()));
-        const overlapping = f.rows.filter(s => s.checked && gridKeys.has(`${s.name}|${s.unit}|${s.isSystem ? '' : s.context}`.toLowerCase()));
+        const overlapping = f.rows.filter(s => s.checked && !s.mergedInto && gridKeys.has(`${s.name}|${s.unit}|${s.isSystem ? '' : s.context}`.toLowerCase()));
         if (overlapping.length) {
             banner.style.display = 'flex';
             document.getElementById('overlap-warning-text').textContent = `${overlapping.length} item(s) in this file (e.g. "${overlapping[0].name}") already exist in your open workspace for this pharmacy/month. Importing will create separate DB entries rather than merging — clear or push your workspace first if you want them combined.`;
@@ -1927,37 +2295,66 @@
         }
     }
 
+    let reviewFilter = '';
+    function onReviewFilter(v) { reviewFilter = v; renderReview(); }
+
     function renderReview() {
         let activeEl = document.activeElement ? document.activeElement.id : null;
         let f = IMPORT_FILES.find(x => x.id === activeFileId);
         if(!f) return;
-        let mergedGroups = checkStagingDuplicates(f.rows);
-        if(mergedGroups) showToast(`Merged ${mergedGroups} duplicate row(s)`);
         checkGridOverlap(f);
-        const tb = document.getElementById('review-tbody'); tb.innerHTML = '';
-        f.rows.forEach((s, i) => {
+
+        let visibleRows = f.rows.filter(s => !s.mergedInto);
+        let totalVisible = visibleRows.length;
+        if(reviewFilter.trim()) {
+            let nf = normalizeAr(reviewFilter);
+            visibleRows = visibleRows.filter(s => normalizeAr(`${s.name} ${s.unit} ${s.context}`).includes(nf));
+        }
+        const REVIEW_CAP = 300;
+        let truncated = visibleRows.length > REVIEW_CAP;
+        let renderedRows = truncated ? visibleRows.slice(0, REVIEW_CAP) : visibleRows;
+
+        const tb = document.getElementById('review-tbody');
+        let parts = [];
+        renderedRows.forEach(s => {
+            let absorbed = f.rows.filter(r => r.mergedInto === s.id);
             let trCls = s.checked ? '' : 'row-disabled';
             let valid = s.name.trim() !== '' && !isNaN(s.quantity) && s.quantity > 0 && (s.isSystem || (s.context !== '' && s.unit.trim() !== ''));
-            let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (s.merged ? 'status-dupe' : 'status-ok'));
-            let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (s.merged ? 'Merged' : 'Ready')));
+            let isDupeSurvivor = absorbed.length > 0;
+            let statCls = !s.checked ? 'status-skip' : (!valid ? 'status-err' : (isDupeSurvivor ? 'status-dupe' : 'status-ok'));
+            let statTxt = !s.checked ? 'Skipped' : (s.name.trim() === '' ? 'Empty Name' : (!valid ? (s.isSystem ? 'Invalid Qty' : 'Need Context/Qty') : (isDupeSurvivor ? `Merged +${absorbed.length}` : 'Ready')));
 
-            tb.innerHTML += `
+            parts.push(`
             <tr class="${trCls}">
-                <td style="text-align:center;"><input id="rev-chk-${i}" type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="updateStg(${i}, 'chk', this.checked)"></td>
-                <td><input id="rev-name-${i}" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg(${i}, 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
-                <td><input id="rev-unit-${i}" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg(${i}, 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
-                <td><select id="rev-ctx-${i}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;${s.isSystem ? ' opacity:0.4;' : ''}" onchange="updateStg(${i}, 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
-                <td style="text-align:center;"><input id="rev-qty-${i}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg(${i}, 'qty', this.value)" style="width:100%;"></td>
+                <td style="text-align:center;"><input id="rev-chk-${s.id}" type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="updateStg('${s.id}', 'chk', this.checked)"></td>
+                <td><input id="rev-name-${s.id}" dir="auto" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg('${s.id}', 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
+                <td><input id="rev-unit-${s.id}" dir="auto" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg('${s.id}', 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
+                <td><select id="rev-ctx-${s.id}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;${s.isSystem ? ' opacity:0.4;' : ''}" onchange="updateStg('${s.id}', 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
+                <td style="text-align:center;"><input id="rev-qty-${s.id}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg('${s.id}', 'qty', this.value)" style="width:100%;"></td>
                 <td style="text-align:center;"><span class="status-badge ${statCls}">${statTxt}</span></td>
-            </tr>`;
+            </tr>`);
+            absorbed.forEach(dup => {
+                parts.push(`
+                <tr class="row-disabled">
+                    <td></td>
+                    <td style="padding-left:2rem; font-size:0.85rem;" dir="auto">↳ ${esc(dup.name)}</td>
+                    <td style="font-size:0.85rem;" dir="auto">${esc(dup.unit)}</td>
+                    <td style="font-size:0.85rem;" dir="auto">${esc(dup.context)}</td>
+                    <td style="text-align:center; font-size:0.85rem;">${isNaN(dup.quantity) ? '' : dup.quantity}</td>
+                    <td style="text-align:center;"><button type="button" class="btn-ghost" style="padding:2px 8px; font-size:0.72rem;" onclick="unmergeStg('${dup.id}')">↺ Keep separate</button></td>
+                </tr>`);
+            });
         });
+
+        tb.innerHTML = parts.join('') || `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No rows match this filter.</td></tr>`;
+        if(truncated) tb.innerHTML += `<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.8rem;">Showing first ${REVIEW_CAP} of ${visibleRows.length} matching rows — narrow with the filter above to see the rest.</td></tr>`;
 
         renderFileTabs();
         const allChk = document.getElementById('rev-chk-all');
         if (allChk) {
-            const checkedCount = f.rows.filter(s => s.checked).length;
-            allChk.checked = checkedCount > 0 && checkedCount === f.rows.length;
-            allChk.indeterminate = checkedCount > 0 && checkedCount < f.rows.length;
+            const checkedCount = f.rows.filter(s => !s.mergedInto && s.checked).length;
+            allChk.checked = checkedCount > 0 && checkedCount === totalVisible;
+            allChk.indeterminate = checkedCount > 0 && checkedCount < totalVisible;
         }
 
         if (activeEl) {
@@ -1973,25 +2370,37 @@
         }
     }
 
+    function setStatusVariant(variant) {
+        const content = document.querySelector('#status-modal .modal-content');
+        content.classList.remove('variant-ok', 'variant-err');
+        content.classList.add(variant);
+    }
+
     function showErrorModal() {
+        setStatusVariant('variant-err');
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-        document.getElementById('status-title').textContent = 'Push Failed — Offline'; document.getElementById('status-title').style.color = 'var(--danger)';
+        document.getElementById('status-title').textContent = 'Push Failed — Offline';
         document.getElementById('status-desc').innerHTML = 'The database could not be reached.<br><strong style="color:var(--text-main)">Your data is safe.</strong> It was downloaded as a CSV/JSON backup and queued to sync automatically once you\'re back online.';
-        document.getElementById('status-btn').style.background = 'var(--surface-hover)'; document.getElementById('status-btn').style.color = 'var(--text-main)';
-        document.getElementById('status-modal').classList.add('active');
+        openModal('status-modal');
     }
 
     function showSuccessModal(msg) {
+        setStatusVariant('variant-ok');
         document.getElementById('status-icon').innerHTML = `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-        document.getElementById('status-title').textContent = 'Pushed'; document.getElementById('status-title').style.color = 'var(--accent-2)';
+        document.getElementById('status-title').textContent = 'Pushed';
         document.getElementById('status-desc').textContent = msg;
-        document.getElementById('status-btn').style.background = 'var(--accent-2)'; document.getElementById('status-btn').style.color = 'var(--ink-fixed)';
-        document.getElementById('status-modal').classList.add('active');
+        openModal('status-modal');
     }
 
     function loadPendingQueue() { try { return JSON.parse(localStorage.getItem('lx_pending') || '[]'); } catch(e) { return []; } }
     function savePendingQueue(q) { localStorage.setItem('lx_pending', JSON.stringify(q)); renderPendingBadge(); }
-    function queuePending(payload, label) { let q = loadPendingQueue(); q.push({ id: Date.now()+Math.random(), label, payload, ts: new Date().toISOString() }); savePendingQueue(q); }
+    function queuePending(payload, label, batchId) { let q = loadPendingQueue(); q.push({ id: Date.now()+Math.random(), label, payload, batchId, ts: new Date().toISOString() }); savePendingQueue(q); }
+    function removePendingByBatchId(batchId) {
+        if(!batchId) return;
+        let q = loadPendingQueue();
+        let filtered = q.filter(e => e.batchId !== batchId);
+        if(filtered.length !== q.length) savePendingQueue(filtered);
+    }
     function renderPendingBadge() {
         let q = loadPendingQueue();
         const btn = document.getElementById('sync-btn');
@@ -1999,11 +2408,12 @@
         if(q.length) { btn.style.display = 'inline-flex'; document.getElementById('sync-count').textContent = q.length; }
         else btn.style.display = 'none';
     }
-    function pushBatchToFirebase(payload) {
+    function pushBatchToFirebase(payload, signal) {
         return fetch('https://firecloud.rubberylock7.workers.dev/submit/plan-b', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal
         }).then(res => {
             if(!res.ok) throw new Error('submit_failed');
             return res.json();
@@ -2040,7 +2450,7 @@
                 showToast(`Missing global settings in file: ${f.name}`, 'error');
                 return;
             }
-            let activeRows = f.rows.filter(r => r.checked);
+            let activeRows = f.rows.filter(r => r.checked && !r.mergedInto);
             if(!activeRows.length) { skippedFiles.push(f.name); continue; }
             let invalid = activeRows.find(s => s.name.trim() === '' || isNaN(s.quantity) || s.quantity <= 0 || (!s.isSystem && (!s.context || s.unit.trim() === '')));
             if(invalid) {
@@ -2064,16 +2474,20 @@
 
         if(!payload.length) { showToast('No active items to import across files.', 'error'); return; }
 
+        let batchId = `${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+        payload.forEach(row => { row.batchId = batchId; });
+
         const btn = document.getElementById('btn-confirm-import'); const origTxt = btn.textContent; isPushingImport = true; btn.disabled = true; btn.textContent = 'Pushing...';
         exportPayload(payload, '_ImportBatch');
 
+        const controller = new AbortController();
         let settled = false, timedOut = false;
         const restoreConfirmBtn = () => { isPushingImport = false; btn.disabled = false; btn.textContent = origTxt; };
-        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; queuePending(payload, 'Import batch'); showErrorModal(); restoreConfirmBtn(); } }, 8000);
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; controller.abort(); queuePending(payload, 'Import batch', batchId); showErrorModal(); restoreConfirmBtn(); } }, 8000);
 
-        pushBatchToFirebase(payload).then(() => {
+        pushBatchToFirebase(payload, controller.signal).then(() => {
             clearTimeout(timeout);
-            if (timedOut) { showToast('Import actually completed after the earlier timeout — check the Sync queue before resubmitting.'); closeImport(); return; }
+            if (timedOut) { removePendingByBatchId(batchId); showToast('Import actually completed after the earlier timeout — the queued duplicate has been removed.'); closeImport(); return; }
             if (settled) return;
             settled = true;
             showSuccessModal('Batch imported and pushed to the ledger database.' + (skippedFiles.length ? ` (Skipped, no active rows: ${skippedFiles.join(', ')})` : ''));
@@ -2082,15 +2496,24 @@
             clearTimeout(timeout);
             if (settled) return;
             settled = true;
-            queuePending(payload, 'Import batch');
+            queuePending(payload, 'Import batch', batchId);
             showErrorModal(); restoreConfirmBtn();
         });
     }
 
+    function downloadBlob(content, mime, filename) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = filename;
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
     function saveSession() {
         const sessionPayload = JSON.stringify({ state: STATE, data: DATA }, null, 2);
-        const link = document.createElement('a'); link.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(sessionPayload)); link.setAttribute('download', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Saved a local copy");
+        downloadBlob(sessionPayload, 'application/json;charset=utf-8', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
+        showToast("Saved a local copy");
     }
 
     function loadSession(file) {
@@ -2103,30 +2526,41 @@
     };
     function syncThemeIcon() { const el = document.getElementById('theme-icon'); if(el) el.innerHTML = THEME_ICONS[document.documentElement.dataset.theme] || THEME_ICONS.dark; }
     function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('lx_theme', root.dataset.theme); syncThemeIcon(); }
-    let toastTimeout;
+    let toastStack = [];
+    function removeToast(el) {
+        if(!el || !toastStack.includes(el)) return;
+        clearTimeout(el._toastTimeout);
+        toastStack = toastStack.filter(t => t !== el);
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 300);
+    }
     function showToast(msg, type='normal', actionLabel=null, actionFn=null) {
-        const t = document.getElementById('toast');
-        document.getElementById('toast-msg').textContent = msg;
-        const actionSlot = document.getElementById('toast-action');
+        const container = document.getElementById('toast-stack');
+        const el = document.createElement('div');
+        el.className = 'toast' + (type === 'error' ? ' error-toast' : '');
+        el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span class="toast-msg"></span>`;
+        el.querySelector('.toast-msg').textContent = msg;
         if(actionLabel && actionFn) {
-            actionSlot.style.display = 'inline-flex';
-            actionSlot.textContent = actionLabel;
-            actionSlot.onclick = () => { actionFn(); t.classList.remove('show'); };
-        } else {
-            actionSlot.style.display = 'none';
-            actionSlot.onclick = null;
+            const btn = document.createElement('button');
+            btn.className = 'toast-action';
+            btn.textContent = actionLabel;
+            btn.onclick = () => { actionFn(); removeToast(el); };
+            el.appendChild(btn);
         }
-        type==='error' ? t.classList.add('error-toast') : t.classList.remove('error-toast');
-        t.classList.add('show');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(()=>t.classList.remove('show'), actionLabel ? 6000 : 3000);
+        container.appendChild(el);
+        toastStack.push(el);
+        requestAnimationFrame(() => el.classList.add('show'));
+        while(toastStack.length > 3) removeToast(toastStack[0]);
+        el._toastTimeout = setTimeout(() => removeToast(el), actionLabel ? 6000 : 3000);
     }
 
+    function csvCell(v) { return (v === undefined || v === null ? '' : v).toString().replace(/"/g, '""'); }
+
     function exportPayload(p, suffix = '') {
-        const jsonLink = document.createElement('a'); jsonLink.setAttribute("href", "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2))); jsonLink.setAttribute("download", `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.json`); document.body.appendChild(jsonLink); jsonLink.click(); document.body.removeChild(jsonLink);
+        downloadBlob(JSON.stringify(p, null, 2), 'application/json;charset=utf-8', `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.json`);
         const headers = ["Year", "Month", "Class", "Region", "Pharmacy", "Product", "Unit", "UnitsSold", "Method", "Category", "Timestamp"]; const csvRows = [headers.join(',')];
-        p.forEach(row => { csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${(v||'').toString().replace(/"/g, '""')}"`).join(',')); });
-        const csvLink = document.createElement('a'); csvLink.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent("\uFEFF" + csvRows.join('\n'))); csvLink.setAttribute("download", `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.csv`); document.body.appendChild(csvLink); csvLink.click(); document.body.removeChild(csvLink);
+        p.forEach(row => { csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${csvCell(v)}"`).join(',')); });
+        setTimeout(() => downloadBlob("\uFEFF" + csvRows.join('\r\n'), 'text/csv;charset=utf-8', `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.csv`), 150);
     }
 
     let isSubmittingData = false;
@@ -2142,16 +2576,19 @@
         txt.textContent='Pushing...';
 
         const p = DATA.map(d=>({ year:STATE.year, month:STATE.month, class:STATE.class, region:STATE.region, pharmacy:STATE.pharmacy, name:d.isCustom?`${d.name} (${d.context})`:d.name, unit:d.unit, unitSold:d.quantity, method:d.isCustom?'new':'old', category:d.context, ts:new Date().toISOString() }));
+        let batchId = `${Date.now()}_${Math.random().toString(36).slice(2,10)}`;
+        p.forEach(row => { row.batchId = batchId; });
         exportPayload(p);
 
         const restoreBtn = () => { isSubmittingData = false; btn.disabled = false; document.getElementById('submit-icon').outerHTML = origIcon; txt.textContent = origTxt; };
 
+        const controller = new AbortController();
         let settled = false, timedOut = false;
-        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; queuePending(p, 'Workspace batch'); showErrorModal(); restoreBtn(); } }, 8000);
+        const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; controller.abort(); queuePending(p, 'Workspace batch', batchId); showErrorModal(); restoreBtn(); } }, 8000);
 
-        pushBatchToFirebase(p).then(()=>{
+        pushBatchToFirebase(p, controller.signal).then(()=>{
             clearTimeout(timeout);
-            if (timedOut) { showToast('Went through after all — check the Sync queue for the duplicate before resubmitting.'); return; }
+            if (timedOut) { removePendingByBatchId(batchId); showToast('Went through after all — the queued duplicate has been removed.'); return; }
             if (settled) return;
             settled = true;
             showSuccessModal('Workspace pushed and exported.');
@@ -2160,7 +2597,7 @@
             clearTimeout(timeout);
             if (settled) return;
             settled = true;
-            queuePending(p, 'Workspace batch');
+            queuePending(p, 'Workspace batch', batchId);
             showErrorModal(); restoreBtn();
         });
     }
