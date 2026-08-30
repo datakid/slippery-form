@@ -1694,7 +1694,7 @@
 
     function saveSession() {
         const sessionPayload = JSON.stringify({ state: STATE, data: DATA }, null, 2);
-        downloadBlob(sessionPayload, 'application/json;charset=utf-8', `LX_Session_${STATE.pharmacy || 'Draft'}.json`);
+        downloadBlob(sessionPayload, 'application/json;charset=utf-8', `Lx_Folio_Session_${STATE.pharmacy || 'Draft'}.json`);
         showToast("Saved a local copy");
     }
 
@@ -3080,10 +3080,10 @@
     }
 
     function exportPayload(p, suffix = '') {
-        downloadBlob(JSON.stringify(p, null, 2), 'application/json;charset=utf-8', `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.json`);
+        downloadBlob(JSON.stringify(p, null, 2), 'application/json;charset=utf-8', `Lx_Folio_Export_${STATE.pharmacy||'Batch'}${suffix}.json`);
         const headers = ["Year", "Month", "Class", "Region", "Pharmacy", "Product", "Unit", "UnitsSold", "Method", "Category", "Timestamp"]; const csvRows = [headers.join(',')];
         p.forEach(row => { csvRows.push([row.year, row.month, row.class, row.region, row.pharmacy, row.name, row.unit, row.unitSold, row.method, row.category, row.ts].map(v => `"${csvCell(v)}"`).join(',')); });
-        setTimeout(() => downloadBlob("\uFEFF" + csvRows.join('\r\n'), 'text/csv;charset=utf-8', `LX_Export_${STATE.pharmacy||'Batch'}${suffix}.csv`), 150);
+        setTimeout(() => downloadBlob("\uFEFF" + csvRows.join('\r\n'), 'text/csv;charset=utf-8', `Lx_Folio_Export_${STATE.pharmacy||'Batch'}${suffix}.csv`), 150);
     }
 
     function submitToDB() {
@@ -3384,7 +3384,7 @@
         if((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
         if((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); if(e.shiftKey) redo(); else undo(); }
         if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitToDB(); }
-        if((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveSession(); }
+        if((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if(DATA.length) saveSession(); else showToast('Nothing to save yet'); }
         if((e.key === 'f' || e.key === 'F') && (e.ctrlKey || e.metaKey) && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); document.getElementById('grid-filter').focus(); }
         if((e.key === 'd' || e.key === 'D') && (e.ctrlKey || e.metaKey)) {
             const activeRow = document.activeElement && document.activeElement.closest ? document.activeElement.closest('tr.data-row') : null;
