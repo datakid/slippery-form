@@ -2268,16 +2268,17 @@
 
         let exIdx = DATA.findIndex(d => d.isCustom === isCustom && lineKey(d.name,d.unit,d.context) === lineKey(name,unit,context));
 
-        commit(`Add ${name}`, () => {
-            if(exIdx >= 0) { DATA[exIdx].quantity += qty; lastTouchedRowId = DATA[exIdx].id; }
-            else { const newRow = { id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }; DATA.unshift(newRow); lastTouchedRowId = newRow.id; }
-        });
-
         bumpFrequency(name, unit);
 
         dom.omni.value=''; dom.qty.value=''; dom.unit.value=''; dom.ctx.value='';
         dom.unit.disabled=false; dom.ctx.disabled=false;
         dom.omni.dataset.raw=''; dom.omni.focus(); syncCtxUI();
+
+        commit(`Add ${name}`, () => {
+            if(exIdx >= 0) { DATA[exIdx].quantity += qty; lastTouchedRowId = DATA[exIdx].id; }
+            else { const newRow = { id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }; DATA.unshift(newRow); lastTouchedRowId = newRow.id; }
+        });
+
         document.getElementById('grid-container').scrollTop = 0;
     }
 
