@@ -1824,7 +1824,13 @@
         const val = dom.ctx.value;
         const opts = ctxOptions();
         opts.forEach(d => d.classList.toggle('sel', (d.dataset.val || '') === val));
-        let idx = opts.findIndex(d => (d.dataset.val || '') === val);
+        // Context is required whenever this menu matters (custom lines) — default the active option to
+        // the first real context rather than the "Context..." placeholder, so arriving here via the hop
+        // chain and pressing Enter right away picks something instead of silently selecting nothing.
+        // (An empty val matches the placeholder's own empty data-val, so that lookup only runs when
+        // there's an actual selection — otherwise we skip straight to the first non-empty option.)
+        let idx = val ? opts.findIndex(d => (d.dataset.val || '') === val) : -1;
+        if(idx < 0) idx = opts.findIndex(d => (d.dataset.val || '') !== '');
         setCtxActive(idx >= 0 ? idx : 0, false);
     }
 
@@ -1859,7 +1865,9 @@
         dom.ctx.value = val;
         syncCtxUI();
         closeCtxMenu();
-        setFocus(dom.omni, 'ctx-option-selected');
+        // Restores the classic "advance to the next field" feel — safe now because #qty is no longer
+        // a dead end (Escape/`/`/Ctrl+K all still reach back out from here).
+        setFocus(dom.qty, 'ctx-option-selected-advance');
     }
 
     // Phase 1: merged into the single omni-row keydown router as a branch (not a competing listener),
@@ -2421,8 +2429,12 @@
         let context = (exactSysMatch && !forceExt) ? '' : (obj && obj.ctx ? obj.ctx : parsedCtx);
         let raw = (exactSysMatch && !forceExt) ? exactSysMatch.raw : `${name}|${unit}`;
 
-        if(isCustom && (!unit || !context)) { showToast('Complete the Unit and Context for this line', 'error'); return; }
-        if(!Number.isInteger(qty) || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
+        if(isCustom && (!unit || !context)) {
+            showToast('Complete the Unit and Context for this line', 'error');
+            if(!unit) setFocus(dom.unit, 'validation-need-unit'); else focusCtxField();
+            return;
+        }
+        if(!Number.isInteger(qty) || qty <= 0) { setFocus(dom.qty, 'validation-need-qty'); dom.qty.select(); showToast('Enter a valid quantity', 'error'); return; }
 
         if (wasIntendedCustom && exactSysMatch && !forceExt) {
             showToast('Matched with a System Core item');
@@ -2485,8 +2497,11 @@
         };
     }
 
-    // Product/custom identified but no quantity typed yet — adopt it into the bar (mirrors what a
-    // click used to do) and leave the caret exactly where it is, in #omni, waiting for "*5".
+    // Product/custom identified but no quantity typed yet — adopt it into the bar and advance focus to
+    // whichever field still needs filling (unit -> context -> quantity for a custom line; straight to
+    // quantity for a system product, since unit/context don't apply). This is the classic hop-to-qty
+    // flow the user asked to keep — it's safe to restore now because every one of these fields has a
+    // real way back out (Escape/`/`/Ctrl+K), unlike the original version that left #qty a dead end.
     function adoptResolvedProduct(line) {
         const item = line.item;
         dom.omni.value = item.txt;
@@ -2500,9 +2515,19 @@
             dom.ctx.value = '';
             dom.unit.disabled = true; dom.ctx.disabled = true;
         }
-        dom.res.classList.remove('show');
         syncCtxUI();
-        setFocus(dom.omni, 'product-adopted-await-qty');
+        showAdoptedHint(item);
+        if (item.t === 'custom' && !dom.unit.value.trim()) { setFocus(dom.unit, 'adopted-need-unit'); }
+        else if (item.t === 'custom' && !dom.ctx.value) { focusCtxField(); }
+        else { setFocus(dom.qty, 'adopted-need-qty'); }
+    }
+
+    function showAdoptedHint(item) {
+        dom.res.innerHTML = ''; resList = []; resData = []; selIdx = -1;
+        const div = document.createElement('div'); div.className = 'res-item'; div.dir = 'auto';
+        div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--accent-2)">✓ <strong style="color:var(--text-main)">${esc(item.txt)}</strong> selected</div><span class="res-type" style="background:var(--accent-2);color:#fff;border:none;">${item.t === 'custom' && (!dom.unit.value.trim() || !dom.ctx.value) ? 'Fill in below' : 'Enter qty →'}</span>`;
+        dom.res.appendChild(div);
+        dom.res.classList.add('show');
     }
 
     // Everything is present — populate the classic fields exactly as the old field-hopping flow did
@@ -2569,7 +2594,13 @@
 
         if (e.target === dom.omni) { routeOmniEnter(); return; }
         if (e.target === dom.ctxTrigger) { ctxTriggerKeydown(e); return; }
-        if (e.target === dom.unit || e.target === dom.qty) { processAdd(); return; }
+        if (e.target === dom.unit) {
+            if (!dom.unit.value.trim()) { showToast('Enter a unit', 'error'); return; }
+            if (!dom.ctx.disabled && !dom.ctx.value) { focusCtxField(); }
+            else { setFocus(dom.qty, 'unit-advance'); }
+            return;
+        }
+        if (e.target === dom.qty) { processAdd(); return; }
     }
 
     function onGridFilter(v) { gridFilter = v; drawGrid(); }
@@ -3630,6 +3661,27 @@
 
         let extScenario = _flowTestScenario('!Self-Test Flow Drug @Box #1*4', { name: 'Self-Test Flow Drug', unit: 'Box', context: CONTEXTS[0], qty: 4, isCustom: true });
         assert('Keystroke budget: EXT line (!name @unit #ctx *qty -> Enter) commits with zero focus changes outside #omni', extScenario.ok, extScenario.leftBar ? 'a fallback field (#omni-unit/#omni-ctx-trigger/#qty) was focused' : '');
+
+        // Restored hop-chain: adopting a line with a piece still missing now advances focus to
+        // whichever field needs filling (the "old way" the user asked to keep), instead of always
+        // staying in #omni. Safe to restore because every one of these fields has a real way back out.
+        const omniSnap = { v: dom.omni.value, raw: dom.omni.dataset.raw, u: dom.unit.value, ud: dom.unit.disabled, c: dom.ctx.value, cd: dom.ctx.disabled, q: dom.qty.value };
+
+        let hopProd = PRODS[1].split('|');
+        dom.omni.value = hopProd[0]; dom.omni.dataset.raw=''; dom.unit.value=''; dom.ctx.value=''; dom.unit.disabled=false; dom.ctx.disabled=false; dom.res.classList.remove('show'); selIdx=-1;
+        routeOmniEnter();
+        assert('Adopting a system product with no quantity advances focus straight to #qty', document.activeElement === dom.qty);
+
+        dom.omni.value = '!Self-Test Hop Drug'; dom.omni.dataset.raw=''; dom.unit.value=''; dom.ctx.value=''; dom.unit.disabled=false; dom.ctx.disabled=false; dom.res.classList.remove('show'); selIdx=-1;
+        routeOmniEnter();
+        assert('Adopting a fresh custom line advances focus to #omni-unit first', document.activeElement === dom.unit);
+
+        dom.ctx.value = ''; highlightCtxSelected();
+        assert('Context menu defaults its highlighted option to a real context, not the empty placeholder', ctxOptions().findIndex(d => d.classList.contains('active-opt')) > 0);
+
+        dom.omni.value = omniSnap.v; dom.omni.dataset.raw = omniSnap.raw; dom.unit.value = omniSnap.u; dom.unit.disabled = omniSnap.ud; dom.ctx.value = omniSnap.c; dom.ctx.disabled = omniSnap.cd; dom.qty.value = omniSnap.q;
+        dom.res.classList.remove('show'); closeCtxMenu(); syncCtxUI();
+        setFocus(dom.omni, 'selftest-cleanup');
 
         showSelfTestModal(results);
     }
