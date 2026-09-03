@@ -923,7 +923,7 @@
         <div class="util-actions">
             <div class="filter-box">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="grid-filter" placeholder="Filter ledger..." oninput="onGridFilter(this.value)">
+                <input type="text" id="grid-filter" placeholder="Filter folio..." oninput="onGridFilter(this.value)">
             </div>
             <button class="btn-stub" onclick="openScaleTool()" title="Scale quantities">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
@@ -1005,7 +1005,7 @@
             <div class="dot-sep"></div>
             <span class="mono-note" id="last-saved"></span>
             <div style="width: 1.5px; height: 16px; background: var(--border-strong);"></div>
-            <button class="btn-ghost danger" onclick="resetData()" title="Void ledger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Void</button>
+            <button class="btn-ghost danger" onclick="resetData()" title="Void folio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Void</button>
             <button class="btn-ghost" onclick="saveSession()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save</button>
             <label class="btn-ghost" style="cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Load<input type="file" id="file-load" accept=".json" style="display:none;" onchange="if(this.files[0]) loadSession(this.files[0])"></label>
             <button class="btn-ghost" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print</button>
@@ -1055,7 +1055,7 @@
                 <span><kbd>/keyboard</kbd> or <kbd>?</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Advance / Log Line</span>
+                <span style="font-weight:600;">Select / Advance / Log</span>
                 <span><kbd>Enter ↵</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
@@ -1083,7 +1083,7 @@
                 <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>S</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Filter Ledger</span>
+                <span style="font-weight:600;">Filter Folio</span>
                 <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>F</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
@@ -1094,18 +1094,38 @@
                 <span style="font-weight:600;">Reset / Clear View</span>
                 <span><kbd>Esc</kbd></span>
             </div>
-            <p class="sub" style="margin: 1.5rem 0 0.6rem;">Omni bar shortcuts</p>
+            <p class="sub" style="margin: 1.5rem 0 0.6rem;">Omni bar — search &amp; log</p>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
+                <span>Search by name, ID, or Franco-Arabic</span>
+                <span><kbd>panadol</kbd></span>
+            </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
                 <span>Log a system product in one step</span>
-                <span><kbd>name x50</kbd></span>
+                <span><kbd>name*5</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Adjust the last-touched line</span>
-                <span><kbd>+5</kbd> / <kbd>-5</kbd></span>
+                <span>...or press Enter to select, then just type the qty</span>
+                <span><kbd>name</kbd> ↵ <kbd>5</kbd> ↵</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
+                <span>Force a new EXT (custom) line</span>
+                <span><kbd>!name</kbd></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
+                <span>Set unit / context inline (or press Enter to be walked through them)</span>
+                <span><kbd>@unit</kbd> <kbd>#1-4</kbd></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
+                <span>Context mnemonics — committee/judicial/medical/list</span>
+                <span><kbd>#c</kbd> <kbd>#j</kbd> <kbd>#m</kbd> <kbd>#l</kbd></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
+                <span>Full EXT line in one step</span>
+                <span><kbd>!name @unit #1*5</kbd></span>
             </div>
             <div style="display:flex; justify-content:space-between;">
-                <span>Force a new EXT line</span>
-                <span><kbd>!name</kbd></span>
+                <span>Adjust the last-touched line</span>
+                <span><kbd>+5</kbd> / <kbd>-5</kbd></span>
             </div>
         </div>
     </div>
@@ -1622,15 +1642,15 @@
     }
 
     function resetData() {
-        if(!DATA.length) { showToast('Ledger is already empty'); return; }
-        openConfirm('Void the ledger?', 'This clears every line in your current workspace. The header filters stay put.', 'Void it', () => {
-            commit('Void the ledger', () => { DATA = []; });
-            showToast('Ledger voided', 'normal', 'Undo', undo);
+        if(!DATA.length) { showToast('Folio is already empty'); return; }
+        openConfirm('Void the folio?', 'This clears every line in your current workspace. The header filters stay put.', 'Void it', () => {
+            commit('Void the folio', () => { DATA = []; });
+            showToast('Folio voided', 'normal', 'Undo', undo);
         });
     }
 
     function resetAllHard() {
-        openConfirm('Wipe everything?', 'Clears the ledger and resets Year, Month, Class, Region and Pharmacy.', 'Wipe it', () => {
+        openConfirm('Wipe everything?', 'Clears the folio and resets Year, Month, Class, Region and Pharmacy.', 'Wipe it', () => {
             commit('Wipe everything', () => { DATA = []; });
             resetHUD();
             localStorage.removeItem('lx_b'); lastBackupSnapshot='';
@@ -2108,7 +2128,7 @@
                 { keys: ['/print', 'print'], icon: SVG_ICONS.print, label: 'Print Report', act: () => window.print(), color: 'var(--text-muted)' },
                 { keys: ['/import', 'import'], icon: SVG_ICONS.import, label: 'Import CSV', act: openImport, color: 'var(--warning)' },
                 { keys: ['/scale', 'scale'], icon: SVG_ICONS.scale, label: 'Scale Quantities', act: openScaleTool, color: 'var(--accent)' },
-                { keys: ['/filter', 'filter'], icon: SVG_ICONS.search, label: 'Filter Ledger', act: () => { dom.omni.value=''; dom.res.classList.remove('show'); document.getElementById('grid-filter').focus(); }, color: 'var(--accent-2)' },
+                { keys: ['/filter', 'filter'], icon: SVG_ICONS.search, label: 'Filter Folio', act: () => { dom.omni.value=''; dom.res.classList.remove('show'); document.getElementById('grid-filter').focus(); }, color: 'var(--accent-2)' },
                 { keys: ['/undo', 'undo'], icon: SVG_ICONS.undo, label: 'Undo', act: undo, color: 'var(--accent-2)' },
                 { keys: ['/redo', 'redo'], icon: SVG_ICONS.undo, label: 'Redo', act: redo, color: 'var(--accent-2)' },
                 { keys: ['/theme', 'theme'], icon: SVG_ICONS.theme, label: 'Toggle Theme', act: toggleTheme, color: 'var(--accent)' },
@@ -2525,7 +2545,8 @@
     function showAdoptedHint(item) {
         dom.res.innerHTML = ''; resList = []; resData = []; selIdx = -1;
         const div = document.createElement('div'); div.className = 'res-item'; div.dir = 'auto';
-        div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--accent-2)">✓ <strong style="color:var(--text-main)">${esc(item.txt)}</strong> selected</div><span class="res-type" style="background:var(--accent-2);color:#fff;border:none;">${item.t === 'custom' && (!dom.unit.value.trim() || !dom.ctx.value) ? 'Fill in below' : 'Enter qty →'}</span>`;
+        const needsMore = item.t === 'custom' && (!dom.unit.value.trim() || !dom.ctx.value);
+        div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--text-muted)">✓ <strong style="color:var(--text-main)">${esc(item.txt)}</strong> selected</div><span class="res-type">${needsMore ? 'fill in below' : 'enter qty'}</span>`;
         dom.res.appendChild(div);
         dom.res.classList.add('show');
     }
