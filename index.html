@@ -466,6 +466,10 @@
         background: var(--surface-2); color: var(--text-muted); font-weight: 600;
         text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; white-space: nowrap;
     }
+    .qty-badge {
+        font-size: 0.62rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-xl);
+        background: var(--accent); color: #fff; font-weight: 600; white-space: nowrap;
+    }
 
     .util-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
     .freq-strip { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 2px; }
@@ -890,7 +894,7 @@
         <p>بيان الخارجي عن شهر <span id="print-month"></span></p>
     </div>
 
-    <div class="omni-row">
+    <div class="omni-row" id="omni-row">
         <div class="omni-wrapper">
             <input type="text" class="omni-input" id="omni" placeholder="Search product, type ID, or / commands..." autocomplete="off">
             <div class="cmd-trigger" onclick="triggerCmd()">/ Cmd</div>
@@ -1238,6 +1242,7 @@
     let DATA = [];
 
     let ID_SEQ = Date.now();
+    let suppressNextGridFocusRestore = false;
 
     let IMPORT_FILES = [];
 
@@ -1254,6 +1259,21 @@
     const HISTORY_LIMIT = 40;
 
     const esc = s => (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
+
+    // ---- Flow instrumentation (Phase 0) ----
+    // Every focus change in the omni-bar's Enter chain routes through here so it can be traced with
+    // /flowtrace and asserted on in runSelfTest's keystroke-budget checks. #omni is the only field
+    // that chain should ever land on — a setFocus() call to #omni-unit, #omni-ctx-trigger or #qty from
+    // within that chain is a bug, not a feature.
+    const FLOW = { enabled: false, log: [] };
+    function setFocus(el, reason) {
+        if(!el) return;
+        if(FLOW.enabled) {
+            FLOW.log.push({ id: el.id || el.tagName || '?', reason: reason || '' });
+            if(FLOW.log.length > 300) FLOW.log.shift();
+        }
+        try { el.focus(); } catch(e) {}
+    }
 
     const CONTEXTS = ["قرار لجنة", "حكم قضائي", "شئون طبية", "داخل اللستة"];
 
@@ -1324,6 +1344,70 @@
             .filter(s => s.score >= 0.25)
             .sort((a, b) => b.score - a.score)
             .map(f => ({ item: f.item }));
+    }
+
+    // ---- Inline omni-bar grammar (Phase 2/4) ----
+    // [!] <name tokens…> [@unit] [#ctx] [(*|x|,)<qty>] — parsed live on every keystroke, not just Enter.
+    // Quantity requires an explicit separator (never a bare trailing integer): the catalog has real
+    // entries like "Omega 3" and "Vitamin E 400" where a trailing number is part of the name.
+    function parseOmniLine(raw) {
+        let s = (raw || '');
+        let forceExt = /^!/.test(s.trim());
+        s = s.trim().replace(/^!\s*/, '');
+
+        let qty = null, unit = null, ctxToken = null;
+
+        let qtyMatch = s.match(/[*x,]\s*(\d+)\s*$/i);
+        if(qtyMatch) { qty = parseInt(qtyMatch[1], 10); s = s.slice(0, qtyMatch.index).trim(); }
+
+        let ctxMatch = s.match(/#(\S+)/);
+        if(ctxMatch) { ctxToken = ctxMatch[1]; s = (s.slice(0, ctxMatch.index) + s.slice(ctxMatch.index + ctxMatch[0].length)).replace(/\s{2,}/g, ' ').trim(); }
+
+        let unitMatch = s.match(/@(\S+)/);
+        if(unitMatch) { unit = unitMatch[1]; s = (s.slice(0, unitMatch.index) + s.slice(unitMatch.index + unitMatch[0].length)).replace(/\s{2,}/g, ' ').trim(); }
+
+        return { forceExt, name: s.trim(), unit, ctxToken, qty };
+    }
+
+    // #1-#4 map to CONTEXTS positionally; #c/#j/#m/#l are mnemonics (committee/judicial/medical/list);
+    // any other token is matched against the Arabic first letters (or a longer prefix) of CONTEXTS.
+    const CTX_MNEMONICS = { c: 0, j: 1, m: 2, l: 3 };
+    function resolveCtxToken(token) {
+        if(!token) return null;
+        let n = parseInt(token, 10);
+        if(!isNaN(n) && n >= 1 && n <= CONTEXTS.length) return CONTEXTS[n - 1];
+        let low = token.toLowerCase();
+        if(low in CTX_MNEMONICS) return CONTEXTS[CTX_MNEMONICS[low]];
+        let nt = normalizeAr(token);
+        let match = CONTEXTS.find(c => normalizeAr(c).startsWith(nt));
+        return match || null;
+    }
+
+    // ---- Script-agnostic fallback: positional QWERTY <-> Arabic-101 remap (Phase 5) ----
+    // Deterministic, no fuzzy risk — catches "Arabic layout was active, gibberish came out" typos
+    // against the Latin-only product catalog. Never merged into the scored pool; a last-resort pass
+    // the same way fuzzySearch backstops the primary term match.
+    const AR_TO_LATIN_LAYOUT = {
+        'ض':'q','ص':'w','ث':'e','ق':'r','ف':'t','غ':'y','ع':'u','ه':'i','خ':'o','ح':'p','ج':'[','د':']',
+        'ش':'a','س':'s','ي':'d','ب':'f','ل':'g','ا':'h','ت':'j','ن':'k','م':'l','ك':';','ط':"'",
+        'ئ':'z','ء':'x','ؤ':'c','ر':'v','ى':'b','ة':'n','و':'m'
+    };
+    function remapArabicToLatinLayout(str) {
+        let out = '';
+        for(const ch of (str || '')) out += (AR_TO_LATIN_LAYOUT[ch] != null) ? AR_TO_LATIN_LAYOUT[ch] : ch;
+        return out;
+    }
+    function remappedProductSearch(sq) {
+        let remapped = remapArabicToLatinLayout(sq);
+        if(remapped === sq) return [];
+        let terms = normalizeAr(remapped).trim().split(/\s+/).filter(Boolean);
+        if(!terms.length) return [];
+        let scored = SEARCH_IDX.filter(o => o.t === 'product').map(obj => {
+            let target = obj._t, score = 0, matchedTokens = 0;
+            for(let t of terms) { if(target.includes(t)) { score += t.length * 2; matchedTokens++; if(target.startsWith(t)) score += 5; } }
+            return { item: obj, score, matchedTokens };
+        });
+        return scored.filter(s => s.matchedTokens === terms.length).sort((a, b) => b.score - a.score).map(f => ({ item: f.item }));
     }
 
     function findDataIndex(id) { return DATA.findIndex(d => d.id === id); }
@@ -1706,7 +1790,7 @@
 
     function toggleTheme() { const root = document.documentElement; root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('lx_theme', root.dataset.theme); syncThemeIcon(); }
 
-    function focusCtxField() { if(dom.ctx.disabled) return; dom.ctxTrigger.focus(); openCtxMenu(); }
+    function focusCtxField() { if(dom.ctx.disabled) return; setFocus(dom.ctxTrigger, 'focusCtxField-fallback'); openCtxMenu(); }
 
     function syncCtxUI() {
         const wrap = document.getElementById('omni-ctx-wrap');
@@ -1717,6 +1801,9 @@
         label.textContent = val || 'Context...';
         trigger.classList.toggle('filled', !!val);
         trigger.setAttribute('aria-disabled', dom.ctx.disabled ? 'true' : 'false');
+        // Phase 6: a real disabled attribute (not just a CSS class) removes the trigger from the tab
+        // order, so Shift+Tab from #qty can no longer land on a dead, pointer-events:none button.
+        trigger.disabled = !!dom.ctx.disabled;
         wrap.classList.toggle('disabled', dom.ctx.disabled);
         highlightCtxSelected();
     }
@@ -1744,11 +1831,13 @@
     function openCtxMenu() {
         const wrap = document.getElementById('omni-ctx-wrap');
         if(!wrap || wrap.classList.contains('disabled') || wrap.classList.contains('open')) return;
-        const trigger = document.activeElement;
         wrap.classList.add('open');
         document.getElementById('omni-ctx-trigger').setAttribute('aria-expanded', 'true');
         highlightCtxSelected();
-        layerStack.push({ id: 'omni-ctx-menu', trigger, close: () => { closeCtxMenu(); if(trigger && trigger.focus) { try { trigger.focus(); } catch(e) {} } } });
+        // This menu is part of the omni bar's own fallback path, not an independent layer like a modal
+        // or HUD dropdown — closing it (via Escape or selection) always lands back on #omni, in one
+        // press, honoring the "every path begins and ends in #omni" invariant.
+        layerStack.push({ id: 'omni-ctx-menu', trigger: dom.omni, close: () => { closeCtxMenu(); setFocus(dom.omni, 'ctx-menu-escaped'); } });
     }
 
     function closeCtxMenu() {
@@ -1770,9 +1859,13 @@
         dom.ctx.value = val;
         syncCtxUI();
         closeCtxMenu();
-        if(!dom.ctx.disabled) dom.qty.focus();
+        setFocus(dom.omni, 'ctx-option-selected');
     }
 
+    // Phase 1: merged into the single omni-row keydown router as a branch (not a competing listener),
+    // so there's no ordering race with the Enter router and no stopImmediatePropagation needed anywhere.
+    // This trigger button is now a mouse/accessibility fallback for the #ctx grammar token, not part
+    // of the primary Enter chain.
     function ctxTriggerKeydown(e) {
         const wrap = document.getElementById('omni-ctx-wrap');
         if(!wrap || wrap.classList.contains('disabled')) return;
@@ -1785,10 +1878,11 @@
         else if(e.key === 'Home' && isOpen) { e.preventDefault(); setCtxActive(0, true); }
         else if(e.key === 'End' && isOpen) { e.preventDefault(); setCtxActive(opts.length - 1, true); }
         else if(e.key === 'Enter') {
-            if(isOpen) { e.preventDefault(); e.stopImmediatePropagation(); if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
-            else { e.preventDefault(); } // suppress the button's native click-to-open so this falls through to handleKey's existing Enter-to-advance flow instead
+            e.preventDefault();
+            if(isOpen) { if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
+            else { openCtxMenu(); }
         }
-        else if(e.key === ' ' && isOpen) { e.preventDefault(); e.stopImmediatePropagation(); if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
+        else if(e.key === ' ' && isOpen) { e.preventDefault(); if(opts[idx]) selectCtxOption(opts[idx].dataset.val || ''); }
         else if(e.key.length === 1 && isOpen && /\S/.test(e.key)) {
             const nk = normalizeAr(e.key);
             const match = opts.findIndex(d => normalizeAr(d.textContent).trim().startsWith(nk));
@@ -1921,7 +2015,68 @@
         });
         let filtered = scored.filter(s => s.matchedTokens === terms.length);
         if(filtered.length) return filtered.sort((a,b) => b.score - a.score).map(f => ({ item: f.item }));
-        return fuzzySearch(sq);
+        let fuzzy = fuzzySearch(sq);
+        if(fuzzy.length) return fuzzy;
+        if(/[\u0600-\u06FF]/.test(sq)) {
+            let remapped = remappedProductSearch(sq);
+            if(remapped.length) return remapped;
+        }
+        return fuzzy;
+    }
+
+    // Every row pushed into the dropdown gets a matching resData[] entry alongside resList[], so the
+    // Enter router can ask "what's highlighted right now?" without simulating a click. 'product' and
+    // 'custom' carry the underlying item for resolveLine(); every other kind is fully self-contained —
+    // the router just replays its own onclick via .click().
+    function pushResult(el, data) { dom.res.appendChild(el); resList.push(el); resData.push(data); }
+
+    function toggleFlowTrace() {
+        FLOW.enabled = !FLOW.enabled;
+        if(FLOW.enabled) { FLOW.log = []; showToast('Flow trace on — watch the console for focus changes'); }
+        else { console.log('[FLOW] trace stopped —', FLOW.log.length, 'focus change(s):', FLOW.log); showToast(`Flow trace off — ${FLOW.log.length} change(s) logged to console`); }
+    }
+
+    const qtyBadgeHtml = qty => qty != null ? `<span class="qty-badge">Enter → log ${esc(String(qty))}</span>` : '';
+
+    function renderUnitCompletion(query) {
+        dom.res.innerHTML = ''; resList = []; resData = [];
+        let nq = normalizeAr(query);
+        let matches = (nq ? UNITS.filter(u => normalizeAr(u).includes(nq)) : UNITS).slice(0, 8);
+        matches.forEach(u => {
+            const div = document.createElement('div'); div.className = 'res-item'; div.dir = 'auto';
+            div.innerHTML = `<div>📏 <strong>${esc(u)}</strong></div><span class="res-type" style="background:var(--accent-2);color:#fff;border:none;">Unit</span>`;
+            div.onclick = () => applyInlineToken('unit', u);
+            pushResult(div, { kind: 'unit' });
+        });
+        if(resList.length) { dom.res.classList.add('show'); selIdx = 0; hi(); } else { dom.res.classList.remove('show'); }
+    }
+
+    function renderCtxCompletion(query) {
+        dom.res.innerHTML = ''; resList = []; resData = [];
+        let nq = normalizeAr(query);
+        const mnemonicFor = i => Object.keys(CTX_MNEMONICS).find(k => CTX_MNEMONICS[k] === i);
+        CONTEXTS.forEach((c, i) => {
+            let code = String(i + 1), mnem = mnemonicFor(i);
+            if(nq && !normalizeAr(c).includes(nq) && !code.startsWith(nq) && !(mnem && mnem.startsWith(nq))) return;
+            const div = document.createElement('div'); div.className = 'res-item'; div.dir = 'auto';
+            div.innerHTML = `<div>🏷️ <strong>${esc(c)}</strong></div><span class="res-type" style="background:var(--accent);color:#fff;border:none;">#${code}${mnem ? ' / #' + mnem : ''}</span>`;
+            div.onclick = () => applyInlineToken('ctx', code);
+            pushResult(div, { kind: 'ctx' });
+        });
+        if(resList.length) { dom.res.classList.add('show'); selIdx = 0; hi(); } else { dom.res.classList.remove('show'); }
+    }
+
+    // Replaces the trailing in-progress @... or #... token with its resolved full form and keeps
+    // going — the caret never leaves #omni for this.
+    function applyInlineToken(kind, value) {
+        let raw = dom.omni.value;
+        let re = kind === 'unit' ? /(^|\s)@(\S*)$/ : /(^|\s)#(\S*)$/;
+        let sigil = kind === 'unit' ? '@' : '#';
+        raw = raw.replace(re, (m, pre) => `${pre}${sigil}${value} `);
+        dom.omni.value = raw;
+        dom.omni.dataset.raw = '';
+        setFocus(dom.omni, `inline-${kind}-selected`);
+        dom.omni.dispatchEvent(new Event('input'));
     }
 
     function runOmniSearch(q) {
@@ -1938,7 +2093,7 @@
         }
 
         if (qLow.startsWith('/') && !isCmdAdd) {
-            dom.res.innerHTML = ''; resList = [];
+            dom.res.innerHTML = ''; resList = []; resData = [];
             const CMDS = [
                 { keys: ['/save', 'save'], icon: SVG_ICONS.save, label: 'Save Session', act: saveSession, color: 'var(--accent-2)' },
                 { keys: ['/load', 'load'], icon: SVG_ICONS.load, label: 'Load Session', act: () => document.getElementById('file-load').click(), color: 'var(--accent)' },
@@ -1950,6 +2105,7 @@
                 { keys: ['/redo', 'redo'], icon: SVG_ICONS.undo, label: 'Redo', act: redo, color: 'var(--accent-2)' },
                 { keys: ['/theme', 'theme'], icon: SVG_ICONS.theme, label: 'Toggle Theme', act: toggleTheme, color: 'var(--accent)' },
                 { keys: ['/keyboard', 'keyboard'], icon: SVG_ICONS.help, label: 'Keyboard Shortcuts', act: showShortcutsModal, color: 'var(--accent)' },
+                { keys: ['/flowtrace', 'flowtrace'], icon: SVG_ICONS.test, label: FLOW.enabled ? 'Flow Trace: stop (console)' : 'Flow Trace: start (console)', act: toggleFlowTrace, color: 'var(--accent-2)' },
                 { keys: ['/reset filters', 'reset filters'], icon: SVG_ICONS.filters, label: 'Reset Filters', act: resetHUD, color: 'var(--warning)' },
                 { keys: ['/reset data', 'reset data'], icon: SVG_ICONS.trash, label: 'Reset Data', act: resetData, color: 'var(--danger)' },
                 { keys: ['/reset all', 'reset all'], icon: SVG_ICONS.boom, label: 'Reset All', act: resetAllHard, color: 'var(--danger)' },
@@ -1962,15 +2118,15 @@
             if (qLow === '/' || '/add'.startsWith(qLow)) {
                 const addCmd = document.createElement('div'); addCmd.className = 'res-item';
                 addCmd.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--warning)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> <strong style="color:var(--text-main)">/add [product]</strong></div><span class="res-type" style="background:var(--warning);color:#fff;border:none;">Cmd</span>`;
-                addCmd.onclick = () => { dom.omni.value = '/add '; dom.omni.focus(); dom.omni.dispatchEvent(new Event('input')); };
-                dom.res.appendChild(addCmd); resList.push(addCmd);
+                addCmd.onclick = () => { dom.omni.value = '/add '; dom.omni.dataset.raw = ''; dom.omni.dispatchEvent(new Event('input')); setFocus(dom.omni, 'add-command'); };
+                pushResult(addCmd, { kind: 'cmd' });
             }
 
             matchedCmds.forEach(c => {
                 const div = document.createElement('div'); div.className = 'res-item';
                 div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:${c.color}">${c.icon} <strong style="color:var(--text-main)">${c.label}</strong></div><span class="res-type" style="background:${c.color};color:#fff;border:none;">Cmd</span>`;
-                div.onclick = () => { c.act(); dom.omni.value=''; dom.res.classList.remove('show'); };
-                dom.res.appendChild(div); resList.push(div);
+                div.onclick = () => { c.act(); dom.omni.value=''; dom.omni.dataset.raw=''; dom.res.classList.remove('show'); setFocus(dom.omni, 'cmd-run'); };
+                pushResult(div, { kind: 'cmd' });
             });
 
             let cmdQuery = q.slice(1).trim();
@@ -1979,7 +2135,7 @@
                     const div = document.createElement('div'); div.className = 'res-item'; div.dir = 'auto';
                     div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> ${r.item.u ? `<small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small>` : ''}</div><span class="res-type">${r.item.t}</span>`;
                     div.onclick = () => applyOmni(r.item);
-                    dom.res.appendChild(div); resList.push(div);
+                    pushResult(div, { kind: r.item.t === 'product' ? 'product' : 'nav', item: r.item });
                 });
             }
 
@@ -1988,32 +2144,42 @@
             return;
         }
 
-        let parsedCtx = "";
-        let sq = searchRaw;
-        for (let c of CONTEXTS) {
-            if (sq.includes(c)) {
-                parsedCtx = c;
-                sq = sq.replace(c, '').replace(/\s{2,}/g, ' ').trim();
-                break;
+        // Phase 4: while the user is actively typing an @unit or #ctx token (it's the last, still-open
+        // token in the line), the dropdown switches entirely into that completion mode. This is what
+        // keeps an EXT line inside #omni — no more hopping to the unit field or the context menu.
+        let unitTokenMatch = searchRaw.match(/(^|\s)@(\S*)$/);
+        if (unitTokenMatch) { renderUnitCompletion(unitTokenMatch[2]); return; }
+        let ctxTokenMatch = searchRaw.match(/(^|\s)#(\S*)$/);
+        if (ctxTokenMatch) { renderCtxCompletion(ctxTokenMatch[2]); return; }
+
+        // Phase 2: parse the full grammar on every keystroke (not just Enter) so a quantity badge can
+        // be shown live, and so completed @unit/#ctx tokens typed earlier in the line are respected.
+        let parsedFull = parseOmniLine(searchRaw);
+        let parsedCtx = parsedFull.ctxToken ? (resolveCtxToken(parsedFull.ctxToken) || '') : '';
+        let sq = parsedFull.name;
+        if (!parsedCtx) {
+            for (let c of CONTEXTS) {
+                if (sq.includes(c)) { parsedCtx = c; sq = sq.replace(c, '').replace(/\s{2,}/g, ' ').trim(); break; }
             }
         }
+        let qtyBadge = qtyBadgeHtml(parsedFull.qty);
 
         const createAddCustomNode = () => {
             const cDiv = document.createElement('div'); cDiv.className = 'res-item'; cDiv.dir = 'auto';
-            let b = parsedCtx ? `<span class="res-type" style="background:var(--accent);color:#fff;border:none;">${parsedCtx}</span>` : '';
-            cDiv.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">➕ <strong style="color:var(--warning)">Add EXT:</strong> <span>${esc(sq) || '...'}</span></div><div style="display:flex; gap:6px; align-items:center;">${b}<span class="res-type" style="background:var(--warning);color:#fff;border:none;">Custom</span></div>`;
+            let b = parsedCtx ? `<span class="res-type" style="background:var(--accent);color:#fff;border:none;">${esc(parsedCtx)}</span>` : '';
+            cDiv.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">➕ <strong style="color:var(--warning)">Add EXT:</strong> <span>${esc(sq) || '...'}</span></div><div style="display:flex; gap:6px; align-items:center;">${qtyBadge}${b}<span class="res-type" style="background:var(--warning);color:#fff;border:none;">Custom</span></div>`;
             cDiv.onclick = () => applyOmni({t:'custom', txt:sq, ctx: parsedCtx});
             return cDiv;
         };
 
-        dom.res.innerHTML = ''; resList = [];
+        dom.res.innerHTML = ''; resList = []; resData = [];
         let isYear = /^\d{4}$/.test(q.trim());
         const omniYr = getYearBounds();
         if (isYear && parseInt(q.trim()) >= omniYr.min && parseInt(q.trim()) <= omniYr.max && !isCmdAdd) {
             const yDiv = document.createElement('div'); yDiv.className = 'res-item';
             yDiv.innerHTML = `<div>📅 Set Year: <strong>${q.trim()}</strong></div><span class="res-type" style="background:var(--accent);color:#fff;border:none;">Year</span>`;
-            yDiv.onclick = () => { setHud('year', q.trim()); dom.omni.value=''; dom.res.classList.remove('show'); showToast('Year set'); };
-            dom.res.appendChild(yDiv); resList.push(yDiv);
+            yDiv.onclick = () => { setHud('year', q.trim()); dom.omni.value=''; dom.omni.dataset.raw=''; dom.res.classList.remove('show'); showToast('Year set'); setFocus(dom.omni, 'nav-applied'); };
+            pushResult(yDiv, { kind: 'year' });
         }
 
         let searchResults = sq ? smartSearch(sq).slice(0, 8) : [];
@@ -2035,32 +2201,34 @@
         const appendResults = (results) => {
             results.forEach((r, idx) => {
                 const div = document.createElement('div'); div.className = 'res-item';
+                let badge = r.item.t === 'product' ? qtyBadge : '';
                 if (idx === 0 && !exactMatch && sq.length > 2 && r.item.t === 'product') {
-                    div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type" style="background:var(--accent-glow); color:var(--accent); border-color:var(--accent);">Suggest</span>`;
+                    div.innerHTML = `<div>💡 <strong style="color:var(--accent)">${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><div style="display:flex; gap:6px; align-items:center;">${badge}<span class="res-type" style="background:var(--accent-glow); color:var(--accent); border-color:var(--accent);">Suggest</span></div>`;
                 } else {
-                    div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><span class="res-type">${r.item.t}</span>`;
+                    div.innerHTML = `<div><strong>${esc(r.item.txt)}</strong> <small style="color:var(--text-muted); margin-left:8px">${esc(r.item.u)}</small></div><div style="display:flex; gap:6px; align-items:center;">${badge}<span class="res-type">${r.item.t}</span></div>`;
                 }
                 div.onclick = () => applyOmni(r.item);
-                dom.res.appendChild(div); resList.push(div);
+                pushResult(div, { kind: r.item.t === 'product' ? 'product' : 'nav', item: r.item });
             });
         };
 
         let cNode = (sq || isCmdAdd) ? createAddCustomNode() : null;
+        let pushCNode = () => { if(cNode) pushResult(cNode, { kind: 'custom', item: { t: 'custom', txt: sq, ctx: parsedCtx } }); };
 
         if (isCmdAdd) {
-            if (cNode) { dom.res.appendChild(cNode); resList.push(cNode); }
+            pushCNode();
             appendResults(searchResults);
         } else if (exactMatch || isIdMatch) {
             appendResults(searchResults);
-            if (cNode) { dom.res.appendChild(cNode); resList.push(cNode); }
+            pushCNode();
         } else if (searchResults.length === 0) {
-            if (cNode) { dom.res.appendChild(cNode); resList.push(cNode); }
+            pushCNode();
         } else {
             if (highConfidence) {
                 appendResults(searchResults);
-                if (cNode) { dom.res.appendChild(cNode); resList.push(cNode); }
+                pushCNode();
             } else {
-                if (cNode) { dom.res.appendChild(cNode); resList.push(cNode); }
+                pushCNode();
                 appendResults(searchResults);
             }
         }
@@ -2074,32 +2242,26 @@
 
     function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) { resList[selIdx].classList.add('sel'); resList[selIdx].scrollIntoView({block:'nearest'}); } }
 
+    // Phase 3: adopt-or-commit. A product/custom target with no quantity yet is adopted into the bar
+    // and focus stays put — Enter (routeOmniEnter) and a mouse click both funnel through here, so
+    // clicking a result behaves exactly like typing the rest of the line and pressing Enter would.
     function applyOmni(item) {
         dom.res.classList.remove('show');
-        if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value=''; showToast('Pharmacy linked'); }
-        else if(item.t === 'month') { setHud('month', item.val); dom.omni.value=''; showToast('Month linked'); }
-        else if(item.t === 'class') { setHud('class', item.val); dom.omni.value=''; showToast('Class linked'); }
-        else if(item.t === 'region') { setHud('region', item.val); dom.omni.value=''; showToast('Region linked'); }
-        else if(item.t === 'custom') {
-            if(!item.txt) { dom.omni.value = '/add '; dom.omni.dispatchEvent(new Event('input')); dom.omni.focus(); return; }
-            dom.omni.value = item.txt;
-            dom.omni.dataset.raw = JSON.stringify(item);
-            dom.unit.value = '';
-            dom.ctx.value = item.ctx || '';
-            dom.unit.disabled = false;
-            dom.ctx.disabled = false;
-            dom.unit.focus();
-        }
-        else {
-            dom.omni.value = item.txt;
-            dom.omni.dataset.raw = JSON.stringify(item);
-            dom.unit.value = item.u||'';
-            dom.ctx.value = '';
-            dom.unit.disabled = true;
-            dom.ctx.disabled = true;
-            dom.qty.focus();
-        }
-        syncCtxUI();
+        if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value=''; dom.omni.dataset.raw=''; showToast('Pharmacy linked'); syncCtxUI(); setFocus(dom.omni, 'nav-applied'); return; }
+        if(item.t === 'month') { setHud('month', item.val); dom.omni.value=''; dom.omni.dataset.raw=''; showToast('Month linked'); syncCtxUI(); setFocus(dom.omni, 'nav-applied'); return; }
+        if(item.t === 'class') { setHud('class', item.val); dom.omni.value=''; dom.omni.dataset.raw=''; showToast('Class linked'); syncCtxUI(); setFocus(dom.omni, 'nav-applied'); return; }
+        if(item.t === 'region') { setHud('region', item.val); dom.omni.value=''; dom.omni.dataset.raw=''; showToast('Region linked'); syncCtxUI(); setFocus(dom.omni, 'nav-applied'); return; }
+        if(item.t === 'custom' && !item.txt) { dom.omni.value = '/add '; dom.omni.dataset.raw = ''; dom.omni.dispatchEvent(new Event('input')); setFocus(dom.omni, 'add-command'); return; }
+
+        let parsed = parseOmniLine(dom.omni.value);
+        let line = {
+            item, isCustom: item.t === 'custom',
+            unit: parsed.unit != null ? parsed.unit : (item.u || ''),
+            resolvedCtx: parsed.ctxToken ? (resolveCtxToken(parsed.ctxToken) || '') : (item.ctx || ''),
+            qty: parsed.qty
+        };
+        if (line.qty != null) commitResolvedLine(line);
+        else adoptResolvedProduct(line);
     }
 
     function triggerCmd() {
@@ -2109,7 +2271,7 @@
     function quickAdd(name, unit) {
         let match = findSystemProduct(name, unit);
         if(match) { applyOmni(match); }
-        else { applyOmni({ t: 'custom', txt: name, ctx: '' }); dom.unit.value = unit || ''; }
+        else { applyOmni({ t: 'custom', txt: name, ctx: '' }); if(unit) { dom.unit.value = unit; syncCtxUI(); } }
     }
 
     function renderFrequentChips() {
@@ -2259,8 +2421,8 @@
         let context = (exactSysMatch && !forceExt) ? '' : (obj && obj.ctx ? obj.ctx : parsedCtx);
         let raw = (exactSysMatch && !forceExt) ? exactSysMatch.raw : `${name}|${unit}`;
 
-        if(isCustom && (!unit || !context)) { if(!unit) dom.unit.focus(); else focusCtxField(); showToast('Complete the Unit and Context for this line', 'error'); return; }
-        if(!Number.isInteger(qty) || qty <= 0) { dom.qty.focus(); dom.qty.select(); showToast('Enter a valid quantity', 'error'); return; }
+        if(isCustom && (!unit || !context)) { showToast('Complete the Unit and Context for this line', 'error'); return; }
+        if(!Number.isInteger(qty) || qty <= 0) { showToast('Enter a valid quantity', 'error'); return; }
 
         if (wasIntendedCustom && exactSysMatch && !forceExt) {
             showToast('Matched with a System Core item');
@@ -2272,14 +2434,142 @@
 
         dom.omni.value=''; dom.qty.value=''; dom.unit.value=''; dom.ctx.value='';
         dom.unit.disabled=false; dom.ctx.disabled=false;
-        dom.omni.dataset.raw=''; dom.omni.focus(); syncCtxUI();
+        dom.omni.dataset.raw=''; setFocus(dom.omni, 'add-committed'); syncCtxUI();
 
+        suppressNextGridFocusRestore = true;
         commit(`Add ${name}`, () => {
             if(exIdx >= 0) { DATA[exIdx].quantity += qty; lastTouchedRowId = DATA[exIdx].id; }
             else { const newRow = { id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }; DATA.unshift(newRow); lastTouchedRowId = newRow.id; }
         });
 
         document.getElementById('grid-container').scrollTop = 0;
+    }
+
+    // Phase 3: resolveLine() reads the full grammar out of #omni — preferring a highlighted dropdown
+    // row, then a product already adopted into the bar, then a fresh exact-match search — and returns
+    // a plain description of the line. It never touches focus and never mutates DATA; processAdd still
+    // owns dedupe/merge, commit()/undo history and bumpFrequency, exactly as before.
+    function resolveLine() {
+        const raw = dom.omni.value;
+        const parsed = parseOmniLine(raw);
+        const resolvedCtx = parsed.ctxToken ? (resolveCtxToken(parsed.ctxToken) || '') : '';
+
+        let obj = null;
+        try { obj = dom.omni.dataset.raw ? JSON.parse(dom.omni.dataset.raw) : null; } catch(e) {}
+
+        let item = null, isCustom = false;
+
+        if (obj && obj.t === 'product' && normalizeAr(obj.txt) === normalizeAr(parsed.name)) {
+            item = obj; isCustom = false;
+        } else if (obj && obj.t === 'custom' && normalizeAr(obj.txt) === normalizeAr(parsed.name)) {
+            item = obj; isCustom = true;
+        } else if (!parsed.forceExt) {
+            let highlighted = (dom.res.classList.contains('show') && selIdx >= 0 && resData[selIdx] &&
+                (resData[selIdx].kind === 'product' || resData[selIdx].kind === 'custom')) ? resData[selIdx].item : null;
+            if (highlighted) { item = highlighted; isCustom = highlighted.t === 'custom'; }
+            else {
+                let results = parsed.name ? smartSearch(parsed.name) : [];
+                if (results.length && results[0].item.t === 'product' && normalizeAr(results[0].item.txt) === normalizeAr(parsed.name)) {
+                    item = results[0].item; isCustom = false;
+                }
+            }
+        }
+
+        if (!item && parsed.name) { item = { t: 'custom', txt: parsed.name, ctx: resolvedCtx }; isCustom = true; }
+
+        return {
+            parsed, resolvedCtx, item, isCustom,
+            unit: parsed.unit != null ? parsed.unit : ((item && item.u) || ''),
+            qty: parsed.qty,
+            missing: item ? [] : ['product']
+        };
+    }
+
+    // Product/custom identified but no quantity typed yet — adopt it into the bar (mirrors what a
+    // click used to do) and leave the caret exactly where it is, in #omni, waiting for "*5".
+    function adoptResolvedProduct(line) {
+        const item = line.item;
+        dom.omni.value = item.txt;
+        dom.omni.dataset.raw = JSON.stringify(item);
+        if (item.t === 'custom') {
+            dom.unit.value = line.unit || '';
+            dom.ctx.value = line.resolvedCtx || item.ctx || '';
+            dom.unit.disabled = false; dom.ctx.disabled = false;
+        } else {
+            dom.unit.value = item.u || '';
+            dom.ctx.value = '';
+            dom.unit.disabled = true; dom.ctx.disabled = true;
+        }
+        dom.res.classList.remove('show');
+        syncCtxUI();
+        setFocus(dom.omni, 'product-adopted-await-qty');
+    }
+
+    // Everything is present — populate the classic fields exactly as the old field-hopping flow did
+    // and hand off to processAdd(), which is untouched: same dedupe/merge, same commit()/undo history.
+    function commitResolvedLine(line) {
+        dom.omni.value = line.item.txt;
+        dom.omni.dataset.raw = JSON.stringify(line.item);
+        dom.unit.value = line.unit || '';
+        dom.ctx.value = line.resolvedCtx || line.item.ctx || dom.ctx.value || '';
+        dom.qty.value = String(line.qty);
+        dom.unit.disabled = !line.isCustom;
+        dom.ctx.disabled = !line.isCustom;
+        syncCtxUI();
+        dom.res.classList.remove('show');
+        processAdd();
+    }
+
+    function applyDeltaShortcut(match) {
+        let idx = lastTouchedRowId != null ? findDataIndex(lastTouchedRowId) : -1;
+        if (idx < 0) return;
+        let delta = parseInt(match[1] + match[2], 10);
+        let newQty = Math.max(1, DATA[idx].quantity + delta);
+        let rowId = DATA[idx].id, rowName = DATA[idx].name;
+        commit(`Adjust ${rowName}`, () => { DATA[idx].quantity = newQty; }, { patch: () => patchRowQuantity(rowId) });
+        dom.omni.value = ''; dom.omni.dataset.raw = ''; dom.res.classList.remove('show');
+        showToast(`${rowName} → ${newQty}`, 'normal', 'Undo', undo);
+    }
+
+    // The single Enter router for #omni. This is the whole of Phase 3: a navigational highlight is
+    // applied and we stay; a product/custom with a quantity commits and we stay; a product/custom
+    // without one is adopted and we stay. #omni is the only field this function ever focuses.
+    function routeOmniEnter() {
+        const trimmed = dom.omni.value.trim();
+        if (!trimmed) return;
+
+        let deltaMatch = trimmed.match(/^([+-])(\d+)$/);
+        if (deltaMatch) { applyDeltaShortcut(deltaMatch); return; }
+
+        if (dom.res.classList.contains('show') && selIdx >= 0 && resData[selIdx]) {
+            const entry = resData[selIdx];
+            if (entry.kind !== 'product' && entry.kind !== 'custom') { resList[selIdx].click(); return; }
+        }
+
+        const line = resolveLine();
+        if (line.missing.length) return;
+        if (line.qty == null) { adoptResolvedProduct(line); return; }
+        commitResolvedLine(line);
+    }
+
+    // Phase 1: one delegated keydown handler on the omni-row container — no dual bindings, no
+    // stopImmediatePropagation, no ordering race between a "which listener runs first" coin flip.
+    function handleOmniRowKeydown(e) {
+        if (e.target === dom.ctxTrigger && e.key !== 'Enter') { ctxTriggerKeydown(e); return; }
+
+        if (e.target === dom.omni && dom.res.classList.contains('show') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            e.preventDefault();
+            selIdx = e.key === 'ArrowDown' ? Math.min(selIdx + 1, resList.length - 1) : Math.max(selIdx - 1, 0);
+            hi();
+            return;
+        }
+
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+
+        if (e.target === dom.omni) { routeOmniEnter(); return; }
+        if (e.target === dom.ctxTrigger) { ctxTriggerKeydown(e); return; }
+        if (e.target === dom.unit || e.target === dom.qty) { processAdd(); return; }
     }
 
     function onGridFilter(v) { gridFilter = v; drawGrid(); }
@@ -2386,17 +2676,18 @@
         renderTotalsFooter();
         renderValidationChip();
 
-        if(activeId) {
+        if(activeId && !suppressNextGridFocusRestore) {
             setTimeout(() => {
                 let el = document.getElementById(activeId);
                 if(el) {
-                    el.focus();
+                    setFocus(el, 'drawGrid-restore');
                     if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
                         let v = el.value; el.value = ''; el.value = v;
                     }
                 }
             }, 0);
         }
+        suppressNextGridFocusRestore = false;
     }
 
     let selectedRowIds = new Set();
@@ -3133,8 +3424,8 @@
         const focusables = container.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
         if(!focusables.length) return;
         const first = focusables[0], last = focusables[focusables.length - 1];
-        if(e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if(!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        if(e.shiftKey && document.activeElement === first) { e.preventDefault(); setFocus(last, 'modal-trap-tab'); }
+        else if(!e.shiftKey && document.activeElement === last) { e.preventDefault(); setFocus(first, 'modal-trap-tab'); }
     }
 
     function openModal(id, customClose) {
@@ -3148,7 +3439,7 @@
         const focusables = content.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
         if(!content.hasAttribute('tabindex')) content.tabIndex = -1;
         const focusTarget = focusables[0] || content;
-        setTimeout(() => focusTarget.focus(), 0);
+        setTimeout(() => setFocus(focusTarget, 'modal-open'), 0);
         const trapHandler = e => trapFocus(e, content);
         modal._trapHandler = trapHandler;
         modal.addEventListener('keydown', trapHandler);
@@ -3228,6 +3519,37 @@
         openModal('status-modal');
     }
 
+    // Phase 0: drives the real Enter router directly (not simulated key events) against a snapshot of
+    // DATA, then restores everything — including the localStorage backup — so running the self-test
+    // never leaves a test row behind. Fails if the router ever leaves #omni during either sequence.
+    function _flowTestScenario(rawLine, expect) {
+        const dataSnap = JSON.stringify(DATA);
+        const histPastSnap = historyPast.slice();
+        const histFutureSnap = historyFuture.slice();
+        const lastTouchedSnap = lastTouchedRowId;
+
+        FLOW.enabled = true; FLOW.log = [];
+        dom.omni.value = rawLine; dom.omni.dataset.raw = '';
+        dom.unit.value = ''; dom.ctx.value = ''; dom.qty.value = '';
+        dom.unit.disabled = false; dom.ctx.disabled = false;
+        dom.res.classList.remove('show'); selIdx = -1;
+
+        routeOmniEnter();
+
+        const leftBar = FLOW.log.some(f => f.id === 'omni-unit' || f.id === 'omni-ctx-trigger' || f.id === 'qty');
+        const added = DATA[0];
+        const ok = !leftBar && !!added && added.name === expect.name && (added.unit||'') === expect.unit &&
+            (added.context||'') === expect.context && added.quantity === expect.qty && added.isCustom === expect.isCustom;
+
+        DATA = JSON.parse(dataSnap);
+        historyPast = histPastSnap; historyFuture = histFutureSnap; lastTouchedRowId = lastTouchedSnap;
+        FLOW.enabled = false; FLOW.log = [];
+        drawGrid();
+        saveLocalBackup();
+
+        return { ok, leftBar };
+    }
+
     function runSelfTest() {
         const results = [];
         const assert = (name, cond, detail) => results.push({ name, pass: !!cond, detail: detail || '' });
@@ -3270,10 +3592,17 @@
         if(ambiguousName) assert('resolvePharmacy flags a real cross-class name collision as ambiguous', resolvePharmacy(ambiguousName).ambiguous === true);
         else assert('resolvePharmacy ambiguous-name check', true, 'skipped — no duplicate pharmacy names in the current PHARM tree');
 
-        let qg1 = 'ambroxol x50'.match(/^(!?)(.+?)\s*[x*]\s*(\d+)$/i);
-        assert('Quantity grammar parses "name x50"', !!qg1 && qg1[2] === 'ambroxol' && qg1[3] === '50');
-        let qg2 = '!custom*12'.match(/^(!?)(.+?)\s*[x*]\s*(\d+)$/i);
-        assert('Quantity grammar parses forced "!name*qty"', !!qg2 && qg2[1] === '!' && qg2[2] === 'custom' && qg2[3] === '12');
+        let pg1 = parseOmniLine('ambroxol x50');
+        assert('parseOmniLine parses "name x50"', pg1.name === 'ambroxol' && pg1.qty === 50 && !pg1.forceExt);
+        let pg2 = parseOmniLine('!custom*12');
+        assert('parseOmniLine parses forced "!name*qty"', pg2.forceExt === true && pg2.name === 'custom' && pg2.qty === 12);
+        let pg3 = parseOmniLine('!Some Drug @Box #1*4');
+        assert('parseOmniLine parses the full EXT grammar (name @unit #ctx *qty)', pg3.forceExt && pg3.name === 'Some Drug' && pg3.unit === 'Box' && pg3.ctxToken === '1' && pg3.qty === 4);
+        assert('parseOmniLine requires a separator — no bare trailing integer as quantity', parseOmniLine('Vitamin E 400').qty === null && parseOmniLine('Omega 3').qty === null);
+        assert('resolveCtxToken resolves #1..#4 positionally', resolveCtxToken('1') === CONTEXTS[0] && resolveCtxToken('4') === CONTEXTS[3]);
+        assert('resolveCtxToken resolves mnemonics (#c/#j/#m/#l)', resolveCtxToken('c') === CONTEXTS[0] && resolveCtxToken('m') === CONTEXTS[2]);
+        assert('UNITS is derived from the catalog and non-empty', Array.isArray(UNITS) && UNITS.length > 0 && PRODS.some(p => p.split('|')[1] && UNITS.includes(p.split('|')[1])));
+
         let deltaM = '+5'.match(/^([+-])(\d+)$/);
         assert('Delta grammar parses "+5"', !!deltaM && deltaM[1] === '+' && deltaM[2] === '5');
 
@@ -3292,6 +3621,15 @@
         let expectedKeys = ['year','month','class','region','pharmacy','name','unit','unitSold','method','category','ts'].sort().join(',');
         let actualKeys = payloadRows.length ? Object.keys(payloadRows[0]).sort().join(',') : '';
         assert('toPayload output has the exact frozen schema key set', actualKeys === expectedKeys, actualKeys !== expectedKeys ? `got: ${actualKeys}` : '');
+
+        assert('Arabic-layout remap recovers Latin text typed under an Arabic keyboard ("asdf" <-> شسيب)', remapArabicToLatinLayout('شسيب') === 'asdf');
+
+        let testProd = PRODS[0].split('|');
+        let sysScenario = _flowTestScenario(`${testProd[0]}*3`, { name: testProd[0], unit: testProd[1] || '', context: '', qty: 3, isCustom: false });
+        assert('Keystroke budget: system-core line (name*qty -> Enter) commits with zero focus changes outside #omni', sysScenario.ok, sysScenario.leftBar ? 'a fallback field (#omni-unit/#omni-ctx-trigger/#qty) was focused' : '');
+
+        let extScenario = _flowTestScenario('!Self-Test Flow Drug @Box #1*4', { name: 'Self-Test Flow Drug', unit: 'Box', context: CONTEXTS[0], qty: 4, isCustom: true });
+        assert('Keystroke budget: EXT line (!name @unit #ctx *qty -> Enter) commits with zero focus changes outside #omni', extScenario.ok, extScenario.leftBar ? 'a fallback field (#omni-unit/#omni-ctx-trigger/#qty) was focused' : '');
 
         showSelfTestModal(results);
     }
@@ -3326,30 +3664,41 @@
 
     let SEARCH_IDX = [];
 
-    DIC.months.en.forEach((m, i) => SEARCH_IDX.push({ t: 'month', txt: DIC.months.ar[i], val: m }));
+    // Franco-Arabic aliases for HUD-only nav terms (set once per session, not per line — cheap to add,
+    // low-value per keystroke, per Phase 5). English names/keys were already searchable via `val`.
+    const MONTH_FRANCO = ['yanayer','febrayer','maris','ebril','mayo','yonyo','yolyo','aghostos','sebtember','oktobar','nofember','disember'];
+    DIC.months.en.forEach((m, i) => SEARCH_IDX.push({ t: 'month', txt: DIC.months.ar[i], val: m, _alias: MONTH_FRANCO[i] || '' }));
 
-    Object.entries(DIC.classes).forEach(([k, v]) => SEARCH_IDX.push({ t: 'class', txt: v, val: k }));
+    const CLASS_FRANCO = { student: 'tolab', workforce: 'omala', infants: 'mawalid' };
+    Object.entries(DIC.classes).forEach(([k, v]) => SEARCH_IDX.push({ t: 'class', txt: v, val: k, _alias: CLASS_FRANCO[k] || '' }));
 
-    Object.entries(DIC.regions).forEach(([k, v]) => SEARCH_IDX.push({ t: 'region', txt: v, val: k, kw: 'منطقة' }));
+    const REGION_FRANCO = { first: 'oula 1', second: 'tania 2', third: 'talta 3' };
+    Object.entries(DIC.regions).forEach(([k, v]) => SEARCH_IDX.push({ t: 'region', txt: v, val: k, kw: 'منطقة', _alias: REGION_FRANCO[k] || '' }));
 
     for(let c in PHARM) for(let r in PHARM[c]) PHARM[c][r].forEach(p => SEARCH_IDX.push({ t: 'pharmacy', txt: `${p.n} (${p.id})`, obj: {c, r, n: p.n, id: p.id} }));
 
     PRODS.forEach(p => { let [n, u] = p.split('|'); SEARCH_IDX.push({ t: 'product', txt: n, u: u||'', raw: p }); });
 
-    SEARCH_IDX.forEach(o => { o._t = normalizeAr(`${o.txt} ${o.val||''} ${o.id||''} ${o.kw||''}`); });
+    SEARCH_IDX.forEach(o => { o._t = normalizeAr(`${o.txt} ${o.val||''} ${o.id||''} ${o.kw||''} ${o._alias||''}`); });
 
     const SYS_PRODUCT_MAP = new Map();
 
     SEARCH_IDX.forEach(x => { if(x.t === 'product') SYS_PRODUCT_MAP.set(`${x.txt.toLowerCase()}|${(x.u||'').toLowerCase()}`, x); });
 
+    // Phase 4: a real UNITS vocabulary derived from the catalog — this is what powers @ inline
+    // completion; it didn't exist before, which is why the unit field was bare free text.
+    const UNITS = [...new Set(PRODS.map(p => p.split('|')[1]).filter(Boolean))].sort();
+
     const dom = { omni: document.getElementById('omni'), unit: document.getElementById('omni-unit'), ctx: { value: '', disabled: false }, ctxTrigger: document.getElementById('omni-ctx-trigger'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
 
-    const omniFields = [dom.omni, dom.unit, dom.ctxTrigger, dom.qty];
+    // Phase 1: one delegated listener on the row container instead of four+one competing bindings.
+    // handleOmniRowKeydown merges what ctxTriggerKeydown used to fight over via stopImmediatePropagation.
+    const omniRowEl = document.getElementById('omni-row');
+    if(omniRowEl) omniRowEl.addEventListener('keydown', handleOmniRowKeydown);
 
-    document.getElementById('omni-ctx-trigger').addEventListener('keydown', ctxTriggerKeydown);
-
-    let selIdx = -1, resList = [];
+    let selIdx = -1, resList = [], resData = [];
     let lastTouchedRowId = null;
+
 
     let omniDebounceTimer = null;
 
@@ -3381,8 +3730,9 @@
     document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); if(!e.target.closest('.omni-ctx-wrap')) closeCtxMenu(); });
 
     document.addEventListener('keydown', e => {
-        if(e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
-        if((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); dom.omni.focus(); triggerCmd(); }
+        const inOmniFallback = e.target === dom.unit || e.target === dom.qty;
+        if(e.key === '/' && (inOmniFallback || !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))) { e.preventDefault(); setFocus(dom.omni, 'slash-shortcut'); triggerCmd(); }
+        if((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); setFocus(dom.omni, 'ctrlk-shortcut'); triggerCmd(); }
         if((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); if(e.shiftKey) redo(); else undo(); }
         if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitToDB(); }
         if((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if(DATA.length) saveSession(); else showToast('Nothing to save yet'); }
@@ -3396,10 +3746,15 @@
         }
         if(e.key === '?' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); showShortcutsModal(); }
         if(e.key === 'Escape') {
+            // Every layer that belongs to the omni bar (the ctx menu) already returns focus to #omni
+            // itself when popped — see openCtxMenu. Other layers (modals, HUD dropdowns) keep their own
+            // independent close()/refocus behavior, which is correct and untouched. If nothing was open,
+            // clear the bar and land back in #omni in this same press — no more needing a second Escape.
             if(popTopLayer()) { e.preventDefault(); return; }
-            dom.omni.value=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false;
-            omniFields.forEach(f=>f.blur());
+            e.preventDefault();
+            dom.omni.value=''; dom.omni.dataset.raw=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false;
             syncCtxUI();
+            setFocus(dom.omni, 'escape-bar-cleared');
         }
 
         const isGridInput = e.target.classList.contains('cell-input') || e.target.classList.contains('qty-rev-inp') || e.target.classList.contains('rev-inp');
@@ -3452,86 +3807,9 @@
         handleFile([file]);
     });
 
-    const handleKey = e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
+    // Enter/Arrow handling for the omni row now lives in handleOmniRowKeydown, bound once on the
+    // container (see near the `dom` declaration) — see Phase 1/3 in the flow-fix notes above.
 
-            if (e.target === dom.omni) {
-                const val = dom.omni.value.trim();
-
-                let deltaMatch = val.match(/^([+-])(\d+)$/);
-                if (deltaMatch) {
-                    let idx = lastTouchedRowId != null ? findDataIndex(lastTouchedRowId) : -1;
-                    if (idx >= 0) {
-                        let delta = parseInt(deltaMatch[1] + deltaMatch[2], 10);
-                        let newQty = Math.max(1, DATA[idx].quantity + delta);
-                        let rowId = DATA[idx].id, rowName = DATA[idx].name;
-                        commit(`Adjust ${rowName}`, () => { DATA[idx].quantity = newQty; }, { patch: () => patchRowQuantity(rowId) });
-                        dom.omni.value = ''; dom.res.classList.remove('show');
-                        showToast(`${rowName} → ${newQty}`, 'normal', 'Undo', undo);
-                        return;
-                    }
-                }
-
-                let qtyGrammarMatch = val.match(/^(!?)(.+?)\s*[x*]\s*(\d+)$/i);
-                if (qtyGrammarMatch) {
-                    let forceExt = !!qtyGrammarMatch[1];
-                    let searchName = qtyGrammarMatch[2].trim();
-                    let grammarQty = qtyGrammarMatch[3];
-                    let results = forceExt ? [] : smartSearch(searchName);
-                    if (results.length && results[0].item.t === 'product' && normalizeAr(results[0].item.txt) === normalizeAr(searchName)) {
-                        let item = results[0].item;
-                        dom.omni.value = item.txt;
-                        dom.omni.dataset.raw = JSON.stringify(item);
-                        dom.unit.value = item.u || '';
-                        dom.ctx.value = '';
-                        dom.unit.disabled = true;
-                        dom.ctx.disabled = true;
-                        dom.qty.value = grammarQty;
-                        syncCtxUI();
-                        dom.res.classList.remove('show');
-                        processAdd();
-                        return;
-                    }
-                    dom.omni.value = (forceExt ? '!' : '') + searchName;
-                    dom.omni.dataset.raw = '';
-                    dom.qty.value = grammarQty;
-                    dom.res.classList.remove('show');
-                    dom.unit.disabled = false; dom.ctx.disabled = false;
-                    syncCtxUI();
-                    dom.unit.focus();
-                    return;
-                }
-            }
-
-            if (e.target === dom.omni && dom.res.classList.contains('show')) {
-                if (selIdx >= 0 && resList[selIdx]) resList[selIdx].click();
-                else processAdd();
-                return;
-            }
-
-            let isCustom = !dom.unit.disabled;
-
-            if (e.target === dom.omni) {
-                if (isCustom) dom.unit.focus(); else dom.qty.focus();
-            } else if (e.target === dom.unit) {
-                if (!dom.unit.value.trim()) { showToast('Enter a unit', 'error'); return; }
-                focusCtxField();
-            } else if (e.target === dom.ctxTrigger) {
-                if (!dom.ctx.value) { showToast('Select a context', 'error'); return; }
-                dom.qty.focus();
-            } else if (e.target === dom.qty) {
-                processAdd();
-            } else {
-                processAdd();
-            }
-        } else if (e.target === dom.omni && dom.res.classList.contains('show')) {
-            if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx+1, resList.length-1); hi(); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx-1, 0); hi(); }
-        }
-    };
-
-    omniFields.forEach(f => f.addEventListener('keydown', handleKey));
 
     document.getElementById('freq-strip').addEventListener('click', e => {
         const btn = e.target.closest('button[data-freq-action]');
