@@ -322,6 +322,9 @@
     }
 
     .hud-dropdown.show { opacity: 1; pointer-events: auto; visibility: visible; transform: translateX(-50%) translateY(0); }
+    .hud-dropdown.align-right { left: auto; right: 0; transform: translateY(-4px); }
+    .hud-dropdown.align-right.show { transform: translateY(0); }
+    .hud-dropdown.wide { min-width: 260px; }
 
     .drop-item {
         padding: 0.65rem 0.9rem;
@@ -772,19 +775,18 @@
     .spinner { animation: spin 1s linear infinite; }
 
     @media (max-width: 900px) {
-        .workspace { padding: 1rem; gap: 0.9rem; }
-        .hud-bar { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
+        body { height: auto; min-height: 100dvh; overflow-y: auto; overflow-x: hidden; }
+        .hud-bar { position: sticky; top: 0; flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
+        .workspace { flex: none; padding: 1rem; gap: 0.9rem; }
+        .grid-area { flex: none; height: 55vh; min-height: 300px; }
+
         .hud-left { flex-direction: column; align-items: flex-start; gap: 1rem; width: 100%; }
         .hud-right { position: absolute; top: 1rem; right: 1rem; }
 
-        .context-group { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-        .context-group::-webkit-scrollbar { display: none; }
-
-        .hud-dropdown { left: 0; transform: translateX(0) translateY(-4px); min-width: 200px; }
-        .hud-dropdown.show { transform: translateX(0) translateY(0); }
+        .hud-dropdown { max-width: calc(100vw - 24px); }
 
         .omni-row { flex-wrap: wrap; height: auto; padding: 12px; gap: 8px; }
-        .omni-wrapper { width: 100%; flex: none; border-bottom: none; padding-bottom: 0; }
+        .omni-wrapper { width: 100%; flex: none; }
         .omni-wrapper::after { display: none; }
         .omni-unit, .omni-ctx-wrap { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
         .qty-input, .btn-enter { width: calc(50% - 4px); height: 48px; margin-top: 0; }
@@ -792,8 +794,8 @@
 
         .util-bar { flex-direction: column; align-items: stretch; }
         .util-actions { justify-content: space-between; }
-        .filter-box input { width: 100%; }
         .filter-box { flex: 1; }
+        .filter-box input { width: 100%; }
 
         .bottom-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
         .dock-stats { justify-content: center; flex-wrap: wrap; }
@@ -801,7 +803,7 @@
         .action-btns button { width: 100%; }
 
         .modal-overlay { padding: 0.5rem; }
-        .modal-content { height: calc(100vh - 1rem); max-height: none; border-radius: var(--radius-md); }
+        .modal-content { height: calc(100dvh - 1rem); max-height: none; border-radius: var(--radius-md); }
         .modal-header, .modal-body, .modal-footer { padding: 1rem; }
 
         th, td { padding: 0.8rem 0.6rem; }
@@ -812,9 +814,45 @@
         .toast { justify-content: center; text-align: center; font-size: 0.9rem; }
     }
 
+    @media (max-width: 720px) {
+        .context-group { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .context-group::-webkit-scrollbar { display: none; }
+
+        .hud-dropdown,
+        .hud-dropdown.align-right {
+            position: fixed;
+            top: auto; bottom: 0; left: 0; right: 0;
+            width: auto; min-width: 0; max-width: none;
+            transform: translateY(100%);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-left: none; border-right: none; border-bottom: none;
+            max-height: min(70vh, 460px);
+            padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -18px 46px -14px rgba(0,0,0,0.45);
+            z-index: 1200;
+        }
+        .hud-dropdown.show,
+        .hud-dropdown.align-right.show { transform: translateY(0); }
+        .hud-dropdown .drop-item,
+        .hud-dropdown .year-chip { min-height: 44px; }
+
+        body.sheet-open::before {
+            content: ''; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.38); z-index: 1150;
+            opacity: 0; animation: fadeIn 0.18s var(--ease-out) forwards;
+        }
+    }
+
     @media (max-width: 480px) {
+        .hud-right { position: static; order: -1; width: 100%; justify-content: flex-end; flex-wrap: wrap; }
         .qty-input, .btn-enter { width: 100%; }
-        .omni-results { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 50vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: none; border-left: none; border-right: none; }
+        .omni-results {
+            position: fixed; top: auto; bottom: 0; left: 0; right: 0;
+            max-height: 55vh; z-index: 1200;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-bottom: none; border-left: none; border-right: none;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        }
         .omni-results.show { transform: translateY(0); }
     }
 
@@ -865,7 +903,7 @@
             <button type="button" class="btn-ghost" aria-haspopup="menu" aria-expanded="false" aria-controls="drafts-dropdown" onclick="toggleHud('drafts-dropdown')" title="Saved drafts" style="padding: 8px; border-radius: 50%;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             </button>
-            <div class="hud-dropdown" id="drafts-dropdown" role="menu" aria-label="Saved drafts" style="min-width:260px; right:0; left:auto; transform:translateY(-4px);">
+            <div class="hud-dropdown align-right wide" id="drafts-dropdown" role="menu" aria-label="Saved drafts">
                 <div id="drafts-menu"></div>
             </div>
         </div>
@@ -873,7 +911,7 @@
             <button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-palette" onclick="toggleHud('drop-palette')" title="Palette">
                 <span id="palette-label">Sage &amp; Clay</span>
             </button>
-            <div class="hud-dropdown" id="drop-palette" role="menu" aria-label="Palette" style="right:0; left:auto; transform:translateY(-4px);">
+            <div class="hud-dropdown align-right" id="drop-palette" role="menu" aria-label="Palette">
                 <div class="drop-item" role="menuitem" tabindex="-1" data-palette-val="sage-clay">Sage &amp; Clay</div>
                 <div class="drop-item" role="menuitem" tabindex="-1" data-palette-val="ink-saffron">Ink &amp; Saffron</div>
                 <div class="drop-item" role="menuitem" tabindex="-1" data-palette-val="slate-copper">Slate &amp; Copper</div>
@@ -1292,11 +1330,6 @@
 
     const esc = s => (s === 0 ? '0' : (s||'')).toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
 
-    // ---- Flow instrumentation (Phase 0) ----
-    // Every focus change in the omni-bar's Enter chain routes through here so it can be traced with
-    // /flowtrace and asserted on in runSelfTest's keystroke-budget checks. #omni is the only field
-    // that chain should ever land on — a setFocus() call to #omni-unit, #omni-ctx-trigger or #qty from
-    // within that chain is a bug, not a feature.
     const FLOW = { enabled: false, log: [] };
     function setFocus(el, reason) {
         if(!el) return;
@@ -1378,10 +1411,6 @@
             .map(f => ({ item: f.item }));
     }
 
-    // ---- Inline omni-bar grammar (Phase 2/4) ----
-    // [!] <name tokens…> [@unit] [#ctx] [(*|x|,)<qty>] — parsed live on every keystroke, not just Enter.
-    // Quantity requires an explicit separator (never a bare trailing integer): the catalog has real
-    // entries like "Omega 3" and "Vitamin E 400" where a trailing number is part of the name.
     function parseOmniLine(raw) {
         let s = (raw || '');
         let forceExt = /^!/.test(s.trim());
@@ -1401,8 +1430,6 @@
         return { forceExt, name: s.trim(), unit, ctxToken, qty };
     }
 
-    // #1-#4 map to CONTEXTS positionally; #c/#j/#m/#l are mnemonics (committee/judicial/medical/list);
-    // any other token is matched against the Arabic first letters (or a longer prefix) of CONTEXTS.
     const CTX_MNEMONICS = { c: 0, j: 1, m: 2, l: 3 };
     function resolveCtxToken(token) {
         if(!token) return null;
@@ -1415,10 +1442,6 @@
         return match || null;
     }
 
-    // ---- Script-agnostic fallback: positional QWERTY <-> Arabic-101 remap (Phase 5) ----
-    // Deterministic, no fuzzy risk — catches "Arabic layout was active, gibberish came out" typos
-    // against the Latin-only product catalog. Never merged into the scored pool; a last-resort pass
-    // the same way fuzzySearch backstops the primary term match.
     const AR_TO_LATIN_LAYOUT = {
         'ض':'q','ص':'w','ث':'e','ق':'r','ف':'t','غ':'y','ع':'u','ه':'i','خ':'o','ح':'p','ج':'[','د':']',
         'ش':'a','س':'s','ي':'d','ب':'f','ل':'g','ا':'h','ت':'j','ن':'k','م':'l','ك':';','ط':"'",
@@ -1889,8 +1912,6 @@
         label.textContent = val || 'Context...';
         trigger.classList.toggle('filled', !!val);
         trigger.setAttribute('aria-disabled', dom.ctx.disabled ? 'true' : 'false');
-        // Phase 6: a real disabled attribute (not just a CSS class) removes the trigger from the tab
-        // order, so Shift+Tab from #qty can no longer land on a dead, pointer-events:none button.
         trigger.disabled = !!dom.ctx.disabled;
         wrap.classList.toggle('disabled', dom.ctx.disabled);
         highlightCtxSelected();
@@ -1912,11 +1933,6 @@
         const val = dom.ctx.value;
         const opts = ctxOptions();
         opts.forEach(d => d.classList.toggle('sel', (d.dataset.val || '') === val));
-        // Context is required whenever this menu matters (custom lines) — default the active option to
-        // the first real context rather than the "Context..." placeholder, so arriving here via the hop
-        // chain and pressing Enter right away picks something instead of silently selecting nothing.
-        // (An empty val matches the placeholder's own empty data-val, so that lookup only runs when
-        // there's an actual selection — otherwise we skip straight to the first non-empty option.)
         let idx = val ? opts.findIndex(d => (d.dataset.val || '') === val) : -1;
         if(idx < 0) idx = opts.findIndex(d => (d.dataset.val || '') !== '');
         setCtxActive(idx >= 0 ? idx : 0, false);
@@ -1928,9 +1944,6 @@
         wrap.classList.add('open');
         document.getElementById('omni-ctx-trigger').setAttribute('aria-expanded', 'true');
         highlightCtxSelected();
-        // This menu is part of the omni bar's own fallback path, not an independent layer like a modal
-        // or HUD dropdown — closing it (via Escape or selection) always lands back on #omni, in one
-        // press, honoring the "every path begins and ends in #omni" invariant.
         layerStack.push({ id: 'omni-ctx-menu', trigger: dom.omni, close: () => { closeCtxMenu(); setFocus(dom.omni, 'ctx-menu-escaped'); } });
     }
 
@@ -1953,15 +1966,9 @@
         dom.ctx.value = val;
         syncCtxUI();
         closeCtxMenu();
-        // Restores the classic "advance to the next field" feel — safe now because #qty is no longer
-        // a dead end (Escape/`/`/Ctrl+K all still reach back out from here).
         setFocus(dom.qty, 'ctx-option-selected-advance');
     }
 
-    // Phase 1: merged into the single omni-row keydown router as a branch (not a competing listener),
-    // so there's no ordering race with the Enter router and no stopImmediatePropagation needed anywhere.
-    // This trigger button is now a mouse/accessibility fallback for the #ctx grammar token, not part
-    // of the primary Enter chain.
     function ctxTriggerKeydown(e) {
         const wrap = document.getElementById('omni-ctx-wrap');
         if(!wrap || wrap.classList.contains('disabled')) return;
@@ -2051,6 +2058,7 @@
         if(!el) return;
         const trigger = document.activeElement;
         el.classList.add('show');
+        document.body.classList.add('sheet-open');
         const pillBtn = el.previousElementSibling;
         if(pillBtn && pillBtn.classList && pillBtn.classList.contains('hud-pill')) pillBtn.setAttribute('aria-expanded', 'true');
         layerStack.push({ id, trigger, close: () => { closeHudDropdown(id); if(trigger && trigger.focus) { try { trigger.focus(); } catch(err) {} } } });
@@ -2062,6 +2070,7 @@
         const el = document.getElementById(id);
         if(!el || !el.classList.contains('show')) return;
         el.classList.remove('show');
+        if(!document.querySelector('.hud-dropdown.show')) document.body.classList.remove('sheet-open');
         const pillBtn = el.previousElementSibling;
         if(pillBtn && pillBtn.classList && pillBtn.classList.contains('hud-pill')) pillBtn.setAttribute('aria-expanded', 'false');
         layerStack = layerStack.filter(l => l.id !== id);
@@ -2124,10 +2133,6 @@
         return fuzzy;
     }
 
-    // Every row pushed into the dropdown gets a matching resData[] entry alongside resList[], so the
-    // Enter router can ask "what's highlighted right now?" without simulating a click. 'product' and
-    // 'custom' carry the underlying item for resolveLine(); every other kind is fully self-contained —
-    // the router just replays its own onclick via .click().
     function pushResult(el, data) { dom.res.appendChild(el); resList.push(el); resData.push(data); }
 
     function toggleFlowTrace() {
@@ -2166,8 +2171,6 @@
         if(resList.length) { dom.res.classList.add('show'); selIdx = 0; hi(); } else { dom.res.classList.remove('show'); }
     }
 
-    // Replaces the trailing in-progress @... or #... token with its resolved full form and keeps
-    // going — the caret never leaves #omni for this.
     function applyInlineToken(kind, value) {
         let raw = dom.omni.value;
         let re = kind === 'unit' ? /(^|\s)@(\S*)$/ : /(^|\s)#(\S*)$/;
@@ -2244,16 +2247,11 @@
             return;
         }
 
-        // Phase 4: while the user is actively typing an @unit or #ctx token (it's the last, still-open
-        // token in the line), the dropdown switches entirely into that completion mode. This is what
-        // keeps an EXT line inside #omni — no more hopping to the unit field or the context menu.
         let unitTokenMatch = searchRaw.match(/(^|\s)@(\S*)$/);
         if (unitTokenMatch) { renderUnitCompletion(unitTokenMatch[2]); return; }
         let ctxTokenMatch = searchRaw.match(/(^|\s)#(\S*)$/);
         if (ctxTokenMatch) { renderCtxCompletion(ctxTokenMatch[2]); return; }
 
-        // Phase 2: parse the full grammar on every keystroke (not just Enter) so a quantity badge can
-        // be shown live, and so completed @unit/#ctx tokens typed earlier in the line are respected.
         let parsedFull = parseOmniLine(searchRaw);
         let parsedCtx = parsedFull.ctxToken ? (resolveCtxToken(parsedFull.ctxToken) || '') : '';
         let sq = parsedFull.name;
@@ -2342,9 +2340,6 @@
 
     function hi() { resList.forEach(r => r.classList.remove('sel')); if(resList[selIdx]) { resList[selIdx].classList.add('sel'); resList[selIdx].scrollIntoView({block:'nearest'}); } }
 
-    // Phase 3: adopt-or-commit. A product/custom target with no quantity yet is adopted into the bar
-    // and focus stays put — Enter (routeOmniEnter) and a mouse click both funnel through here, so
-    // clicking a result behaves exactly like typing the rest of the line and pressing Enter would.
     function applyOmni(item) {
         dom.res.classList.remove('show');
         if(item.t === 'pharmacy') { setHud('class', item.obj.c); setHud('region', item.obj.r); setHud('pharmacy', item.obj.n); dom.omni.value=''; dom.omni.dataset.raw=''; showToast('Pharmacy linked'); syncCtxUI(); setFocus(dom.omni, 'nav-applied'); return; }
@@ -2550,10 +2545,6 @@
         document.getElementById('grid-container').scrollTop = 0;
     }
 
-    // Phase 3: resolveLine() reads the full grammar out of #omni — preferring a highlighted dropdown
-    // row, then a product already adopted into the bar, then a fresh exact-match search — and returns
-    // a plain description of the line. It never touches focus and never mutates DATA; processAdd still
-    // owns dedupe/merge, commit()/undo history and bumpFrequency, exactly as before.
     function resolveLine() {
         const raw = dom.omni.value;
         const parsed = parseOmniLine(raw);
@@ -2590,11 +2581,6 @@
         };
     }
 
-    // Product/custom identified but no quantity typed yet — adopt it into the bar and advance focus to
-    // whichever field still needs filling (unit -> context -> quantity for a custom line; straight to
-    // quantity for a system product, since unit/context don't apply). This is the classic hop-to-qty
-    // flow the user asked to keep — it's safe to restore now because every one of these fields has a
-    // real way back out (Escape/`/`/Ctrl+K), unlike the original version that left #qty a dead end.
     function adoptResolvedProduct(line) {
         const item = line.item;
         dom.omni.value = item.txt;
@@ -2625,8 +2611,6 @@
         dom.res.classList.add('show');
     }
 
-    // Everything is present — populate the classic fields exactly as the old field-hopping flow did
-    // and hand off to processAdd(), which is untouched: same dedupe/merge, same commit()/undo history.
     function commitResolvedLine(line) {
         dom.omni.value = line.item.txt;
         dom.omni.dataset.raw = JSON.stringify(line.item);
@@ -2651,9 +2635,6 @@
         showToast(`${rowName} → ${newQty}`, 'normal', 'Undo', undo);
     }
 
-    // The single Enter router for #omni. This is the whole of Phase 3: a navigational highlight is
-    // applied and we stay; a product/custom with a quantity commits and we stay; a product/custom
-    // without one is adopted and we stay. #omni is the only field this function ever focuses.
     function routeOmniEnter() {
         const trimmed = dom.omni.value.trim();
         if (!trimmed) return;
@@ -2672,8 +2653,6 @@
         commitResolvedLine(line);
     }
 
-    // Phase 1: one delegated keydown handler on the omni-row container — no dual bindings, no
-    // stopImmediatePropagation, no ordering race between a "which listener runs first" coin flip.
     function handleOmniRowKeydown(e) {
         if (e.target === dom.ctxTrigger && e.key !== 'Enter') { ctxTriggerKeydown(e); return; }
 
@@ -3663,9 +3642,6 @@
         openModal('status-modal');
     }
 
-    // Phase 0: drives the real Enter router directly (not simulated key events) against a snapshot of
-    // DATA, then restores everything — including the localStorage backup — so running the self-test
-    // never leaves a test row behind. Fails if the router ever leaves #omni during either sequence.
     function _flowTestScenario(rawLine, expect) {
         const dataSnap = JSON.stringify(DATA);
         const histPastSnap = historyPast.slice();
@@ -3775,9 +3751,6 @@
         let extScenario = _flowTestScenario('!Self-Test Flow Drug @Box #1*4', { name: 'Self-Test Flow Drug', unit: 'Box', context: CONTEXTS[0], qty: 4, isCustom: true });
         assert('Keystroke budget: EXT line (!name @unit #ctx *qty -> Enter) commits with zero focus changes outside #omni', extScenario.ok, extScenario.leftBar ? 'a fallback field (#omni-unit/#omni-ctx-trigger/#qty) was focused' : '');
 
-        // Restored hop-chain: adopting a line with a piece still missing now advances focus to
-        // whichever field needs filling (the "old way" the user asked to keep), instead of always
-        // staying in #omni. Safe to restore because every one of these fields has a real way back out.
         const omniSnap = { v: dom.omni.value, raw: dom.omni.dataset.raw, u: dom.unit.value, ud: dom.unit.disabled, c: dom.ctx.value, cd: dom.ctx.disabled, q: dom.qty.value };
 
         let hopProd = PRODS[1].split('|');
@@ -3829,8 +3802,6 @@
 
     let SEARCH_IDX = [];
 
-    // Franco-Arabic aliases for HUD-only nav terms (set once per session, not per line — cheap to add,
-    // low-value per keystroke, per Phase 5). English names/keys were already searchable via `val`.
     const MONTH_FRANCO = ['yanayer','febrayer','maris','ebril','mayo','yonyo','yolyo','aghostos','sebtember','oktobar','nofember','disember'];
     DIC.months.en.forEach((m, i) => SEARCH_IDX.push({ t: 'month', txt: DIC.months.ar[i], val: m, _alias: MONTH_FRANCO[i] || '' }));
 
@@ -3850,20 +3821,15 @@
 
     SEARCH_IDX.forEach(x => { if(x.t === 'product') SYS_PRODUCT_MAP.set(`${x.txt.toLowerCase()}|${(x.u||'').toLowerCase().replace(/\s+/g,'')}`, x); });
 
-    // Phase 4: a real UNITS vocabulary derived from the catalog — this is what powers @ inline
-    // completion; it didn't exist before, which is why the unit field was bare free text.
     const UNITS = [...new Set(PRODS.map(p => p.split('|')[1]).filter(Boolean))].sort();
 
     const dom = { omni: document.getElementById('omni'), unit: document.getElementById('omni-unit'), ctx: { value: '', disabled: false }, ctxTrigger: document.getElementById('omni-ctx-trigger'), qty: document.getElementById('qty'), res: document.getElementById('omni-res'), grid: document.getElementById('grid') };
 
-    // Phase 1: one delegated listener on the row container instead of four+one competing bindings.
-    // handleOmniRowKeydown merges what ctxTriggerKeydown used to fight over via stopImmediatePropagation.
     const omniRowEl = document.getElementById('omni-row');
     if(omniRowEl) omniRowEl.addEventListener('keydown', handleOmniRowKeydown);
 
     let selIdx = -1, resList = [], resData = [];
     let lastTouchedRowId = null;
-
 
     let omniDebounceTimer = null;
 
@@ -3894,6 +3860,10 @@
 
     document.addEventListener('click', e => { if(!e.target.closest('.hud-item')) document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); if(!e.target.closest('.omni-wrapper')) dom.res.classList.remove('show'); if(!e.target.closest('.omni-ctx-wrap')) closeCtxMenu(); });
 
+    const sheetMQ = window.matchMedia('(max-width: 720px)');
+    const onSheetBreak = () => { document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); closeCtxMenu(); };
+    sheetMQ.addEventListener ? sheetMQ.addEventListener('change', onSheetBreak) : sheetMQ.addListener(onSheetBreak);
+
     document.addEventListener('keydown', e => {
         const inOmniFallback = e.target === dom.unit || e.target === dom.qty;
         if(e.key === '/' && (inOmniFallback || !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))) { e.preventDefault(); setFocus(dom.omni, 'slash-shortcut'); triggerCmd(); }
@@ -3911,10 +3881,6 @@
         }
         if(e.key === '?' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) { e.preventDefault(); showShortcutsModal(); }
         if(e.key === 'Escape') {
-            // Every layer that belongs to the omni bar (the ctx menu) already returns focus to #omni
-            // itself when popped — see openCtxMenu. Other layers (modals, HUD dropdowns) keep their own
-            // independent close()/refocus behavior, which is correct and untouched. If nothing was open,
-            // clear the bar and land back in #omni in this same press — no more needing a second Escape.
             if(popTopLayer()) { e.preventDefault(); return; }
             e.preventDefault();
             dom.omni.value=''; dom.omni.dataset.raw=''; dom.unit.value=''; dom.ctx.value=''; dom.res.classList.remove('show'); dom.unit.disabled=false; dom.ctx.disabled=false;
@@ -3971,10 +3937,6 @@
         const file = new File([pasted], `Pasted-${Date.now()}.csv`, { type: 'text/csv' });
         handleFile([file]);
     });
-
-    // Enter/Arrow handling for the omni row now lives in handleOmniRowKeydown, bound once on the
-    // container (see near the `dom` declaration) — see Phase 1/3 in the flow-fix notes above.
-
 
     document.getElementById('freq-strip').addEventListener('click', e => {
         const btn = e.target.closest('button[data-freq-action]');
