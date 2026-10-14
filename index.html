@@ -18,7 +18,6 @@
 })();
 </script>
 <style>
-
     :root {
         color-scheme: light;
         --bg: #f6f5f0;
@@ -191,17 +190,32 @@
         --density-font: 0.84rem;
     }
 
+    :root {
+        --seg-sys: var(--accent);
+        --seg-0: var(--accent-2);
+        --seg-1: var(--warning);
+        --seg-2: color-mix(in srgb, var(--accent) 55%, var(--text-main) 45%);
+        --seg-3: var(--foil);
+        --seg-need: var(--danger);
+        --rule: color-mix(in srgb, var(--text-main) 11%, transparent);
+        --row-h: var(--density-row-h);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     input, select, option, textarea, td, th, button, .stub-chip, .drop-item, .year-chip, .status-badge, .res-item, .file-tab span:first-child { unicode-bidi: plaintext; }
+    button { font: inherit; color: inherit; }
     :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
     input:focus-visible, select:focus-visible, button:focus-visible { outline-offset: 1px; }
-    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--foil); border-radius: 10px; opacity: .4; }
+    ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--foil) 70%, transparent); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     body {
         font-family: var(--font-en);
+        font-size: 16px;
         background-color: var(--bg);
         background-image: var(--wash), var(--noise);
         background-repeat: no-repeat, repeat;
@@ -224,592 +238,707 @@
     }
 
     .hud-bar {
-        padding: 1.1rem 2rem;
+        position: relative; z-index: 100;
+        display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;
+        padding: 0.85rem 2rem;
         background: var(--surface);
-        border-bottom: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        position: relative;
     }
     .hud-bar::after {
-        content: '';
-        position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
-        background: linear-gradient(to right, transparent, var(--foil) 15%, var(--foil) 85%, transparent);
-        opacity: 0.55;
+        content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+        background: linear-gradient(to right, transparent, var(--foil) 12%, var(--foil) 88%, transparent);
+        opacity: 0.5; pointer-events: none;
     }
-
-    .hud-left { display: flex; align-items: center; gap: 2rem; min-width: 0; }
-    .hud-right { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+    .hud-left { display: flex; align-items: center; gap: 1.75rem; min-width: 0; }
+    .hud-right { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
 
     .hud-title {
-        font-family: var(--font-display);
-        font-weight: 500;
-        font-size: 1.25rem;
-        color: var(--text-main);
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-family: var(--font-display); font-weight: 500; font-size: 1.3rem;
+        letter-spacing: 0.1px; white-space: nowrap; display: flex; align-items: center; gap: 10px;
     }
     .hud-title .mark {
-        font-family: var(--font-display);
-        font-weight: 500;
-        color: var(--accent-strong);
-        width: 34px; height: 34px;
-        display: inline-flex; align-items: center; justify-content: center;
-        border: 1px solid var(--border);
-        border-radius: 50%;
-        font-size: 0.95rem;
-        background: var(--surface-2);
+        width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border); border-radius: 50%; font-size: 0.9rem;
+        color: var(--accent-strong); background: var(--surface-2);
     }
-    .hud-title .beta {
-        font-family: var(--font-en);
-        font-size: 0.62rem;
-        color: var(--text-muted);
-        font-weight: 500;
-        margin-left: -4px;
-        align-self: flex-start;
-    }
+    .hud-title .beta { font-family: var(--font-en); font-size: 0.62rem; color: var(--text-muted); margin-left: -4px; align-self: flex-start; }
 
-    .context-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .context-group { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
     .hud-item { position: relative; }
 
     .hud-pill {
-        padding: 0.55rem 1.1rem;
-        border-radius: var(--radius-xl);
-        background: var(--surface);
-        border: 1px solid var(--border);
-        color: var(--text-muted);
-        font-size: 0.82rem;
-        font-weight: 500;
-        font-family: inherit;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: all var(--duration-base) var(--ease-out);
-        user-select: none;
-        white-space: nowrap;
+        display: flex; align-items: center; gap: 7px;
+        padding: 0.5rem 1rem 0.5rem 0.8rem; border-radius: var(--radius-xl);
+        background: var(--surface); border: 1px solid var(--border);
+        color: var(--text-muted); font-size: 0.82rem; font-weight: 500; cursor: pointer;
+        transition: border-color var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+        user-select: none; white-space: nowrap;
     }
-
+    .hud-pill::before {
+        content: ''; width: 8px; height: 8px; border-radius: 50%;
+        border: 1.5px solid var(--foil); background: transparent; flex-shrink: 0;
+        transition: background var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
+    }
     .hud-pill:hover { border-color: var(--foil); color: var(--text-main); background: var(--surface-hover); }
-    .hud-pill.active { border-color: var(--accent); color: var(--text-main); background: var(--accent-glow); }
-    .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.88rem; color: var(--accent-strong); font-weight: 600; }
+    .hud-pill.active { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); color: var(--text-main); background: var(--accent-glow); }
+    .hud-pill.active::before { background: var(--accent); border-color: var(--accent); }
+    .hud-pill span.ar { font-family: var(--font-ar); font-size: 0.88rem; color: var(--accent-strong); font-weight: 700; }
+    .hud-pill:not(.active) span.ar { color: var(--text-subtle); font-weight: 500; }
     .hud-pill.flash-missing { animation: pillFlash .35s ease 2; border-color: var(--danger) !important; color: var(--danger) !important; }
+    .hud-pill.flash-missing::before { border-color: var(--danger); }
     @keyframes pillFlash { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
+    .hud-progress { font-size: 0.78rem; color: var(--text-muted); padding: 0 0.5rem; white-space: nowrap; transition: color var(--duration-base) var(--ease-out); }
+    .hud-progress.done { color: var(--accent-strong); font-weight: 600; }
+
     .hud-dropdown {
-        position: absolute;
-        top: calc(100% + 10px);
-        left: 50%;
+        position: absolute; top: calc(100% + 10px); left: 50%;
         transform: translateX(-50%) translateY(-4px);
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 8px;
-        min-width: 220px;
-        max-height: 300px;
-        overflow-y: auto;
-        box-shadow: var(--elev-2);
-        opacity: 0;
-        pointer-events: none;
-        visibility: hidden;
-        transition: all var(--duration-base) var(--ease-out);
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+        padding: 8px; min-width: 220px; max-height: 320px; overflow-y: auto; box-shadow: var(--elev-2);
+        opacity: 0; pointer-events: none; visibility: hidden;
+        transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out), visibility var(--duration-base);
         z-index: 200;
     }
-
     .hud-dropdown.show { opacity: 1; pointer-events: auto; visibility: visible; transform: translateX(-50%) translateY(0); }
     .hud-dropdown.align-right { left: auto; right: 0; transform: translateY(-4px); }
     .hud-dropdown.align-right.show { transform: translateY(0); }
-    .hud-dropdown.wide { min-width: 260px; }
+    .hud-dropdown.wide { min-width: 280px; }
 
     .drop-item {
-        padding: 0.65rem 0.9rem;
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        font-family: var(--font-ar);
-        font-weight: 600;
-        transition: all var(--duration-fast) var(--ease-out);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--text-main);
-        font-size: 0.95rem;
+        padding: 0.6rem 0.9rem; border-radius: var(--radius-md); cursor: pointer;
+        font-family: var(--font-ar); font-weight: 600; font-size: 0.95rem; color: var(--text-main);
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+        transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
     }
-    .drop-item:hover { background: var(--accent-glow); color: var(--accent-strong); }
+    .drop-item:hover, .drop-item:focus-visible { background: var(--accent-glow); color: var(--accent-strong); outline: none; }
     .drop-item span { font-family: var(--font-en); color: var(--text-muted); font-size: 0.72rem; }
+    .drop-empty { padding: 1rem; color: var(--text-muted); font-size: 0.82rem; text-align: center; }
+    .draft-item { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .draft-item small { color: var(--text-muted); font-family: var(--font-en); font-size: 0.76rem; font-weight: 500; }
 
-    .year-input-box {
-        display: flex; gap: 8px; padding: 0.5rem;
-        border-bottom: 1px solid var(--border-soft); margin-bottom: 0.5rem;
-    }
+    .year-input-box { display: flex; gap: 8px; padding: 0.5rem; border-bottom: 1px solid var(--border-soft); margin-bottom: 0.5rem; }
     .year-input-box input {
-        flex: 1; background: var(--surface-2); border: 1px solid var(--border);
-        color: var(--text-main); padding: 0.4rem 0.9rem; border-radius: var(--radius-xl);
-        font-family: var(--font-en); font-size: 0.9rem;
+        flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-main);
+        padding: 0.4rem 0.9rem; border-radius: var(--radius-xl); font-family: var(--font-en); font-size: 0.9rem;
     }
     .year-input-box button {
-        background: var(--accent); border: none; color: var(--ink-fixed);
-        padding: 0 1rem; border-radius: var(--radius-xl); cursor: pointer;
-        font-weight: 600; transition: background var(--duration-fast) var(--ease-out);
+        background: var(--accent); border: none; color: var(--ink-fixed); padding: 0 1rem;
+        border-radius: var(--radius-xl); cursor: pointer; font-weight: 600;
+        transition: background var(--duration-fast) var(--ease-out);
     }
     .year-input-box button:hover { background: var(--accent-strong); }
     #year-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; }
     .year-chip {
-        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500;
-        padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border);
-        cursor: pointer; color: var(--text-main); transition: all var(--duration-fast) var(--ease-out);
+        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500; padding: 6px 12px;
+        border-radius: var(--radius-xl); border: 1px solid var(--border); cursor: pointer; color: var(--text-main);
+        transition: all var(--duration-fast) var(--ease-out);
     }
-    .year-chip:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); }
+    .year-chip:hover, .year-chip:focus-visible { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); outline: none; }
 
     .workspace {
-        flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto;
-        width: 100%; display: flex; flex-direction: column; gap: 1.25rem; min-height: 0;
+        flex: 1; min-height: 0; width: 100%; max-width: 1400px; margin: 0 auto;
+        padding: 1.5rem 2rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem;
     }
-
     .report-header { display: none; }
 
     .omni-row {
-        display: flex; gap: 0.6rem; height: 64px; position: relative; z-index: 50;
-        background: var(--surface); padding: 6px; border-radius: var(--radius-xl);
-        border: 1px solid var(--border); box-shadow: var(--elev-1);
+        position: relative; z-index: 50; display: flex; gap: 0.5rem; height: 64px; padding: 6px;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--elev-1);
         transition: box-shadow var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
     }
     .omni-row:focus-within { border-color: var(--accent); box-shadow: var(--elev-1), var(--focus-ring); }
+    .omni-wrapper { flex: 1; position: relative; display: flex; align-items: center; min-width: 0; }
+    .omni-wrapper::after { content: ''; position: absolute; right: 0; top: 22%; bottom: 22%; width: 1px; background: var(--border); }
 
-    .omni-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
-
-    .omni-input {
-        height: 100%; width: 100%; padding: 0 1.3rem;
-        background: transparent; border: none;
-        color: var(--text-main); font-family: var(--font-en); font-size: 1.08rem; font-weight: 500;
-        border-radius: var(--radius-lg); transition: all var(--duration-fast) var(--ease-out);
+    .omni-input, .omni-unit, .qty-input {
+        height: 100%; width: 100%; padding: 0 1.3rem; background: transparent; border: none;
+        color: var(--text-main); font-family: var(--font-en); border-radius: var(--radius-lg);
+        transition: background var(--duration-fast) var(--ease-out);
     }
-    .omni-unit, .qty-input {
-        height: 100%; width: 100%; padding: 0 1.3rem;
-        background: transparent; border: none;
-        color: var(--text-main); font-family: var(--font-en); font-size: 1rem;
-        border-radius: var(--radius-lg); transition: all var(--duration-fast) var(--ease-out);
-    }
+    .omni-input { font-size: 1.1rem; font-weight: 500; padding-right: 5.5rem; text-overflow: ellipsis; }
+    .omni-unit { width: 150px; font-size: 1rem; }
+    .qty-input { width: 120px; font-size: 1.15rem; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+    .omni-input:focus, .omni-unit:focus, .qty-input:focus { background: var(--surface-2); outline: none; }
+    .omni-input::placeholder, .qty-input::placeholder, .omni-unit::placeholder { color: var(--text-muted); font-weight: 400; }
+    .omni-unit:disabled { color: var(--text-muted); cursor: not-allowed; }
 
     .cmd-trigger {
-        position: absolute; right: 10px; background: var(--surface-2); color: var(--text-muted);
-        border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 5px 10px; font-size: 0.72rem;
-        font-weight: 600; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); user-select: none;
+        position: absolute; right: 12px; background: var(--surface-2); color: var(--text-muted);
+        border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 5px 11px;
+        font-size: 0.74rem; font-weight: 600; cursor: pointer; user-select: none;
+        transition: all var(--duration-fast) var(--ease-out);
     }
     .cmd-trigger:hover { background: var(--accent-glow); color: var(--accent-strong); border-color: var(--accent); }
 
-    .omni-input::placeholder, .qty-input::placeholder, .omni-unit::placeholder { color: var(--text-muted); }
-    .omni-wrapper::after { content: ''; position: absolute; right: 0; top: 22%; bottom: 22%; width: 1px; background: var(--border); }
-
-    .omni-unit { width: 150px; }
-
     .omni-ctx-wrap { position: relative; width: 190px; height: 100%; }
     .omni-ctx-trigger {
-        height: 100%; width: 100%; padding: 0 1.3rem; border: none; cursor: pointer;
-        background: transparent; color: var(--text-muted); font-family: var(--font-en); font-size: 0.95rem;
-        border-radius: var(--radius-lg); transition: all var(--duration-fast) var(--ease-out);
+        height: 100%; width: 100%; padding: 0 1.2rem; border: none; cursor: pointer; background: transparent;
+        color: var(--text-muted); font-family: var(--font-en); font-size: 0.95rem; border-radius: var(--radius-lg);
         display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left;
+        transition: background var(--duration-fast) var(--ease-out);
     }
-    .omni-ctx-trigger:hover, .omni-ctx-wrap.open .omni-ctx-trigger { background: var(--surface-hover); }
+    .omni-ctx-trigger:hover, .omni-ctx-wrap.open .omni-ctx-trigger, .omni-ctx-trigger:focus-visible { background: var(--surface-2); outline: none; }
     .omni-ctx-trigger .ctx-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .omni-ctx-trigger.filled .ctx-label { color: var(--text-main); font-family: var(--font-ar); font-weight: 600; }
+    .omni-ctx-trigger.filled .ctx-label { color: var(--text-main); font-family: var(--font-ar); font-weight: 700; }
     .omni-ctx-trigger .ctx-caret { flex-shrink: 0; color: var(--text-muted); transition: transform var(--duration-fast) var(--ease-out); }
     .omni-ctx-wrap.open .ctx-caret { transform: rotate(180deg); }
     .omni-ctx-wrap.disabled .omni-ctx-trigger { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-
     .omni-ctx-menu {
-        position: absolute; top: calc(100% + 10px); left: 0; right: 0;
-        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-        padding: 8px; box-shadow: var(--elev-2); max-height: 260px; overflow-y: auto;
-        opacity: 0; pointer-events: none; visibility: hidden; transform: translateY(-4px);
-        transition: all var(--duration-base) var(--ease-out); z-index: 200;
+        position: absolute; top: calc(100% + 10px); left: 0; right: 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 8px; box-shadow: var(--elev-2);
+        max-height: 260px; overflow-y: auto; opacity: 0; pointer-events: none; visibility: hidden; transform: translateY(-4px);
+        transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out), visibility var(--duration-base);
+        z-index: 200;
     }
     .omni-ctx-wrap.open .omni-ctx-menu { opacity: 1; pointer-events: auto; visibility: visible; transform: translateY(0); }
     .omni-ctx-menu .drop-item.sel { background: var(--accent-glow); color: var(--accent-strong); }
     .omni-ctx-menu .drop-item.active-opt { outline: 2px solid var(--accent-2); outline-offset: -2px; }
-    .qty-input { width: 130px; font-size: 1.1rem; font-weight: 600; text-align: center; }
-
-    .omni-input:focus, .omni-unit:focus, .qty-input:focus { background: var(--surface-2); }
 
     .btn-enter {
-        height: 100%; padding: 0 1.9rem; border-radius: var(--radius-lg); border: none;
-        background: var(--accent); color: var(--ink-fixed); font-family: var(--font-en);
-        font-weight: 600; font-size: 0.92rem; cursor: pointer;
-        transition: all var(--duration-base) var(--ease-out); box-shadow: none; white-space: nowrap;
+        height: 100%; padding: 0 1.5rem; border-radius: var(--radius-lg); border: none; cursor: pointer;
+        background: var(--accent); color: var(--ink-fixed); font-weight: 600; font-size: 0.92rem; white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 10px;
+        transition: background var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
     }
-    .btn-enter:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-enter kbd { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--ink-fixed) 40%, transparent); }
+    .btn-enter:hover { background: var(--accent-strong); transform: translateY(-1px); }
     .btn-enter:active { transform: translateY(0); }
 
     .omni-results {
-        position: absolute; top: calc(100% + 12px); left: 0; right: 0;
-        background: var(--surface);
-        border: 1px solid var(--border); border-radius: var(--radius-lg);
-        box-shadow: var(--elev-2); max-height: 400px; overflow-y: auto;
-        padding: 8px; display: none; opacity: 0; transform: translateY(-6px) scale(0.99);
-        transition: all var(--duration-base) var(--ease-out);
+        position: absolute; top: calc(100% + 12px); left: 0; right: 0; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--elev-2);
+        max-height: 400px; overflow-y: auto; padding: 8px; display: none; opacity: 0; transform: translateY(-6px) scale(0.99);
+        transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
         z-index: 1000;
     }
-    .omni-results::before { content: none; }
     .omni-results.show { display: block; opacity: 1; transform: translateY(0) scale(1); }
-
     .res-item {
-        padding: 0.75rem 1rem; border-radius: var(--radius-md); cursor: pointer;
-        display: flex; justify-content: space-between; align-items: center;
-        transition: all var(--duration-fast) var(--ease-out); border: 1px solid transparent; margin-bottom: 2px;
+        padding: 0.7rem 1rem; border-radius: var(--radius-md); cursor: pointer; margin-bottom: 2px;
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem; border: 1px solid transparent;
+        transition: background var(--duration-fast) var(--ease-out);
     }
-    .res-item:hover, .res-item.sel {
-        background: var(--accent-glow); border-color: transparent;
-    }
+    .res-item:hover, .res-item.sel { background: var(--accent-glow); }
     .res-type {
-        font-size: 0.62rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-xl);
-        background: var(--surface-2); color: var(--text-muted); font-weight: 600;
-        text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        font-size: 0.68rem; padding: 0.28rem 0.65rem; border-radius: var(--radius-xl); background: var(--surface-2);
+        color: var(--text-muted); font-weight: 600; letter-spacing: 0.2px; border: 1px solid var(--border);
+        display: flex; align-items: center; gap: 4px; white-space: nowrap;
     }
-    .qty-badge {
-        font-size: 0.62rem; padding: 0.3rem 0.6rem; border-radius: var(--radius-xl);
-        background: var(--accent); color: #fff; font-weight: 600; white-space: nowrap;
+    .qty-badge { font-size: 0.68rem; padding: 0.28rem 0.65rem; border-radius: var(--radius-xl); background: var(--accent); color: var(--ink-fixed); font-weight: 600; white-space: nowrap; }
+
+    .parse-preview {
+        min-height: 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+        padding: 0 0.5rem; font-size: 0.8rem; color: var(--text-muted);
     }
+    .pp-note { color: var(--text-muted); }
+    .pp-chip {
+        display: inline-flex; align-items: baseline; gap: 0.45rem; padding: 0.22rem 0.7rem;
+        border-radius: var(--radius-xl); border: 1px solid var(--border); background: var(--surface); color: var(--text-main);
+        animation: chipIn 0.18s var(--ease-out);
+    }
+    .pp-chip .pp-k { color: var(--text-muted); font-size: 0.72rem; }
+    .pp-chip .pp-v { font-weight: 600; }
+    .pp-chip.sys { background: var(--accent-glow); border-color: transparent; color: var(--accent-strong); }
+    .pp-chip.ext { background: var(--accent-2-glow); border-color: transparent; color: var(--accent-2); }
+    .pp-chip.need { border-style: dashed; border-color: var(--warning); color: var(--warning); background: transparent; }
+    .pp-go { margin-inline-start: auto; font-weight: 600; color: var(--accent-strong); }
+    @keyframes chipIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+
+    .summary {
+        display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 2.5rem;
+        padding: 0.35rem 0.5rem 0.95rem; border-bottom: 1px solid var(--rule);
+    }
+    .sum-figures { display: flex; align-items: flex-end; gap: 2.25rem; }
+    .fig { display: flex; flex-direction: column; gap: 4px; }
+    .fig-num { font-family: var(--font-display); font-weight: 500; font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--text-main); }
+    .fig-main .fig-num { font-size: 2.9rem; letter-spacing: -0.5px; }
+    .fig-lbl { font-size: 0.78rem; color: var(--text-muted); }
+    .sum-ctx { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; padding-bottom: 2px; }
+    .ctx-bar { display: flex; gap: 3px; height: 10px; border-radius: 99px; overflow: hidden; background: var(--surface-2); }
+    .ctx-seg {
+        flex: 1 1 0; min-width: 7px; border: 0; padding: 0; cursor: pointer; background: var(--seg, var(--accent));
+        transition: flex-grow 0.4s var(--ease-out), opacity var(--duration-base) var(--ease-out), filter var(--duration-fast) var(--ease-out);
+    }
+    .ctx-seg.need { background: repeating-linear-gradient(135deg, var(--seg-need) 0 4px, color-mix(in srgb, var(--seg-need) 55%, var(--surface)) 4px 8px); }
+    .ctx-seg:hover { filter: brightness(1.12); }
+    .ctx-bar.has-filter .ctx-seg:not(.on) { opacity: 0.3; }
+    .ctx-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 0.35rem; }
+    .leg {
+        display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.22rem 0.65rem; border-radius: 99px;
+        border: 1px solid transparent; background: transparent; cursor: pointer; font-size: 0.78rem; color: var(--text-muted);
+        transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+    }
+    .leg:hover { background: var(--surface-hover); color: var(--text-main); }
+    .leg.on { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: var(--accent-glow); color: var(--text-main); }
+    .leg i { width: 8px; height: 8px; border-radius: 50%; background: var(--seg, var(--accent)); flex-shrink: 0; }
+    .leg.need i { background: var(--seg-need); }
+    .leg b { font-weight: 600; color: var(--text-main); font-variant-numeric: tabular-nums; font-family: var(--font-en); }
+    .leg .leg-ar { font-family: var(--font-ar); font-weight: 600; }
+    .ctx-empty { font-size: 0.8rem; color: var(--text-subtle); }
 
     .util-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .freq-strip { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 2px; }
+    .freq-strip { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 2px; scrollbar-width: thin; }
     .freq-strip::-webkit-scrollbar { height: 4px; }
-    .freq-empty { font-size: 0.78rem; color: var(--text-muted); font-style: italic; white-space: nowrap; padding: 4px 0; }
+    .freq-empty { font-size: 0.8rem; color: var(--text-subtle); white-space: nowrap; padding: 4px 0; }
     .stub-chip {
-        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500; white-space: nowrap;
-        padding: 7px 14px; border-radius: var(--radius-xl); border: 1px solid var(--border);
-        background: var(--surface); color: var(--text-main); cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
-        flex-shrink: 0;
+        font-family: var(--font-en); font-size: 0.8rem; font-weight: 500; white-space: nowrap; padding: 7px 14px; flex-shrink: 0;
+        border-radius: var(--radius-xl); border: 1px solid var(--border); background: var(--surface); color: var(--text-main); cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-out);
     }
     .stub-chip:hover { border-color: var(--accent-2); color: var(--accent-2); background: var(--accent-2-glow); }
     .chip-group { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
-    .chip-side-btn { font-size: 0.7rem; line-height: 1; padding: 6px 6px; border-radius: var(--radius-xl); border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; flex-shrink: 0; opacity: 0.6; transition: all var(--duration-fast) var(--ease-out); }
-    .chip-side-btn:hover { color: var(--accent-2); border-color: var(--accent-2); opacity: 1; }
-    .chip-side-btn.pinned { color: var(--accent-2); border-color: var(--accent-2); opacity: 1; }
-    .util-actions { display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0; }
+    .chip-side-btn {
+        font-size: 0.7rem; line-height: 1; padding: 6px; border-radius: var(--radius-xl); border: 1px solid var(--border);
+        background: var(--surface); color: var(--text-muted); cursor: pointer; flex-shrink: 0; opacity: 0.55;
+        transition: all var(--duration-fast) var(--ease-out);
+    }
+    .chip-side-btn:hover, .chip-side-btn.pinned { color: var(--accent-2); border-color: var(--accent-2); opacity: 1; }
+    .util-actions { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
     .filter-box {
-        display: flex; align-items: center; gap: 7px; background: var(--surface);
-        border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 0 0.9rem; height: 38px;
-        color: var(--text-muted); transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+        display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius-xl); padding: 0 0.9rem; height: 38px; color: var(--text-muted);
+        transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
     }
     .filter-box:focus-within { border-color: var(--accent); color: var(--accent-strong); box-shadow: var(--focus-ring); }
     .filter-box input { border: none; background: transparent; color: var(--text-main); font-size: 0.85rem; width: 150px; height: 100%; font-family: var(--font-en); }
     .filter-box input::placeholder { color: var(--text-muted); }
     .filter-box input:focus-visible { outline: none; }
     .btn-stub {
-        display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem;
+        display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem; cursor: pointer;
         background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
-        color: var(--text-main); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
+        color: var(--text-main); font-size: 0.8rem; font-weight: 500;
+        transition: all var(--duration-fast) var(--ease-out);
     }
     .btn-stub:hover { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); }
-
-    .bulk-bar {
-        align-items: center; justify-content: space-between; gap: 1rem;
-        padding: 0.7rem 1.2rem; margin-bottom: 0.8rem;
-        background: var(--accent-glow); border: 1px solid var(--accent); border-radius: var(--radius-lg);
-        font-size: 0.85rem; font-weight: 500; color: var(--text-main);
-        animation: fadeIn var(--duration-base) var(--ease-out);
-    }
-    .bulk-actions { display: flex; align-items: center; gap: 0.6rem; }
-    .bulk-ctx-select {
-        height: 38px; padding: 0 0.9rem; border-radius: var(--radius-xl); border: 1px solid var(--border);
-        background: var(--surface); color: var(--text-main); font-size: 0.8rem; cursor: pointer; font-family: var(--font-en);
-    }
-    .select-col { text-align: center; width: 32px; }
-    .row-select-chk, #select-all-rows { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); }
-    #print-tfoot { position: sticky; bottom: 0; z-index: 5; }
-    #print-tfoot td { padding: 0.6rem 1rem; border-top: 1px solid var(--border); font-weight: 600; color: var(--text-main); background: var(--surface-2); }
-    #print-tfoot tr.print-total td { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: 0.95rem; border-top: 2px solid var(--accent); }
-    #print-tfoot tr.print-subtotal td { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
-
+    .btn-stub[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-glow); }
+    .btn-stub.danger { color: var(--danger); border-color: var(--danger-glow); }
     .validation-chip {
-        display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem;
+        display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 1rem; cursor: pointer; white-space: nowrap;
         background: var(--warning-glow); border: 1px solid var(--warning); border-radius: var(--radius-xl);
-        color: var(--warning); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
+        color: var(--warning); font-size: 0.8rem; font-weight: 500; transition: filter var(--duration-fast) var(--ease-out);
     }
     .validation-chip:hover { filter: brightness(0.96); }
     .validation-chip.active { background: var(--warning); color: var(--ink-fixed); }
 
-    .delta-col { display: none; text-align: center; }
-    #table.compare-active .delta-col { display: table-cell; }
-    .delta-up { color: var(--accent); font-weight: 600; }
-    .delta-down { color: var(--danger); font-weight: 600; }
-    .delta-new { color: var(--accent-2); font-weight: 600; font-size: 0.72rem; letter-spacing: 0.03em; }
-    .delta-same { color: var(--text-muted); }
-    .compare-removed-row { opacity: 0.55; }
-    .compare-removed-row td { font-style: italic; }
-    .compare-removed-row .delta-down { font-size: 0.72rem; letter-spacing: 0.03em; }
+    .bulk-bar {
+        align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 1.1rem;
+        background: var(--accent-glow); border: 1px solid var(--accent); border-radius: var(--radius-lg);
+        font-size: 0.85rem; font-weight: 500; color: var(--text-main); animation: fadeIn var(--duration-base) var(--ease-out);
+    }
+    .bulk-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .bulk-ctx-select {
+        height: 38px; padding: 0 0.9rem; border-radius: var(--radius-xl); border: 1px solid var(--border);
+        background: var(--surface); color: var(--text-main); font-size: 0.8rem; cursor: pointer; font-family: var(--font-en);
+    }
 
     .grid-area {
-        flex: 1; overflow-y: auto; overflow-x: auto; position: relative; background: var(--surface);
+        flex: 1; min-height: 0; overflow: auto; position: relative; background: var(--surface);
         border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--elev-1);
     }
 
     .empty-state {
-        position: absolute; inset: 0; display: flex; flex-direction: column;
-        justify-content: center; align-items: center; color: var(--text-muted);
-        pointer-events: none; opacity: 0; animation: fadeIn 0.6s var(--ease-out) forwards;
-        padding: 2rem; text-align: center;
+        position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        padding: 2rem; text-align: center; color: var(--text-muted); pointer-events: none; opacity: 0;
+        animation: fadeIn 0.5s var(--ease-out) forwards;
     }
-    .empty-state svg { padding: 18px; background: var(--surface-2); border-radius: 50%; }
-    .empty-state h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; color: var(--text-main); margin-top: 1.1rem; }
+    .empty-inner { max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 1.1rem; }
+    .empty-state h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.5rem; color: var(--text-main); }
+    .empty-state p { font-size: 0.92rem; line-height: 1.55; max-width: 44ch; }
+    .empty-steps { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; font-size: 0.82rem; color: var(--text-muted); }
+    .empty-steps span { display: inline-flex; align-items: center; gap: 0.5rem; }
+    .empty-steps b {
+        width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2);
+        display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; color: var(--accent-strong);
+        font-family: var(--font-display);
+    }
+    .examples { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; pointer-events: auto; }
+    .example-btn {
+        font-family: var(--font-en); font-size: 0.82rem; padding: 0.45rem 0.9rem; border-radius: var(--radius-xl);
+        border: 1px dashed var(--foil); background: transparent; color: var(--text-main); cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-out);
+    }
+    .example-btn:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-strong); }
+    .shortcuts-hint { font-size: 0.78rem; color: var(--text-subtle); }
 
     table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 820px; }
     th {
-        text-align: left; padding: 1.1rem 1.3rem; color: var(--text-muted); font-size: 0.72rem;
-        text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; font-family: var(--font-en);
-        position: sticky; top: 0; background: var(--surface);
-        z-index: 10; border-bottom: 1px solid var(--border); cursor: default; user-select: none;
+        text-align: left; padding: 0.95rem 1.2rem; color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+        font-family: var(--font-en); position: sticky; top: 0; background: var(--surface); z-index: 10;
+        border-bottom: 1px solid var(--rule); user-select: none;
     }
     th.sortable { cursor: pointer; }
     th.sortable:hover { color: var(--accent-strong); }
     .sort-ind { font-size: 0.65rem; margin-left: 3px; color: var(--accent-strong); }
-    tr.data-row { transition: background var(--duration-fast) var(--ease-out); animation: slideIn 0.3s var(--ease-out) forwards; }
-    tr.data-row:hover { background: var(--surface-2); }
+    td { padding: 0 1.2rem; height: var(--row-h); border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    tr.data-row { transition: background var(--duration-fast) var(--ease-out); }
+    tr.data-row:hover { background: var(--surface-hover); }
     tr.data-row td:first-child { position: relative; }
     tr.data-row td:first-child::before {
-        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
-        background: var(--accent); transition: width var(--duration-fast) var(--ease-out);
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent);
+        transition: width var(--duration-fast) var(--ease-out);
     }
-    tr.data-row:hover td:first-child::before { width: 2px; }
-    td { padding: 0.8rem 1.3rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    tr.data-row:hover td:first-child::before, tr.data-row:focus-within td:first-child::before { width: 2px; }
+    tr.data-row.flash { animation: rowFlash 1.2s var(--ease-out); }
+    @keyframes rowFlash { 0% { background: color-mix(in srgb, var(--accent) 24%, transparent); } 100% { background: transparent; } }
 
+    tr.group-row td {
+        height: auto; padding: 0.55rem 1.2rem; background: var(--surface-2); border-bottom: 1px solid var(--border-soft);
+        font-size: 0.82rem; font-weight: 600; color: var(--text-main);
+    }
+    .grp { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .grp-name { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-ar); }
+    .grp-name i { width: 8px; height: 8px; border-radius: 50%; background: var(--seg, var(--accent)); }
+    .grp-num { color: var(--text-muted); font-weight: 500; font-family: var(--font-en); font-variant-numeric: tabular-nums; }
+
+    .c-name strong { font-size: 1.02rem; font-weight: 600; }
     .cell-input {
-        background: var(--surface-2); border: 1px solid var(--border); color: var(--text-main);
-        font-size: 1.05rem; width: 140px; padding: 0.55rem; text-align: center;
-        border-radius: var(--radius-md); font-weight: 600; transition: all var(--duration-fast) var(--ease-out); font-family: var(--font-en);
+        background: var(--surface-2); border: 1px solid var(--border); color: var(--text-main); font-size: 1rem;
+        width: 140px; padding: 0.5rem; text-align: center; border-radius: var(--radius-md); font-weight: 600; font-family: var(--font-en);
+        transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
     }
     .cell-input.mono-num { font-variant-numeric: tabular-nums; }
-    .cell-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: var(--surface); }
+    .cell-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); background: var(--surface); outline: none; }
     .unit-static { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
-    .core-tag { color: var(--accent-strong); font-weight: 600; font-size: 0.76rem; }
+    .core-tag { color: var(--accent-strong); font-weight: 600; font-size: 0.78rem; }
+
+    .stepper {
+        display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--radius-md);
+        background: var(--surface-2); overflow: hidden;
+        transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+    }
+    .stepper:focus-within { border-color: var(--accent); box-shadow: var(--focus-ring); }
+    .stepper .cell-input { width: 68px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+    .stepper .cell-input:focus { background: transparent; box-shadow: none; }
+    .step-btn {
+        width: 32px; height: 36px; border: 0; background: transparent; cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--text-muted);
+        transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+    }
+    .step-btn:hover { background: var(--accent-glow); color: var(--accent-strong); }
+    .step-btn:active { background: var(--accent); color: var(--ink-fixed); }
 
     .c-select {
-        background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border);
-        padding: 0.55rem 1rem; border-radius: var(--radius-md); font-family: var(--font-ar);
-        font-size: 0.95rem; cursor: pointer; width: 100%; appearance: none;
+        background: var(--surface-2); color: var(--text-main); border: 1px solid var(--border); padding: 0.5rem 1rem;
+        border-radius: var(--radius-md); font-family: var(--font-ar); font-size: 0.95rem; cursor: pointer; width: 100%; appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='gray' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 10px center; transition: all var(--duration-fast) var(--ease-out);
+        background-repeat: no-repeat; background-position: right 10px center;
+        transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
     }
-    .c-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .c-select:focus { border-color: var(--accent); box-shadow: var(--focus-ring); outline: none; }
     .c-select.req { border-color: var(--warning); color: var(--warning); }
 
     .pill-tag {
-        background: var(--accent-2-glow); color: var(--accent-2); padding: 3px 9px;
-        border-radius: var(--radius-xl); font-size: 0.65rem; font-weight: 700;
-        margin-left: 10px; letter-spacing: 0.4px; display: inline-block;
+        background: var(--accent-2-glow); color: var(--accent-2); padding: 3px 9px; border-radius: var(--radius-xl);
+        font-size: 0.68rem; font-weight: 700; margin-left: 10px; letter-spacing: 0.3px; display: inline-block;
     }
 
-    .row-actions { display: flex; gap: 2px; justify-content: center; align-items: center; }
-    .btn-icon {
-        background: transparent; color: var(--text-muted); border: none; cursor: pointer;
-        transition: all var(--duration-fast) var(--ease-out); padding: 7px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
+    .row-actions { display: flex; gap: 2px; justify-content: center; align-items: center; opacity: 0.55; transition: opacity var(--duration-fast) var(--ease-out); }
+    tr.data-row:hover .row-actions, tr.data-row:focus-within .row-actions { opacity: 1; }
+    .btn-icon, .btn-del {
+        background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 7px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; transition: all var(--duration-fast) var(--ease-out);
     }
     .btn-icon:hover { color: var(--accent-2); background: var(--accent-2-glow); }
-    .btn-del {
-        background: transparent; color: var(--text-muted); border: none; cursor: pointer;
-        transition: all var(--duration-fast) var(--ease-out); padding: 7px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-    }
     .btn-del:hover { color: var(--danger); background: var(--danger-glow); }
 
-    .bottom-dock { display: flex; justify-content: space-between; align-items: center; padding-top: 0.3rem; gap: 1rem; flex-wrap: wrap; }
+    .select-col { text-align: center; width: 36px; padding-left: 0.9rem; padding-right: 0.4rem; }
+    .row-select-chk, #select-all-rows { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); }
+
+    #print-tfoot { position: sticky; bottom: 0; z-index: 5; }
+    #print-tfoot td { height: auto; padding: 0.6rem 1.2rem; border-top: 1px solid var(--border); font-weight: 600; background: var(--surface-2); }
+    #print-tfoot tr.print-total td { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: 1rem; border-top: 2px solid var(--accent); }
+    #print-tfoot tr.print-subtotal td { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+
+    .delta-col { display: none; text-align: center; }
+    #table.compare-active .delta-col { display: table-cell; }
+    .delta-up { color: var(--accent-strong); font-weight: 600; }
+    .delta-down { color: var(--danger); font-weight: 600; }
+    .delta-new { color: var(--accent-2); font-weight: 600; font-size: 0.74rem; }
+    .delta-same { color: var(--text-muted); }
+    .compare-removed-row { opacity: 0.55; }
+    .compare-removed-row td { font-style: italic; }
+    .compare-removed-row .delta-down { font-size: 0.74rem; }
+    .empty-row td { height: auto; text-align: center; padding: 2.5rem; color: var(--text-muted); }
+
+    .bottom-dock { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
     .dock-stats {
-        display: flex; gap: 0.9rem; align-items: center; background: var(--surface);
-        padding: 6px 6px 6px 16px; border-radius: var(--radius-xl); border: 1px solid var(--border); flex-wrap: wrap;
+        display: flex; gap: 0.5rem; align-items: center; background: var(--surface); flex-wrap: wrap;
+        padding: 5px 6px 5px 16px; border-radius: var(--radius-xl); border: 1px solid var(--border);
     }
     .stat-line { font-weight: 600; font-size: 0.85rem; font-family: var(--font-display); font-variant-numeric: tabular-nums; }
-    .mono-note { font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; }
-    .dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--foil); flex-shrink: 0; }
+    .mono-note { font-size: 0.76rem; color: var(--text-muted); white-space: nowrap; }
+    .dot-sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; margin: 0 0.3rem; }
 
     .btn-ghost {
-        background: transparent; border: none; color: var(--text-muted); padding: 0.55rem 1rem;
-        border-radius: var(--radius-xl); font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
-        display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem;
+        background: transparent; border: none; color: var(--text-muted); padding: 0.55rem 0.9rem; border-radius: var(--radius-xl);
+        font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem;
+        transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
     }
-    .btn-ghost:hover { background: var(--surface-hover); color: var(--text-main); }    .btn-ghost.danger:hover { color: var(--danger); background: var(--danger-glow); }
+    .btn-ghost:hover { background: var(--surface-hover); color: var(--text-main); }
+    .btn-ghost.danger:hover { color: var(--danger); background: var(--danger-glow); }
     .btn-ghost.warn-ghost { color: var(--warning); border: 1px solid var(--border); }
     .btn-ghost.warn-ghost:hover { background: var(--warning-glow); border-color: var(--warning); }
+    .icon-only { padding: 8px; border-radius: 50%; }
 
-    .action-btns { display: flex; gap: 0.8rem; }
-
+    .action-btns { display: flex; gap: 0.7rem; align-items: stretch; }
     .btn-hollow {
-        background: transparent; border: 1px solid var(--border); color: var(--text-main);
-        padding: 0.8rem 1.6rem; border-radius: var(--radius-xl); font-weight: 500; font-size: .88rem;
-        cursor: pointer; transition: all var(--duration-fast) var(--ease-out); display: flex; align-items: center; gap: 8px; justify-content: center;
+        background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 0.75rem 1.5rem; border-radius: var(--radius-xl);
+        font-weight: 500; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; justify-content: center;
+        transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
     }
     .btn-hollow:hover { background: var(--surface-hover); border-color: var(--foil); }
-
     .btn-solid {
-        background: var(--accent); color: var(--ink-fixed); border: none; padding: 0.8rem 1.7rem;
-        border-radius: var(--radius-xl); font-weight: 600; cursor: pointer; justify-content: center;
-        font-size: .9rem;
-        transition: all var(--duration-base) var(--ease-out); display: flex; align-items: center; gap: 8px;
-        box-shadow: none;
+        background: var(--accent); color: var(--ink-fixed); border: none; padding: 0.75rem 1.6rem; border-radius: var(--radius-xl);
+        font-weight: 600; cursor: pointer; justify-content: center; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+        transition: background var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out), opacity var(--duration-base) var(--ease-out);
     }
-    .btn-solid:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-solid:hover { background: var(--accent-strong); transform: translateY(-1px); }
     .btn-solid:active { transform: translateY(0); }
+    .btn-solid:disabled { opacity: 0.7; cursor: progress; }
     .btn-solid.danger-solid { background: var(--danger); color: #fff; }
-    .btn-solid.danger-solid:hover { background: #9c4d41; }
+    .btn-solid.danger-solid:hover { background: color-mix(in srgb, var(--danger) 85%, #000); }
+    .push-btn .push-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+    .push-btn small { font-size: 0.7rem; font-weight: 500; opacity: 0.85; }
+    .push-btn small:empty { display: none; }
+    .push-btn.not-ready { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+    .push-btn.not-ready:hover { background: var(--surface-hover); transform: none; }
 
     #status-modal .modal-content.variant-ok #status-title { color: var(--accent-2); }
     #status-modal .modal-content.variant-ok #status-btn { background: var(--accent-2); color: var(--ink-fixed); }
     #status-modal .modal-content.variant-err #status-title { color: var(--danger); }
     #status-modal .modal-content.variant-err #status-btn { background: var(--surface-2); color: var(--text-main); }
+    #status-modal .modal-content { max-width: 450px; text-align: center; padding: 3rem 2rem; align-items: center; height: auto; }
+    #status-title { margin: 1.5rem 0 0.5rem; font-size: 1.7rem; font-family: var(--font-display); font-weight: 500; }
+    #status-desc { color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; }
+    #status-btn { width: 100%; justify-content: center; padding: 1rem; }
+    #status-detail-list { display: none; width: 100%; text-align: left; max-height: 280px; overflow-y: auto; margin: -1rem 0 1.5rem; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+    .test-row { display: flex; gap: 8px; padding: 4px 0; align-items: flex-start; }
+    .test-row .mark { font-weight: 700; flex-shrink: 0; }
+    .test-row .mark.pass { color: var(--accent); }
+    .test-row .mark.fail { color: var(--danger); }
+    .test-row small { color: var(--text-muted); }
 
     .modal-overlay {
-        position: fixed; inset: 0; background: rgba(30,28,20,0.35);
-        backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center;
-        z-index: 9000; opacity: 0; pointer-events: none; visibility: hidden; transition: all var(--duration-slow) var(--ease-out); padding: 2rem;
+        position: fixed; inset: 0; background: rgba(30,28,20,0.35); backdrop-filter: blur(3px);
+        display: flex; justify-content: center; align-items: center; z-index: 9000; padding: 2rem;
+        opacity: 0; pointer-events: none; visibility: hidden;
+        transition: opacity var(--duration-slow) var(--ease-out), visibility var(--duration-slow);
     }
     [data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.5); }
     .modal-overlay.active { opacity: 1; pointer-events: auto; visibility: visible; }
-
     .modal-content {
-        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
-        width: 100%; max-width: 1200px; padding: 0; box-shadow: var(--shadow-lg);
-        transform: scale(0.98) translateY(8px); transition: all var(--duration-slow) var(--ease-out);
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); width: 100%; max-width: 1200px;
+        box-shadow: var(--shadow-lg); transform: scale(0.98) translateY(8px); transition: transform var(--duration-slow) var(--ease-out);
         height: 85vh; max-height: 900px; display: flex; flex-direction: column; position: relative; overflow: hidden;
     }
+    .modal-content.compact { height: auto; max-width: 440px; }
+    .modal-content.compact.md { max-width: 560px; }
+    .modal-content.compact.sm { max-width: 420px; }
     .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+    #shortcuts-modal { z-index: 10000; }
+    #scale-modal { z-index: 10500; }
+    #confirm-modal { z-index: 10600; }
+    #status-modal { z-index: 99999; }
 
     .views-wrapper { flex: 1; position: relative; overflow: hidden; display: flex; }
     .view-panel {
-        position: absolute; inset: 0; display: flex; flex-direction: column;
-        opacity: 0; pointer-events: none; visibility: hidden; transform: translateX(16px); transition: all var(--duration-slow) var(--ease-out);
+        position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; visibility: hidden;
+        transform: translateX(16px); transition: all var(--duration-slow) var(--ease-out);
     }
     .view-panel.active { opacity: 1; pointer-events: none; visibility: hidden; transform: translateX(0); z-index: 2; position: relative; width: 100%; }
     .modal-overlay.active .view-panel.active { pointer-events: auto; visibility: visible; }
     .view-panel.exit { transform: translateX(-16px); z-index: 1; }
 
-    .modal-header { padding: 1.6rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
-    .modal-header h2 { font-family: var(--font-display); font-weight: 500; }
+    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: var(--surface); }
+    .modal-header.stack { flex-direction: column; align-items: stretch; padding: 0; gap: 0; }
+    .modal-header.stack .head-row { padding: 1.5rem 2rem 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .modal-header h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.4rem; margin: 0; }
     .modal-header .sub, .modal-body .sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+    .head-actions { display: flex; gap: 10px; align-items: center; }
     .modal-body { padding: 2rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
-    .modal-footer { padding: 1.3rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; background: var(--surface); }
+    .modal-body.flush-bottom { padding-bottom: 0; }
+    .modal-footer { padding: 1.2rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.8rem; background: var(--surface); }
+
+    .scale-presets { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    #scale-factor { width: 100%; }
+    #scale-preview { font-size: 0.82rem; }
+    #confirm-title { font-family: var(--font-display); font-weight: 500; font-size: 1.35rem; }
+
+    .kv { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border-soft); font-size: 0.9rem; }
+    .kv:last-child { border-bottom: 0; }
+    .kv .keys { color: var(--text-muted); text-align: right; white-space: nowrap; }
+    .kv-title { font-family: var(--font-display); font-weight: 500; font-size: 1.05rem; margin: 1.4rem 0 0.2rem; }
+    .kv-title:first-child { margin-top: 0; }
 
     .drop-zone {
-        border: 1.5px dashed var(--border); border-radius: var(--radius-lg); padding: 4rem 2rem;
-        text-align: center; cursor: pointer; transition: all var(--duration-base) var(--ease-out); background: var(--surface-2);
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; margin: auto 0; flex: 1;
+        border: 1.5px dashed var(--border); border-radius: var(--radius-lg); padding: 4rem 2rem; text-align: center; cursor: pointer;
+        background: var(--surface-2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; margin: auto 0; flex: 1;
+        transition: border-color var(--duration-base) var(--ease-out), background var(--duration-base) var(--ease-out);
     }
     .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
-
+    .drop-zone h3 { margin-bottom: 0.5rem; font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; }
+    .drop-zone p { color: var(--text-muted); font-size: 0.9rem; }
     .dz-icon {
-        width: 74px; height: 74px; background: var(--surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center;
-        justify-content: center; transition: transform var(--duration-base) var(--ease-out);
+        width: 74px; height: 74px; background: var(--surface); border: 1px solid var(--border); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; transition: transform var(--duration-base) var(--ease-out);
     }
     .drop-zone:hover .dz-icon, .drop-zone.drag .dz-icon { transform: translateY(-3px); border-color: var(--accent); }
 
     .file-tabs { display: flex; gap: 0.4rem; padding: 1rem 2rem 0; background: var(--surface); overflow-x: auto; border-bottom: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
     .file-tabs::-webkit-scrollbar { display: none; }
-    .file-tab { padding: 0.6rem 1.2rem; background: var(--surface-2); border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius-md) var(--radius-md) 0 0; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; transition: all var(--duration-fast) var(--ease-out); white-space: nowrap; }
-    .file-tab.active { background: var(--surface); color: var(--text-main); border-color: var(--border); border-bottom-color: var(--surface); margin-bottom: -1px; }
-    .file-tab .close-tab { color: var(--danger); opacity: 0.5; padding: 2px; transition: all var(--duration-base) var(--ease-out); border-radius: 4px; display: flex; }
+    .file-tab {
+        padding: 0.55rem 1.1rem; background: var(--surface-2); border: 1px solid var(--border); border-bottom: none;
+        border-radius: var(--radius-md) var(--radius-md) 0 0; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        color: var(--text-muted); font-size: 0.85rem; font-weight: 500; white-space: nowrap; transition: all var(--duration-fast) var(--ease-out);
+    }
+    .file-tab.active { background: var(--surface); color: var(--text-main); border-bottom-color: var(--surface); margin-bottom: -1px; }
+    .file-tab .close-tab { color: var(--danger); opacity: 0.5; padding: 2px; border-radius: 4px; display: flex; transition: all var(--duration-base) var(--ease-out); }
     .file-tab .close-tab:hover { opacity: 1; background: var(--danger-glow); }
 
     .review-meta-bar {
         display: flex; flex-wrap: wrap; gap: 0.8rem; background: var(--surface-2); padding: 1rem;
-        border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 0; align-items: center; flex-shrink: 0;
+        border-radius: var(--radius-md); border: 1px solid var(--border); align-items: center; flex-shrink: 0;
     }
     .review-meta-bar > * { flex: 1; min-width: 140px; }
-
-    .review-table-container { flex: 1; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--surface); }
-    .review-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
-    .review-table th { position: sticky; top: 0; background: var(--surface-2); z-index: 10; padding: 1rem 1.2rem; font-size: 0.72rem; border-bottom: 1px solid var(--border); color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; }
-    .review-table td { padding: 0.55rem 1.2rem; border-bottom: 1px solid var(--border-soft); transition: opacity var(--duration-base) var(--ease-out); vertical-align: middle; }
-
-    .rev-inp, .qty-rev-inp {
-        background: transparent; border: 1px solid transparent; color: var(--text-main); font-family: var(--font-en);
-        padding: 0.5rem; border-radius: var(--radius-sm); font-size: 0.95rem; outline: none; transition: all var(--duration-fast) var(--ease-out);
+    .overlap-warning {
+        display: none; align-items: center; gap: 10px; background: var(--warning-glow); border: 1px solid var(--warning); color: var(--warning);
+        padding: 0.7rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; flex-shrink: 0;
     }
+    .overlap-warning svg { flex-shrink: 0; }
+    .review-tools { display: flex; justify-content: flex-end; }
+    .review-tools .filter-box { height: 34px; }
+    .review-tools .filter-box input { width: 160px; }
+    .review-table-container { flex: 1; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 250px; background: var(--surface); }
+    .review-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 800px; }
+    .review-table th { position: sticky; top: 0; background: var(--surface-2); z-index: 10; padding: 0.9rem 1.2rem; font-size: 0.78rem; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+    .review-table td { height: auto; padding: 0.5rem 1.2rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    .review-note td { text-align: center; padding: 1.2rem; color: var(--text-muted); font-size: 0.82rem; }
+    .rev-inp, .qty-rev-inp {
+        background: transparent; border: 1px solid transparent; color: var(--text-main); font-family: var(--font-en); padding: 0.5rem;
+        border-radius: var(--radius-sm); font-size: 0.95rem; outline: none; width: 100%; transition: all var(--duration-fast) var(--ease-out);
+    }
+    .rev-inp.sys { color: var(--accent-2); font-weight: 600; }
     .rev-inp:hover, .qty-rev-inp:hover { background: var(--surface-hover); border-color: var(--border); }
-    .rev-inp:focus, .qty-rev-inp:focus { background: var(--surface-2); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-
+    .rev-inp:focus, .qty-rev-inp:focus { background: var(--surface-2); border-color: var(--accent); box-shadow: var(--focus-ring); }
     .qty-rev-inp { text-align: center; font-size: 1rem; font-weight: 600; }
+    .review-table .c-select { padding: 0.5rem; }
+    .review-table .c-select:disabled { opacity: 0.4; }
+    .keep-sep { padding: 2px 8px; font-size: 0.72rem; }
+    .merged-cell { padding-left: 2rem; font-size: 0.85rem; }
 
     .status-badge {
-        padding: 0.4rem 0.6rem; border-radius: var(--radius-xl); font-size: 0.68rem; font-weight: 600;
-        text-transform: uppercase; display: inline-block; white-space: nowrap; text-align: center; width: 100%; letter-spacing: 0.4px;
+        padding: 0.35rem 0.6rem; border-radius: var(--radius-xl); font-size: 0.72rem; font-weight: 600;
+        display: inline-block; white-space: nowrap; text-align: center; width: 100%;
     }
     .status-ok { background: var(--accent-glow); color: var(--accent-strong); }
     .status-dupe { background: var(--warning-glow); color: var(--warning); }
     .status-err { background: var(--danger-glow); color: var(--danger); }
     .status-skip { background: var(--surface-2); color: var(--text-muted); }
-
     .err { border-color: var(--danger) !important; box-shadow: 0 0 0 3px var(--danger-glow) !important; }
     .row-disabled { background: rgba(0,0,0,0.04); }
     [data-theme="dark"] .row-disabled { background: rgba(0,0,0,0.16); }
     .row-disabled td { opacity: 0.45; }
-    .rev-checkbox { width: 1.15rem; height: 1.15rem; cursor: pointer; accent-color: var(--accent); border-radius: 3px; }
+    .rev-checkbox { width: 1.1rem; height: 1.1rem; cursor: pointer; accent-color: var(--accent); border-radius: 3px; }
+    .tab-chips { font-size: 0.72rem; opacity: 0.9; }
+    .tab-chips .e { color: var(--danger); font-weight: 800; }
+    .tab-chips .d { color: var(--warning); font-weight: 800; }
+    .tab-chips .o { color: var(--accent-2); font-weight: 800; }
+
+    .push-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border-soft); }
+    .push-row .meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .push-row .meta .pending { color: var(--warning); font-weight: 600; }
+    .push-row .meta .sent { color: var(--accent-strong); font-weight: 600; }
+    .push-actions { display: flex; gap: 0.4rem; }
+    .list-empty { color: var(--text-muted); text-align: center; padding: 2rem 0; }
 
     .toast-stack {
-        position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-        z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
+        position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 9999;
+        display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none;
     }
     .toast {
-        position: relative; pointer-events: auto;
-        background: var(--text-main); color: var(--bg); padding: 0.85rem 0.7rem 0.85rem 1.3rem;
-        border-radius: var(--radius-xl); box-shadow: var(--elev-2); font-weight: 500;
-        transition: all var(--duration-slow) var(--ease-out); opacity: 0; transform: translateY(12px); display: flex; gap: 12px; align-items: center;
+        position: relative; pointer-events: auto; background: var(--text-main); color: var(--bg); padding: 0.8rem 0.8rem 0.8rem 1.2rem;
+        border-radius: var(--radius-xl); box-shadow: var(--elev-2); font-weight: 500; font-size: 0.92rem;
+        display: flex; gap: 12px; align-items: center; opacity: 0; transform: translateY(12px);
+        transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
     }
     .toast.show { transform: translateY(0); opacity: 1; }
+    .toast svg { flex-shrink: 0; }
     .toast.error-toast { background: var(--danger); color: #fff; }
     .toast-action {
-        background: rgba(255,255,255,0.14); border: none; color: inherit; padding: 5px 12px;
-        border-radius: var(--radius-xl); font-weight: 600; cursor: pointer; font-size: .74rem;
+        background: rgba(255,255,255,0.16); border: none; color: inherit; padding: 5px 12px; border-radius: var(--radius-xl);
+        font-weight: 600; cursor: pointer; font-size: 0.76rem;
     }
+    .toast-action:hover { background: rgba(255,255,255,0.26); }
 
     kbd {
-        background: var(--surface-2); border: 1px solid var(--border);
-        border-radius: 5px; padding: 2px 6px; font-family: var(--font-en); font-size: 0.75rem; color: var(--text-muted);
+        background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px;
+        font-family: var(--font-en); font-size: 0.75rem; color: var(--text-muted);
     }
 
-    @keyframes slideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { to { opacity: 1; } }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .spinner { animation: spin 1s linear infinite; }
 
+    @media (max-width: 1100px) {
+        .summary { grid-template-columns: 1fr; gap: 1rem; }
+    }
+
+    .hud-right .hud-pill::before { background: var(--accent); border-color: var(--accent); }
+
+    @media (min-width: 901px) and (max-width: 1180px) {
+        .hud-bar { padding-left: 1.25rem; padding-right: 1.25rem; }
+        .hud-left { gap: 1rem; }
+        .hud-title > span:not(.mark) { display: none; }
+        .hud-progress { display: none; }
+        .hud-pill { padding: 0.45rem 0.75rem 0.45rem 0.6rem; font-size: 0.8rem; }
+        .hud-pill span.ar { max-width: 11ch; overflow: hidden; text-overflow: ellipsis; }
+        #palette-label { display: none; }
+        .hud-right .hud-pill { padding: 0.5rem 0.6rem; }
+        .workspace { padding-left: 1.25rem; padding-right: 1.25rem; }
+        .omni-unit { width: 120px; }
+        .omni-ctx-wrap { width: 160px; }
+        .qty-input { width: 96px; }
+    }
+
+    @media (min-width: 901px) and (max-height: 820px) {
+        .hud-bar { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+        .workspace { padding-top: 0.9rem; padding-bottom: 0.9rem; gap: 0.55rem; }
+        .omni-row { height: 58px; }
+        .parse-preview { min-height: 24px; }
+        .summary { padding-bottom: 0.65rem; }
+        .fig-main .fig-num { font-size: 2.2rem; }
+        .fig-num { font-size: 1.3rem; }
+        .sum-figures { gap: 1.75rem; }
+    }
+
     @media (max-width: 900px) {
         body { height: auto; min-height: 100dvh; overflow-y: auto; overflow-x: hidden; }
-        .hud-bar { position: sticky; top: 0; flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-        .workspace { flex: none; padding: 1rem; gap: 0.9rem; }
-        .grid-area { flex: none; height: 55vh; min-height: 300px; }
-
-        .hud-left { flex-direction: column; align-items: flex-start; gap: 1rem; width: 100%; }
-        .hud-right { position: absolute; top: 1rem; right: 1rem; }
-
+        .hud-bar { position: sticky; top: 0; flex-direction: column; gap: 0.75rem; align-items: stretch; padding: 0.8rem 1rem; }
+        .hud-left { flex-direction: column; align-items: flex-start; gap: 0.75rem; width: 100%; }
+        .hud-right { position: absolute; top: 0.7rem; right: 0.8rem; }
         .hud-dropdown { max-width: calc(100vw - 24px); }
-
-        .omni-row { flex-wrap: wrap; height: auto; padding: 12px; gap: 8px; }
-        .omni-wrapper { width: 100%; flex: none; }
+        .workspace { flex: none; padding: 1rem; gap: 0.8rem; }
+        .grid-area { flex: none; height: 60vh; min-height: 320px; }
+        .omni-row { flex-wrap: wrap; height: auto; padding: 10px; gap: 8px; }
+        .omni-wrapper { width: 100%; flex: none; height: 50px; }
         .omni-wrapper::after { display: none; }
         .omni-unit, .omni-ctx-wrap { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
-        .qty-input, .btn-enter { width: calc(50% - 4px); height: 48px; margin-top: 0; }
-        .qty-input { border: 1px solid var(--border); }
-
+        .omni-ctx-wrap { border-radius: var(--radius-lg); }
+        .omni-ctx-wrap .omni-ctx-trigger { border-radius: var(--radius-lg); }
+        .qty-input { width: calc(50% - 4px); height: 48px; border: 1px solid var(--border); }
+        .btn-enter { width: calc(50% - 4px); height: 48px; justify-content: center; }
         .util-bar { flex-direction: column; align-items: stretch; }
-        .util-actions { justify-content: space-between; }
-        .filter-box { flex: 1; }
+        .util-actions { justify-content: flex-start; }
+        .filter-box { flex: 1; min-width: 160px; }
         .filter-box input { width: 100%; }
-
-        .bottom-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
-        .dock-stats { justify-content: center; flex-wrap: wrap; }
-        .action-btns { flex-direction: column; width: 100%; }
-        .action-btns button { width: 100%; }
-
+        .bottom-dock { flex-direction: column; align-items: stretch; }
+        .dock-stats { justify-content: center; }
+        .action-btns { width: 100%; }
+        .action-btns > * { flex: 1; }
         .modal-overlay { padding: 0.5rem; }
         .modal-content { height: calc(100dvh - 1rem); max-height: none; border-radius: var(--radius-md); }
+        .modal-content.compact { height: auto; }
         .modal-header, .modal-body, .modal-footer { padding: 1rem; }
-
-        th, td { padding: 0.8rem 0.6rem; }
-        .cell-input { width: 110px; font-size: 1rem; padding: 0.5rem; }
-        .c-select { font-size: 0.85rem; padding: 0.5rem; }
-
+        .modal-header.stack .head-row { padding: 1rem 1rem 0; }
+        .file-tabs { padding: 0.8rem 1rem 0; }
         .toast-stack { bottom: 20px; width: 90%; }
         .toast { justify-content: center; text-align: center; font-size: 0.9rem; }
     }
@@ -817,77 +946,130 @@
     @media (max-width: 720px) {
         .context-group { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
         .context-group::-webkit-scrollbar { display: none; }
-
-        .hud-dropdown,
-        .hud-dropdown.align-right {
-            position: fixed;
-            top: auto; bottom: 0; left: 0; right: 0;
-            width: auto; min-width: 0; max-width: none;
-            transform: translateY(100%);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            border-left: none; border-right: none; border-bottom: none;
-            max-height: min(70vh, 460px);
-            padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
-            box-shadow: 0 -18px 46px -14px rgba(0,0,0,0.45);
-            z-index: 1200;
+        .hud-progress { display: none; }
+        .hud-dropdown, .hud-dropdown.align-right {
+            position: fixed; top: auto; bottom: 0; left: 0; right: 0; width: auto; min-width: 0; max-width: none;
+            transform: translateY(100%); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border-left: none; border-right: none; border-bottom: none; max-height: min(70vh, 460px);
+            padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -18px 46px -14px rgba(0,0,0,0.45); z-index: 1200;
         }
-        .hud-dropdown.show,
-        .hud-dropdown.align-right.show { transform: translateY(0); }
-        .hud-dropdown .drop-item,
-        .hud-dropdown .year-chip { min-height: 44px; }
+        .hud-dropdown.show, .hud-dropdown.align-right.show { transform: translateY(0); }
+        .hud-dropdown .drop-item, .hud-dropdown .year-chip { min-height: 44px; }
+        body.sheet-open::before { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 1150; opacity: 0; animation: fadeIn 0.18s var(--ease-out) forwards; }
 
-        body.sheet-open::before {
-            content: ''; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.38); z-index: 1150;
-            opacity: 0; animation: fadeIn 0.18s var(--ease-out) forwards;
+        .sum-figures { gap: 1.5rem; }
+        .fig-main .fig-num { font-size: 2.3rem; }
+
+    }
+
+    @media screen and (max-width: 900px) {
+        .grid-area { height: auto; min-height: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+        .empty-state { position: static; opacity: 1; padding: 2.5rem 1rem; }
+        table, tbody, tfoot { display: block; min-width: 0; width: 100%; }
+        thead { display: none; }
+        tr.data-row {
+            display: grid; grid-template-columns: 30px minmax(0, 1fr) minmax(0, 1fr) auto auto; column-gap: 0.5rem; row-gap: 0.55rem; align-items: center;
+            grid-template-areas: "sel name name delta act" "sel unit ctx ctx ctx" "sel qty qty qty qty";
+            padding: 0.85rem 0.8rem; margin-bottom: 0.6rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--elev-1);
         }
+        tr.data-row td { display: block; height: auto; padding: 0; border: 0; min-width: 0; }
+        tr.data-row td:first-child::before { display: none; }
+        tr.data-row .select-col { grid-area: sel; width: auto; padding: 0; align-self: start; padding-top: 3px; }
+        tr.data-row .c-name { grid-area: name; }
+        tr.data-row .c-unit { grid-area: unit; }
+        tr.data-row .c-ctx { grid-area: ctx; }
+        tr.data-row .c-qty { grid-area: qty; }
+        tr.data-row .c-act { grid-area: act; }
+        tr.data-row .delta-col { grid-area: delta; }
+        #table.compare-active tr.data-row .delta-col { display: block; }
+        tr.data-row .cell-input { width: 100%; }
+        tr.data-row .c-qty .stepper { width: 100%; }
+        tr.data-row .c-qty .stepper .cell-input { flex: 1; width: auto; min-width: 0; font-size: 1.1rem; }
+        tr.data-row .step-btn { width: 52px; height: 44px; font-size: 1.3rem; }
+        tr.data-row .row-actions { opacity: 1; }
+        tr.data-row.flash { animation: rowFlashCard 1.2s var(--ease-out); }
+        tr.group-row { display: block; margin: 0.9rem 0 0.5rem; }
+        tr.group-row td { display: block; background: transparent; border: 0; padding: 0 0.3rem; }
+        tr.compare-removed-row { display: block; padding: 0.7rem 0.9rem; margin-bottom: 0.5rem; border: 1px dashed var(--border); border-radius: var(--radius-lg); }
+        tr.compare-removed-row td { display: inline-block; height: auto; border: 0; padding: 0 0.5rem 0 0; }
+        tr.empty-row, tr.empty-row td { display: block; }
+        #print-tfoot { position: static; }
+        #print-tfoot tr { display: flex; justify-content: space-between; gap: 1rem; padding: 0 0.3rem; }
+        #print-tfoot td { display: block; background: transparent; border: 0; padding: 0.4rem 0; }
+        #print-tfoot td.select-col, #print-tfoot td.delta-col, #print-tfoot td:empty { display: none; }
+        #print-tfoot tr.print-total { border-top: 2px solid var(--accent); margin-top: 0.4rem; }
+        #print-tfoot tr.print-total td { border: 0; }
+    }
+    @keyframes rowFlashCard { 0% { box-shadow: 0 0 0 2px var(--accent), var(--elev-1); } 100% { box-shadow: 0 0 0 0 transparent, var(--elev-1); } }
+
+    @media screen and (min-width: 641px) and (max-width: 900px) {
+        tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.7rem; align-items: start; }
+        tr.group-row, tr.empty-row { grid-column: 1 / -1; }
     }
 
     @media (max-width: 480px) {
         .hud-right { position: static; order: -1; width: 100%; justify-content: flex-end; flex-wrap: wrap; }
         .qty-input, .btn-enter { width: 100%; }
+        .btn-enter { order: 5; }
         .omni-results {
-            position: fixed; top: auto; bottom: 0; left: 0; right: 0;
-            max-height: 55vh; z-index: 1200;
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            border-bottom: none; border-left: none; border-right: none;
+            position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 55vh; z-index: 1200;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-bottom: none; border-left: none; border-right: none;
             padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         }
         .omni-results.show { transform: translateY(0); }
+        .action-btns { flex-direction: column-reverse; }
+        .parse-preview { padding: 0 0.2rem; }
+        .pp-go { margin-inline-start: 0; width: 100%; }
     }
 
     @media print {
         @page { margin: 14mm; }
-        body { background: #fff !important; color: #000 !important; }
-        .hud-bar, .omni-row, .util-bar, .bottom-dock, .modal-overlay, .btn-del, .btn-icon, th:last-child, td:last-child, .toast-stack, .shortcuts-hint, .omni-results, .select-col, .delta-col { display: none !important; }
-        .workspace { padding: 0; } .grid-area { border: none; box-shadow: none; overflow: visible; }
-        table { width: 100%; border-collapse: collapse; min-width: auto; } th, td { border: 1px solid #ddd; padding: 8px; color: #000 !important; }
+        body { background: #fff !important; color: #000 !important; height: auto; overflow: visible; display: block; }
+        .hud-bar, .omni-row, .parse-preview, .summary, .util-bar, .bulk-bar, .bottom-dock, .modal-overlay, .btn-del, .btn-icon, .step-btn, th:last-child, td:last-child, .toast-stack, .shortcuts-hint, .omni-results, .select-col, .delta-col, .empty-state { display: none !important; }
+        .workspace { padding: 0; display: block; }
+        .grid-area { border: none; box-shadow: none; overflow: visible; background: #fff; }
+        table { width: 100%; border-collapse: collapse; min-width: auto; display: table; }
         thead { display: table-header-group; }
-        tr.data-row { page-break-inside: avoid; break-inside: avoid; }
+        tbody { display: table-row-group; }
+        tfoot { display: table-footer-group; }
+        tr.data-row { display: table-row; page-break-inside: avoid; break-inside: avoid; background: none; border: 0; box-shadow: none; animation: none; margin: 0; padding: 0; }
+        tr.data-row td { display: table-cell; height: auto; }
+        th, td { border: 1px solid #ccc; padding: 7px 8px; color: #000 !important; background: none !important; }
         tr.data-row td:first-child::before { display: none; }
-        #print-tfoot { display: table-footer-group; }
-        #print-tfoot td { font-weight: 600; border-top: 2px solid #000; }
+        tr.group-row td { display: table-cell !important; font-weight: 700; border-top: 2px solid #000; }
+        #print-tfoot { position: static; }
+        #print-tfoot tr { display: table-row; }
+        #print-tfoot td { display: table-cell; font-weight: 600; border-top: 2px solid #000; }
         #print-tfoot tr.print-total td { font-weight: 700; font-size: 1.05rem; }
-        .report-header { display: block !important; text-align: right; direction: rtl; font-family: var(--font-ar); margin-bottom: 2rem; }
-        .report-header p { font-size: 1.2rem; font-weight: 600; margin: 5px 0; }
-        input, select { border: none !important; appearance: none; background: transparent !important; color: #000 !important; }
+        .report-header { display: block !important; text-align: right; direction: rtl; font-family: var(--font-ar); margin-bottom: 1.6rem; padding-bottom: 0.8rem; border-bottom: 2px solid #000; }
+        .report-header p { font-size: 1.15rem; font-weight: 700; margin: 4px 0; }
+        input, select { border: none !important; appearance: none; background: transparent !important; color: #000 !important; box-shadow: none !important; }
+        .stepper { border: 0; background: none; }
         .print-signature { display: flex !important; justify-content: space-between; margin-top: 3rem; padding-top: 1rem; page-break-inside: avoid; }
         .print-signature div { text-align: center; width: 40%; border-top: 1px solid #000; padding-top: 0.5rem; font-size: 0.85rem; color: #000; }
     }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .print-signature { display: none; }
+    td.c-unit .cell-input { width: 100%; }
+    td.c-qty { text-align: center; }
+    .f-num { text-align: center; }
+    label.btn-stub, label.btn-ghost { cursor: pointer; }
+    [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 
-<div class="hud-bar">
+<header class="hud-bar">
     <div class="hud-left">
-        <div class="hud-title"><span class="mark">LX</span>FOLIO<span class="beta">β</span></div>
-        <div class="context-group">
+        <div class="hud-title"><span class="mark">LX</span><span>Folio</span><span class="beta">β</span></div>
+        <div class="context-group" role="group" aria-label="Folio header">
             <div class="hud-item">
                 <button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-year" onclick="toggleHud('drop-year')">Year <span class="ar" id="txt-year"></span></button>
                 <div class="hud-dropdown" id="drop-year" role="menu" aria-label="Year">
                     <div class="year-input-box">
-                        <input type="number" id="custom-year-input" placeholder="Type year...">
-                        <button onclick="applyCustomYear()">Set</button>
+                        <input type="number" id="custom-year-input" placeholder="Type a year" aria-label="Custom year">
+                        <button type="button" onclick="applyCustomYear()">Set</button>
                     </div>
                     <div id="year-suggestions"></div>
                 </div>
@@ -896,11 +1078,12 @@
             <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-class" onclick="toggleHud('drop-class')">Class <span class="ar" id="txt-class"></span></button><div class="hud-dropdown" id="drop-class" role="menu" aria-label="Class"></div></div>
             <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-region" onclick="toggleHud('drop-region')">Region <span class="ar" id="txt-region"></span></button><div class="hud-dropdown" id="drop-region" role="menu" aria-label="Region"></div></div>
             <div class="hud-item"><button type="button" class="hud-pill" aria-haspopup="menu" aria-expanded="false" aria-controls="drop-pharmacy" onclick="toggleHud('drop-pharmacy')">Pharmacy <span class="ar" id="txt-pharmacy"></span></button><div class="hud-dropdown" id="drop-pharmacy" role="menu" aria-label="Pharmacy"></div></div>
+            <span class="hud-progress" id="hud-progress" aria-live="polite"></span>
         </div>
     </div>
     <div class="hud-right">
         <div class="hud-item">
-            <button type="button" class="btn-ghost" aria-haspopup="menu" aria-expanded="false" aria-controls="drafts-dropdown" onclick="toggleHud('drafts-dropdown')" title="Saved drafts" style="padding: 8px; border-radius: 50%;">
+            <button type="button" class="btn-ghost icon-only" aria-haspopup="menu" aria-expanded="false" aria-controls="drafts-dropdown" aria-label="Saved drafts" onclick="toggleHud('drafts-dropdown')" title="Saved drafts">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             </button>
             <div class="hud-dropdown align-right wide" id="drafts-dropdown" role="menu" aria-label="Saved drafts">
@@ -917,18 +1100,18 @@
                 <div class="drop-item" role="menuitem" tabindex="-1" data-palette-val="slate-copper">Slate &amp; Copper</div>
             </div>
         </div>
-        <button class="btn-ghost" onclick="showShortcutsModal()" title="Keyboard shortcuts" style="padding: 8px; border-radius: 50%;">
+        <button type="button" class="btn-ghost icon-only" onclick="showShortcutsModal()" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </button>
-        <button class="btn-ghost" onclick="toggleDensity()" title="Toggle density" style="padding: 8px; border-radius: 50%;"><span id="density-icon"></span></button>
-        <button class="btn-ghost" onclick="resetHUD()" title="Clear header" style="padding: 8px; border-radius: 50%;">
+        <button type="button" class="btn-ghost icon-only" onclick="toggleDensity()" title="Toggle density" aria-label="Toggle density"><span id="density-icon"></span></button>
+        <button type="button" class="btn-ghost icon-only" onclick="resetHUD()" title="Clear header" aria-label="Clear folio header">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         </button>
-        <button class="btn-ghost" onclick="toggleTheme()" title="Toggle theme" style="padding: 8px; border-radius: 50%;"><span id="theme-icon"></span></button>
+        <button type="button" class="btn-ghost icon-only" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme"><span id="theme-icon"></span></button>
     </div>
-</div>
+</header>
 
-<div class="workspace">
+<main class="workspace">
     <div class="report-header">
         <p>مرسل الي ادارة التموين الطبي والصيدليات</p>
         <p>فرع البحيرة الموازنة <span id="print-class"></span> المنطقة <span id="print-region"></span></p>
@@ -938,49 +1121,67 @@
 
     <div class="omni-row" id="omni-row">
         <div class="omni-wrapper">
-            <input type="text" class="omni-input" id="omni" placeholder="Search product, type ID, or / commands..." autocomplete="off">
-            <div class="cmd-trigger" onclick="triggerCmd()">/ Cmd</div>
+            <input type="text" class="omni-input" id="omni" placeholder="Search a product, or type a line" autocomplete="off" aria-label="Search a product or type a line">
+            <button type="button" class="cmd-trigger" tabindex="-1" onclick="triggerCmd()" aria-label="Open commands">/ Cmd</button>
             <div class="omni-results" id="omni-res"></div>
         </div>
-        <input type="text" class="omni-unit" id="omni-unit" placeholder="Unit" autocomplete="off">
+        <input type="text" class="omni-unit" id="omni-unit" placeholder="Unit" autocomplete="off" aria-label="Unit">
         <div class="omni-ctx-wrap" id="omni-ctx-wrap">
-            <button type="button" class="omni-ctx-trigger" id="omni-ctx-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="omni-ctx-menu" onclick="toggleCtxMenu(event)">
-                <span class="ctx-label" id="omni-ctx-label">Context...</span>
+            <button type="button" class="omni-ctx-trigger" id="omni-ctx-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="omni-ctx-menu" aria-label="Context" onclick="toggleCtxMenu(event)">
+                <span class="ctx-label" id="omni-ctx-label">Context</span>
                 <svg class="ctx-caret" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 11L3 6h10z"/></svg>
             </button>
             <div class="omni-ctx-menu" id="omni-ctx-menu" role="listbox" aria-label="Context">
-                <div class="drop-item" id="ctx-opt-0" role="option" aria-selected="false" data-val="" onclick="selectCtxOption('')">Context...</div>
+                <div class="drop-item" id="ctx-opt-0" role="option" aria-selected="false" data-val="" onclick="selectCtxOption('')">Context</div>
                 <div class="drop-item" id="ctx-opt-1" role="option" aria-selected="false" data-val="قرار لجنة" onclick="selectCtxOption('قرار لجنة')">قرار لجنة</div>
                 <div class="drop-item" id="ctx-opt-2" role="option" aria-selected="false" data-val="حكم قضائي" onclick="selectCtxOption('حكم قضائي')">حكم قضائي</div>
                 <div class="drop-item" id="ctx-opt-3" role="option" aria-selected="false" data-val="شئون طبية" onclick="selectCtxOption('شئون طبية')">شئون طبية</div>
                 <div class="drop-item" id="ctx-opt-4" role="option" aria-selected="false" data-val="داخل اللستة" onclick="selectCtxOption('داخل اللستة')">داخل اللستة</div>
             </div>
         </div>
-        <input type="number" class="qty-input" id="qty" placeholder="Qty" min="1">
-        <button class="btn-enter" onclick="routeOmniEnter()">Enter ↵</button>
+        <input type="number" class="qty-input" id="qty" placeholder="Qty" min="1" aria-label="Quantity">
+        <button type="button" class="btn-enter" onclick="routeOmniEnter()">Log line <kbd>↵</kbd></button>
     </div>
+
+    <div class="parse-preview" id="parse-preview" aria-live="polite"></div>
+
+    <section class="summary" id="summary" aria-label="Folio summary">
+        <div class="sum-figures">
+            <div class="fig fig-main"><span class="fig-num" id="sum-units">0</span><span class="fig-lbl">units sold</span></div>
+            <div class="fig"><span class="fig-num" id="sum-lines">0</span><span class="fig-lbl">lines</span></div>
+            <div class="fig"><span class="fig-num" id="sum-ext">0</span><span class="fig-lbl">external lines</span></div>
+        </div>
+        <div class="sum-ctx">
+            <div class="ctx-bar" id="ctx-bar" role="group" aria-label="Units by context"></div>
+            <div class="ctx-legend" id="ctx-legend"></div>
+        </div>
+    </section>
 
     <div class="util-bar">
         <div class="freq-strip" id="freq-strip"></div>
         <div class="util-actions">
             <div class="filter-box">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="grid-filter" placeholder="Filter folio..." oninput="onGridFilter(this.value)">
+                <input type="text" id="grid-filter" placeholder="Filter lines" aria-label="Filter lines" oninput="onGridFilter(this.value)">
             </div>
-            <button class="btn-stub" onclick="openScaleTool()" title="Scale quantities">
+            <button type="button" class="btn-stub" id="group-btn" aria-pressed="false" onclick="toggleGroup()" title="Group lines by context">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="6" rx="1.5"></rect><rect x="3" y="12" width="18" height="9" rx="1.5"></rect></svg>
+                Group
+            </button>
+            <button type="button" class="btn-stub" onclick="openScaleTool()" title="Scale quantities">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                 Scale
             </button>
-            <button class="validation-chip" id="needs-context-chip" style="display:none;" onclick="toggleNeedsContextFilter()">
+            <button type="button" class="validation-chip" id="needs-context-chip" style="display:none;" onclick="toggleNeedsContextFilter()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                <span id="needs-context-count">0</span> EXT line(s) need context
+                <span><span id="needs-context-count">0</span> external line(s) need a context</span>
             </button>
-            <label class="btn-stub" title="Compare against a previous export" style="cursor:pointer;">
+            <label class="btn-stub" title="Compare against a previous export">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 Compare
-                <input type="file" accept=".json" id="compare-file-input" style="display:none;" onchange="loadCompareFile(this.files[0])">
+                <input type="file" accept=".json" id="compare-file-input" hidden onchange="loadCompareFile(this.files[0])">
             </label>
-            <button class="btn-ghost" id="compare-clear-btn" style="display:none; padding:8px; border-radius:50%;" title="Exit compare mode" onclick="clearCompare()">
+            <button type="button" class="btn-ghost icon-only" id="compare-clear-btn" style="display:none;" title="Exit compare mode" aria-label="Exit compare mode" onclick="clearCompare()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -989,22 +1190,19 @@
     <div class="bulk-bar" id="bulk-actions-bar" style="display:none;">
         <span><strong id="bulk-count">0</strong> selected</span>
         <div class="bulk-actions">
-            <select class="bulk-ctx-select" onchange="if(this.value){bulkSetContext(this.value); this.value='';}">
-                <option value="">Set Context…</option>
+            <select class="bulk-ctx-select" aria-label="Set context for selection" onchange="if(this.value){bulkSetContext(this.value); this.value='';}">
+                <option value="">Set context</option>
                 <option value="قرار لجنة">قرار لجنة</option>
                 <option value="حكم قضائي">حكم قضائي</option>
                 <option value="شئون طبية">شئون طبية</option>
                 <option value="داخل اللستة">داخل اللستة</option>
             </select>
-            <button class="btn-stub" onclick="openScaleTool()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                Scale Selection
-            </button>
-            <button class="btn-stub" style="color:var(--danger); border-color:var(--danger-glow);" onclick="bulkDeleteSelected()">
+            <button type="button" class="btn-stub" onclick="openScaleTool()">Scale selection</button>
+            <button type="button" class="btn-stub danger" onclick="bulkDeleteSelected()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 Delete
             </button>
-            <button class="btn-ghost" onclick="clearRowSelection()" title="Clear selection" style="padding:8px; border-radius:50%;">
+            <button type="button" class="btn-ghost icon-only" onclick="clearRowSelection()" title="Clear selection" aria-label="Clear selection">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -1012,23 +1210,32 @@
 
     <div class="grid-area" id="grid-container">
         <div class="empty-state" id="empty-state">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            <h2>No lines logged yet</h2>
-            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Search a product above, or press / for commands.</p>
-            <div class="shortcuts-hint" style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.7;">
-                <kbd>/</kbd> Commands &nbsp; <kbd>↑</kbd><kbd>↓</kbd> Navigate &nbsp; <kbd>Esc</kbd> Reset &nbsp; <kbd>⌘Z</kbd> Undo
+            <div class="empty-inner">
+                <h2>Nothing logged yet</h2>
+                <p>Set the folio header above, then type in the bar and press Enter. Each line lands here and counts toward the report.</p>
+                <div class="empty-steps">
+                    <span><b>1</b>Set the header</span>
+                    <span><b>2</b>Log lines</span>
+                    <span><b>3</b>Push &amp; export</span>
+                </div>
+                <div class="examples">
+                    <button type="button" class="example-btn" data-example="Ambroxol*5">Ambroxol*5</button>
+                    <button type="button" class="example-btn" data-example="!New item @Box #1*4">!New item @Box #1*4</button>
+                    <button type="button" class="example-btn" data-example="/">/ commands</button>
+                </div>
+                <div class="shortcuts-hint"><kbd>/</kbd> commands &nbsp; <kbd>↑</kbd><kbd>↓</kbd> move through rows &nbsp; <kbd>Esc</kbd> reset &nbsp; <kbd>Ctrl</kbd><kbd>Z</kbd> undo</div>
             </div>
         </div>
         <table id="table" style="display:none;">
             <thead>
                 <tr>
-                    <th class="select-col" style="width:32px;"><input type="checkbox" id="select-all-rows" onchange="toggleSelectAllRows(this.checked)" title="Select all"></th>
-                    <th class="sortable" onclick="setSort('name')">Product <span class="sort-ind" id="sort-name"></span></th>
-                    <th style="width:190px">Unit</th>
-                    <th style="width:230px">Context</th>
-                    <th class="sortable" style="width:170px;text-align:center;" onclick="setSort('quantity')">Units Sold <span class="sort-ind" id="sort-qty"></span></th>
-                    <th class="delta-col" style="width:100px;">Δ vs Prev</th>
-                    <th style="width:90px;text-align:center;"></th>
+                    <th class="select-col" scope="col"><input type="checkbox" id="select-all-rows" onchange="toggleSelectAllRows(this.checked)" title="Select all" aria-label="Select all lines"></th>
+                    <th class="sortable" scope="col" onclick="setSort('name')">Product <span class="sort-ind" id="sort-name"></span></th>
+                    <th scope="col" style="width:190px">Unit</th>
+                    <th scope="col" style="width:230px">Context</th>
+                    <th class="sortable" scope="col" style="width:170px;text-align:center;" onclick="setSort('quantity')">Units sold <span class="sort-ind" id="sort-qty"></span></th>
+                    <th class="delta-col" scope="col" style="width:100px;">Change</th>
+                    <th scope="col" style="width:90px;text-align:center;"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody id="grid"></tbody>
@@ -1036,147 +1243,80 @@
         </table>
     </div>
 
-    <div class="print-signature" style="display:none;">
+    <div class="print-signature">
         <div>Prepared by</div>
         <div>Approved by</div>
     </div>
 
     <div class="bottom-dock">
         <div class="dock-stats">
-            <div class="stat-line" id="stats-counter">0 lines · 0 units</div>
-            <div class="dot-sep"></div>
+            <div class="stat-line" id="stats-counter">0 lines, 0 units</div>
             <span class="mono-note" id="last-saved"></span>
-            <div style="width: 1.5px; height: 16px; background: var(--border);"></div>
-            <button class="btn-ghost danger" onclick="resetData()" title="Void folio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Void</button>
-            <button class="btn-ghost" onclick="saveSession()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save</button>
-            <label class="btn-ghost" style="cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Load<input type="file" id="file-load" accept=".json" style="display:none;" onchange="if(this.files[0]) loadSession(this.files[0])"></label>
-            <button class="btn-ghost" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print</button>
-            <button class="btn-ghost warn-ghost" id="sync-btn" style="display:none;" onclick="openRecentPushesDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Sync <span id="sync-count"></span></button>
+            <div class="dot-sep"></div>
+            <button type="button" class="btn-ghost danger" onclick="resetData()" title="Void folio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Void</button>
+            <button type="button" class="btn-ghost" onclick="saveSession()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save</button>
+            <label class="btn-ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Load<input type="file" id="file-load" accept=".json" hidden onchange="if(this.files[0]) loadSession(this.files[0])"></label>
+            <button type="button" class="btn-ghost" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print</button>
+            <button type="button" class="btn-ghost warn-ghost" id="sync-btn" style="display:none;" onclick="openRecentPushesDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Sync <span id="sync-count"></span></button>
         </div>
         <div class="action-btns">
-            <button class="btn-hollow" onclick="openImport()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> Import CSV</button>
-            <button class="btn-solid" id="btn-submit" onclick="submitToDB()"><span id="submit-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span> <span id="submit-text">Push & Export</span></button>
+            <button type="button" class="btn-hollow" onclick="openImport()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg> Import CSV</button>
+            <button type="button" class="btn-solid push-btn" id="btn-submit" onclick="submitToDB()"><span id="submit-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></span><span class="push-text"><span id="submit-text">Push &amp; Export</span><small id="submit-meta"></small></span></button>
         </div>
     </div>
-</div>
+</main>
 
 <div class="modal-overlay" id="recent-pushes-modal">
-    <div class="modal-content" style="max-width: 560px; height: auto; padding: 0;">
+    <div class="modal-content compact md">
         <div class="modal-header">
             <div>
-                <h2 style="margin:0; font-size:1.3rem;">Recent Pushes</h2>
-                <p class="sub">Last 10 batches. Pending ones retry automatically when you're back online.</p>
+                <h2>Recent pushes</h2>
+                <p class="sub">Your last 10 batches. Pending ones retry automatically when you're back online.</p>
             </div>
-            <button class="btn-del" onclick="closeRecentPushesDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <button type="button" class="btn-del" aria-label="Close" onclick="closeRecentPushesDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
         <div class="modal-body" id="recent-pushes-list"></div>
         <div class="modal-footer">
-            <button class="btn-hollow" onclick="retryPendingQueue()">Retry All Pending</button>
+            <button type="button" class="btn-hollow" onclick="retryPendingQueue()">Retry all pending</button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="shortcuts-modal" aria-labelledby="shortcuts-modal-title" style="z-index: 10000;">
-    <div class="modal-content" style="max-width: 500px; height: auto;">
+<div class="modal-overlay" id="shortcuts-modal" aria-labelledby="shortcuts-modal-title">
+    <div class="modal-content compact" style="max-width:560px;">
         <div class="modal-header">
             <div>
-                <h2 id="shortcuts-modal-title" style="margin:0; font-size:1.4rem;">Keyboard Shortcuts</h2>
-                <p class="sub">Work faster using keyboard controls.</p>
+                <h2 id="shortcuts-modal-title">Keyboard shortcuts</h2>
+                <p class="sub">Everything in the core flow works without leaving the keyboard.</p>
             </div>
-            <button class="btn-del" onclick="closeModal('shortcuts-modal')">
+            <button type="button" class="btn-del" aria-label="Close" onclick="closeModal('shortcuts-modal')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="modal-body" style="padding: 2rem;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Command Menu / Palette</span>
-                <span><kbd>/</kbd> or <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Show This Menu</span>
-                <span><kbd>/keyboard</kbd> or <kbd>?</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Select / Advance / Log</span>
-                <span><kbd>Enter ↵</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Move Up / Down Rows</span>
-                <span><kbd>↑</kbd> <kbd>↓</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Move Left / Right Cells</span>
-                <span><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Undo (outside the entry fields)</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Redo</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Push &amp; Export</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Save Session</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>S</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Filter Folio</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>F</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:1rem;">
-                <span style="font-weight:600;">Duplicate Focused Row</span>
-                <span><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>D</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-                <span style="font-weight:600;">Reset / Clear View</span>
-                <span><kbd>Esc</kbd></span>
-            </div>
-            <p class="sub" style="margin: 1.5rem 0 0.6rem;">Omni bar — search &amp; log</p>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Search by name, ID, or Franco-Arabic</span>
-                <span><kbd>panadol</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Log a system product in one step</span>
-                <span><kbd>name*5</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>...or press Enter to select, then just type the qty</span>
-                <span><kbd>name</kbd> ↵ <kbd>5</kbd> ↵</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Force a new EXT (custom) line</span>
-                <span><kbd>!name</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Set unit / context inline (or press Enter to be walked through them)</span>
-                <span><kbd>@unit</kbd> <kbd>#1-4</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Context mnemonics — committee/judicial/medical/list</span>
-                <span><kbd>#c</kbd> <kbd>#j</kbd> <kbd>#m</kbd> <kbd>#l</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Full EXT line in one step</span>
-                <span><kbd>!name @unit #1*5</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Adjust the last-touched line</span>
-                <span><kbd>+5</kbd> / <kbd>-5</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.6rem;">
-                <span>Qty needs a separator — a bare trailing number is read as part of the name</span>
-                <span><kbd>*</kbd> <kbd>x</kbd> <kbd>,</kbd></span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-                <span>Typed in Arabic keyboard layout by mistake?</span>
-                <span>Auto-corrected</span>
-            </div>
+        <div class="modal-body">
+            <h3 class="kv-title">Anywhere</h3>
+            <div class="kv"><span>Open commands</span><span class="keys"><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd></span></div>
+            <div class="kv"><span>Show this list</span><span class="keys"><kbd>?</kbd> or <kbd>/keyboard</kbd></span></div>
+            <div class="kv"><span>Push &amp; export</span><span class="keys"><kbd>Ctrl</kbd> <kbd>Enter</kbd></span></div>
+            <div class="kv"><span>Save session</span><span class="keys"><kbd>Ctrl</kbd> <kbd>S</kbd></span></div>
+            <div class="kv"><span>Filter lines</span><span class="keys"><kbd>Ctrl</kbd> <kbd>F</kbd></span></div>
+            <div class="kv"><span>Undo / redo (outside the entry fields)</span><span class="keys"><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Shift</kbd> <kbd>Z</kbd></span></div>
+            <div class="kv"><span>Reset the bar, close the top layer</span><span class="keys"><kbd>Esc</kbd></span></div>
+            <h3 class="kv-title">In the grid</h3>
+            <div class="kv"><span>Move between rows</span><span class="keys"><kbd>↑</kbd> <kbd>↓</kbd></span></div>
+            <div class="kv"><span>Move between cells</span><span class="keys"><kbd>Tab</kbd> / <kbd>Shift</kbd> <kbd>Tab</kbd></span></div>
+            <div class="kv"><span>Duplicate the focused row</span><span class="keys"><kbd>Ctrl</kbd> <kbd>D</kbd></span></div>
+            <h3 class="kv-title">In the bar</h3>
+            <div class="kv"><span>Search by name, ID, or Franco-Arabic</span><span class="keys"><kbd>panadol</kbd></span></div>
+            <div class="kv"><span>Log a system product in one step</span><span class="keys"><kbd>name*5</kbd></span></div>
+            <div class="kv"><span>Select first, then type the quantity</span><span class="keys"><kbd>name</kbd> <kbd>↵</kbd> <kbd>5</kbd> <kbd>↵</kbd></span></div>
+            <div class="kv"><span>Force an external line</span><span class="keys"><kbd>!name</kbd></span></div>
+            <div class="kv"><span>Set unit and context inline</span><span class="keys"><kbd>@unit</kbd> <kbd>#1</kbd>–<kbd>#4</kbd></span></div>
+            <div class="kv"><span>Context shortcuts: committee, judicial, medical, list</span><span class="keys"><kbd>#c</kbd> <kbd>#j</kbd> <kbd>#m</kbd> <kbd>#l</kbd></span></div>
+            <div class="kv"><span>A whole external line at once</span><span class="keys"><kbd>!name @unit #1*5</kbd></span></div>
+            <div class="kv"><span>Adjust the last line you touched</span><span class="keys"><kbd>+5</kbd> / <kbd>-5</kbd></span></div>
+            <div class="kv"><span>Quantity separators (a bare trailing number stays in the name)</span><span class="keys"><kbd>*</kbd> <kbd>x</kbd> <kbd>,</kbd></span></div>
+            <div class="kv"><span>Typed with the Arabic keyboard layout by mistake</span><span class="keys">Fixed automatically</span></div>
         </div>
     </div>
 </div>
@@ -1187,12 +1327,12 @@
             <div id="import-ui" class="view-panel active">
                 <div class="modal-header">
                     <div>
-                        <h2 style="margin:0; font-size:1.4rem;">Import CSV</h2>
-                        <p class="sub">Headers Supported: year, month, pharmacy, name, unit, quantity, context</p>
+                        <h2>Import CSV</h2>
+                        <p class="sub">Supported headers: year, month, pharmacy, name, unit, quantity, context</p>
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn-ghost" onclick="exportCSVTemplate()">↓ Template</button>
-                        <button class="btn-del" onclick="closeImport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <div class="head-actions">
+                        <button type="button" class="btn-ghost" onclick="exportCSVTemplate()">Download template</button>
+                        <button type="button" class="btn-del" aria-label="Close" onclick="closeImport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
                 </div>
                 <div class="modal-body">
@@ -1201,106 +1341,106 @@
                             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         </div>
                         <div>
-                            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Click or Drag CSV Here</h3>
-                            <p style="color: var(--text-muted); font-size: 0.9rem;" id="import-status-text">Supports multiple files mapping to the folio database.</p>
+                            <h3>Drop CSV files here, or click to choose</h3>
+                            <p id="import-status-text">Supports multiple files mapping to the folio database.</p>
                         </div>
-                        <input type="file" id="file-in" accept=".csv" multiple style="display:none;" onchange="if(this.files.length) handleFile(this.files)">
+                        <input type="file" id="file-in" accept=".csv" multiple hidden onchange="if(this.files.length) handleFile(this.files)">
                     </div>
                 </div>
             </div>
 
             <div id="review-ui" class="view-panel">
-                <div class="modal-header" style="flex-direction: column; align-items: stretch; padding: 0;">
-                    <div style="padding: 1.5rem 2rem 0; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="modal-header stack">
+                    <div class="head-row">
                         <div>
-                            <h2 style="margin:0; font-size:1.4rem;">Review & Push</h2>
-                            <p class="sub">Verify files independently. Validated rows will be merged and pushed.</p>
+                            <h2>Review &amp; push</h2>
+                            <p class="sub">Check each file on its own. Validated rows are merged and pushed.</p>
                         </div>
-                        <button class="btn-del" onclick="closeImport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                        <button type="button" class="btn-del" aria-label="Close" onclick="closeImport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                     </div>
                     <div class="file-tabs" id="import-file-tabs"></div>
                 </div>
-                <div class="modal-body" style="padding-bottom:0; flex-direction:column;">
+                <div class="modal-body flush-bottom">
                     <div class="review-meta-bar">
-                        <select id="rev-year" class="c-select" onchange="syncMeta()"></select>
-                        <select id="rev-month" class="c-select" onchange="syncMeta()"></select>
-                        <select id="rev-class" class="c-select" onchange="updateRevPharm()"></select>
-                        <select id="rev-region" class="c-select" onchange="updateRevPharm()"></select>
-                        <select id="rev-pharmacy" class="c-select" onchange="syncMeta()"></select>
+                        <select id="rev-year" class="c-select" aria-label="Year" onchange="syncMeta()"></select>
+                        <select id="rev-month" class="c-select" aria-label="Month" onchange="syncMeta()"></select>
+                        <select id="rev-class" class="c-select" aria-label="Class" onchange="updateRevPharm()"></select>
+                        <select id="rev-region" class="c-select" aria-label="Region" onchange="updateRevPharm()"></select>
+                        <select id="rev-pharmacy" class="c-select" aria-label="Pharmacy" onchange="syncMeta()"></select>
                     </div>
-                    <div id="overlap-warning" style="display:none; align-items:center; gap:10px; background:var(--warning-glow); border:1.5px solid var(--warning); color:var(--warning); padding:0.7rem 1rem; border-radius:var(--radius-md); margin:1rem 0 0; font-size:0.85rem; font-weight:600; flex-shrink:0;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <div class="overlap-warning" id="overlap-warning">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                         <span id="overlap-warning-text"></span>
                     </div>
-                    <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
-                        <div class="filter-box" style="height:34px;">
+                    <div class="review-tools">
+                        <div class="filter-box">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" id="review-filter" placeholder="Filter rows..." oninput="onReviewFilter(this.value)" style="width:160px;">
+                            <input type="text" id="review-filter" placeholder="Filter rows" aria-label="Filter rows" oninput="onReviewFilter(this.value)">
                         </div>
                     </div>
                     <div class="review-table-container">
                         <table class="review-table">
-                            <thead><tr><th style="width:50px;text-align:center"><input type="checkbox" id="rev-chk-all" class="rev-checkbox" title="Select / deselect all rows" onchange="toggleAllRows(this.checked)"></th><th>Product Name</th><th style="width:180px">Unit</th><th style="width:200px">Context</th><th style="width:120px;text-align:center">Qty</th><th style="width:120px;text-align:center">Status</th></tr></thead>
+                            <thead><tr><th scope="col" style="width:50px;text-align:center"><input type="checkbox" id="rev-chk-all" class="rev-checkbox" title="Select or deselect all rows" aria-label="Select or deselect all rows" onchange="toggleAllRows(this.checked)"></th><th scope="col">Product name</th><th scope="col" style="width:180px">Unit</th><th scope="col" style="width:200px">Context</th><th scope="col" style="width:120px;text-align:center">Qty</th><th scope="col" style="width:130px;text-align:center">Status</th></tr></thead>
                             <tbody id="review-tbody"></tbody>
                         </table>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-hollow" onclick="switchView('import-ui')">Back</button>
-                    <button class="btn-hollow" onclick="loadFileIntoWorkspace()">Load into Workspace</button>
-                    <button class="btn-solid" id="btn-confirm-import" onclick="confirmReview()">Confirm & Push Database</button>
+                    <button type="button" class="btn-hollow" onclick="switchView('import-ui')">Back</button>
+                    <button type="button" class="btn-hollow" onclick="loadFileIntoWorkspace()">Load into workspace</button>
+                    <button type="button" class="btn-solid" id="btn-confirm-import" onclick="confirmReview()">Confirm &amp; push</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="scale-modal" style="z-index: 10500;">
-    <div class="modal-content" style="max-width: 440px; height: auto; padding: 0;">
+<div class="modal-overlay" id="scale-modal">
+    <div class="modal-content compact">
         <div class="modal-header">
             <div>
-                <h2 style="margin:0; font-size:1.3rem;">Scale Quantities</h2>
+                <h2>Scale quantities</h2>
                 <p class="sub" id="scale-modal-sub">Applies to the lines currently visible below the filter.</p>
             </div>
-            <button class="btn-del" onclick="closeScaleTool()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <button type="button" class="btn-del" aria-label="Close" onclick="closeScaleTool()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
         <div class="modal-body">
-            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
-                <button class="btn-stub" onclick="setScaleFactor(2)">×2</button>
-                <button class="btn-stub" onclick="setScaleFactor(0.5)">×0.5</button>
-                <button class="btn-stub" onclick="setScaleFactor(1.1)">+10%</button>
-                <button class="btn-stub" onclick="setScaleFactor(0.9)">-10%</button>
+            <div class="scale-presets">
+                <button type="button" class="btn-stub" onclick="setScaleFactor(2)">×2</button>
+                <button type="button" class="btn-stub" onclick="setScaleFactor(0.5)">×0.5</button>
+                <button type="button" class="btn-stub" onclick="setScaleFactor(1.1)">+10%</button>
+                <button type="button" class="btn-stub" onclick="setScaleFactor(0.9)">−10%</button>
             </div>
-            <input type="number" id="scale-factor" step="0.01" placeholder="Custom factor, e.g. 1.25" class="cell-input mono-num" style="width:100%;" oninput="updateScalePreview()">
-            <div class="mono-note" id="scale-preview" style="font-size:0.8rem;"></div>
+            <input type="number" id="scale-factor" step="0.01" placeholder="Custom factor, e.g. 1.25" class="cell-input mono-num" aria-label="Scale factor" oninput="updateScalePreview()">
+            <div class="mono-note" id="scale-preview"></div>
         </div>
         <div class="modal-footer">
-            <button class="btn-hollow" onclick="closeScaleTool()">Cancel</button>
-            <button class="btn-solid" onclick="applyScale()">Apply</button>
+            <button type="button" class="btn-hollow" onclick="closeScaleTool()">Cancel</button>
+            <button type="button" class="btn-solid" onclick="applyScale()">Apply</button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="confirm-modal" style="z-index: 10600;">
-    <div class="modal-content" style="max-width: 420px; height: auto; padding: 0;">
-        <div class="modal-body" style="padding: 2rem;">
-            <h2 id="confirm-title" style="font-family:var(--font-display); text-transform:uppercase; letter-spacing:0.5px; font-size:1.3rem;"></h2>
-            <p id="confirm-desc" class="sub" style="margin-top:0.6rem;"></p>
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-content compact sm">
+        <div class="modal-body">
+            <h2 id="confirm-title"></h2>
+            <p id="confirm-desc" class="sub"></p>
         </div>
         <div class="modal-footer">
-            <button class="btn-hollow" onclick="closeConfirm()">Cancel</button>
-            <button class="btn-solid danger-solid" onclick="runConfirm()"><span id="confirm-action-label"></span></button>
+            <button type="button" class="btn-hollow" onclick="closeConfirm()">Cancel</button>
+            <button type="button" class="btn-solid danger-solid" onclick="runConfirm()"><span id="confirm-action-label"></span></button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="status-modal" style="z-index: 99999;">
-    <div class="modal-content" style="max-width: 450px; text-align: center; padding: 3rem 2rem; align-items: center; border-radius: var(--radius-lg); height: auto;">
+<div class="modal-overlay" id="status-modal">
+    <div class="modal-content">
         <div id="status-icon"></div>
-        <h2 id="status-title" style="margin: 1.5rem 0 0.5rem; font-size: 1.8rem; font-family: var(--font-display); text-transform: uppercase;"></h2>
-        <p id="status-desc" style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6;"></p>
-        <div id="status-detail-list" style="display:none; width:100%; text-align:left; max-height:280px; overflow-y:auto; margin: -1rem 0 1.5rem; font-size:0.8rem; border-top:1px solid var(--border); padding-top:1rem;"></div>
-        <button class="btn-solid" id="status-btn" onclick="closeModal('status-modal')" style="width: 100%; justify-content: center; padding: 1rem;">Acknowledge</button>
+        <h2 id="status-title"></h2>
+        <p id="status-desc"></p>
+        <div id="status-detail-list"></div>
+        <button type="button" class="btn-solid" id="status-btn" onclick="closeModal('status-modal')">Got it</button>
     </div>
 </div>
 
@@ -1328,6 +1468,12 @@
 
     const HISTORY_LIMIT = 40;
 
+    let groupMode = false;
+
+    let contextFilter = null;
+
+    let flashRowId = null;
+
     const esc = s => (s === 0 ? '0' : (s||'')).toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\'":'&#39;'})[m]);
 
     const FLOW = { enabled: false, log: [] };
@@ -1341,6 +1487,15 @@
     }
 
     const CONTEXTS = ["قرار لجنة", "حكم قضائي", "شئون طبية", "داخل اللستة"];
+
+    const GROUP_ORDER = ['sys', ...CONTEXTS, 'need'];
+
+    const HUD_KEYS = ['year', 'month', 'class', 'region', 'pharmacy'];
+
+    const TOAST_ICONS = {
+        ok: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+        error: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+    };
 
     const DIC = {
         months: { en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], ar: ["يناير", "فبراير", "مارس", "ابريل", "مايو", "يونيو", "يوليو", "اغسطس", "سبتمبر", "اكتوبر", "نوفمبر", "ديسمبر"] },
@@ -1616,15 +1771,15 @@
         if(!menu) return;
         const drafts = loadDraftsList();
         const keys = Object.keys(drafts).sort((a,b) => (drafts[b].savedAt||0) - (drafts[a].savedAt||0));
-        if(!keys.length) { menu.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">No saved drafts yet</div>`; return; }
+        if(!keys.length) { menu.innerHTML = `<div class="drop-empty">No saved drafts yet</div>`; return; }
         menu.innerHTML = keys.map(k => {
             let d = drafts[k];
             let lineCount = (d.data||[]).length;
             let when = new Date(d.savedAt).toLocaleDateString();
-            let label = `${d.state.pharmacy||'?'} — ${d.state.month||'?'} ${d.state.year||''}`;
-            return `<div class="drop-item" role="menuitem" tabindex="-1" data-draft-key="${esc(k)}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;" dir="auto">
+            let label = `${d.state.pharmacy||'?'}, ${d.state.month||'?'} ${d.state.year||''}`;
+            return `<div class="drop-item draft-item" role="menuitem" tabindex="-1" data-draft-key="${esc(k)}" dir="auto">
                 <strong>${esc(label)}</strong>
-                <small style="color:var(--text-muted);">${lineCount} line(s) · ${esc(when)}</small>
+                <small>${lineCount} ${lineCount === 1 ? 'line' : 'lines'}, saved ${esc(when)}</small>
             </div>`;
         }).join('');
     }
@@ -1797,18 +1952,18 @@
         if(!list) return;
         const log = loadRecentPushes();
         const pendingIds = new Set(loadPendingQueue().map(e => e.batchId));
-        if(!log.length) { list.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding:2rem 0;">No pushes yet.</p>`; return; }
+        if(!log.length) { list.innerHTML = `<p class="list-empty">No pushes yet.</p>`; return; }
         list.innerHTML = log.map(e => {
             const isPending = pendingIds.has(e.batchId);
             const when = new Date(e.ts).toLocaleString();
-            return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem 0; border-bottom:1px solid var(--border);">
+            return `<div class="push-row">
                 <div>
                     <strong dir="auto">${esc(e.meta)}</strong>
-                    <div style="font-size:0.78rem; color:var(--text-muted);">${e.rowCount} row(s) · ${esc(when)} · ${isPending ? '<span style="color:var(--warning);">Pending</span>' : '<span style="color:var(--accent);">Sent</span>'}</div>
+                    <div class="meta">${e.rowCount} ${e.rowCount === 1 ? 'row' : 'rows'}, ${esc(when)}, ${isPending ? '<span class="pending">Pending</span>' : '<span class="sent">Sent</span>'}</div>
                 </div>
-                <div style="display:flex; gap:0.4rem;">
-                    <button class="btn-icon" title="Re-download" data-redownload="${esc(e.batchId)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
-                    ${isPending ? `<button class="btn-icon" title="Retry now" data-retry="${esc(e.batchId)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg></button>` : ''}
+                <div class="push-actions">
+                    <button type="button" class="btn-icon" title="Download again" aria-label="Download again" data-redownload="${esc(e.batchId)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+                    ${isPending ? `<button type="button" class="btn-icon" title="Retry now" aria-label="Retry now" data-retry="${esc(e.batchId)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg></button>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -1847,7 +2002,7 @@
         const timeout = setTimeout(() => { if(!settled) { settled = true; timedOut = true; controller.abort(); isRetryingQueue = false; showToast('Still offline — will retry automatically.', 'error'); } }, 8000);
         pushBatchToFirebase(entry.payload, controller.signal).then(() => {
             clearTimeout(timeout);
-            if (timedOut) { removePendingByBatchId(entry.batchId); showToast(`Synced pending batch (${entry.label}) after all`); return; }
+            if (timedOut) { removePendingByBatchId(entry.batchId); markRecentPushSent(entry.batchId); showToast(`Synced pending batch (${entry.label}) after all`); return; }
             if (settled) return;
             settled = true;
             let q2 = loadPendingQueue(); q2.shift(); savePendingQueue(q2);
@@ -1909,12 +2064,13 @@
         const trigger = document.getElementById('omni-ctx-trigger');
         if(!wrap || !label || !trigger) return;
         const val = dom.ctx.value;
-        label.textContent = val || 'Context...';
+        label.textContent = val || 'Context';
         trigger.classList.toggle('filled', !!val);
         trigger.setAttribute('aria-disabled', dom.ctx.disabled ? 'true' : 'false');
         trigger.disabled = !!dom.ctx.disabled;
         wrap.classList.toggle('disabled', dom.ctx.disabled);
         highlightCtxSelected();
+        renderParsePreview();
     }
 
     function ctxOptions() { return Array.from(document.querySelectorAll('#omni-ctx-menu .drop-item')); }
@@ -2086,16 +2242,16 @@
 
     function buildPharmMenu() {
         const d = document.getElementById('drop-pharmacy'); d.innerHTML = '';
-        if(!STATE.class || !STATE.region) { d.innerHTML = `<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Select Class & Region</div>`; return; }
+        if(!STATE.class || !STATE.region) { d.innerHTML = `<div class="drop-empty">Choose a class and region first</div>`; return; }
         PHARM[STATE.class][STATE.region].forEach(p => d.innerHTML += `<div class="drop-item" role="menuitem" tabindex="-1" data-hud-key="pharmacy" data-hud-val="${esc(p.n)}">${p.n} <span>${p.id}</span></div>`);
     }
 
     function setHud(key, val) { STATE[key] = val; if(key === 'class' || key === 'region') STATE.pharmacy = null; updateHudUI(); document.querySelectorAll('.hud-dropdown.show').forEach(d => closeHudDropdown(d.id)); saveLocalBackup(); }
 
     function updateHudUI() {
-        const upd = (id, val, dict) => { const el = document.getElementById(`txt-${id}`).parentNode; const span = document.getElementById(`txt-${id}`); if(val) { el.classList.add('active'); span.textContent = dict ? dict[val] || val : val; } else { el.classList.remove('active'); span.textContent = 'Set'; } };
+        const upd = (id, val, dict) => { const el = document.getElementById(`txt-${id}`).parentNode; const span = document.getElementById(`txt-${id}`); if(val) { el.classList.add('active'); span.textContent = dict ? dict[val] || val : val; } else { el.classList.remove('active'); span.textContent = ''; } };
         upd('year', STATE.year); upd('month', STATE.month, Object.fromEntries(DIC.months.en.map((m,i)=>[m,DIC.months.ar[i]]))); upd('class', STATE.class, DIC.classes); upd('region', STATE.region, DIC.regions); upd('pharmacy', STATE.pharmacy);
-        document.getElementById('print-class').textContent = DIC.classes[STATE.class] || ''; document.getElementById('print-region').textContent = DIC.regions[STATE.region] || ''; document.getElementById('print-pharmacy').textContent = STATE.pharmacy || ''; let mIdx = DIC.months.en.indexOf(STATE.month); document.getElementById('print-month').textContent = mIdx >= 0 ? DIC.months.ar[mIdx] : '';
+        document.getElementById('print-class').textContent = DIC.classes[STATE.class] || ''; document.getElementById('print-region').textContent = DIC.regions[STATE.region] || ''; document.getElementById('print-pharmacy').textContent = STATE.pharmacy || ''; let mIdx = DIC.months.en.indexOf(STATE.month); document.getElementById('print-month').textContent = mIdx >= 0 ? DIC.months.ar[mIdx] : ''; renderReadiness();
     }
 
     function flashMissingHud() {
@@ -2120,6 +2276,7 @@
                     if(i === t.length) { let span = endPos - startPos + 1; let tightness = t.length / span; score += t.length * tightness; matchedTokens++; }
                 }
             }
+            if(matchedTokens === terms.length) { if(normalizeAr(obj.txt) === terms.join(' ')) score += 100; score -= target.length * 0.001; }
             return { item: obj, score, matchedTokens };
         });
         let filtered = scored.filter(s => s.matchedTokens === terms.length);
@@ -2204,6 +2361,8 @@
                 { keys: ['/import', 'import'], icon: SVG_ICONS.import, label: 'Import CSV', act: openImport, color: 'var(--warning)' },
                 { keys: ['/scale', 'scale'], icon: SVG_ICONS.scale, label: 'Scale Quantities', act: openScaleTool, color: 'var(--accent)' },
                 { keys: ['/filter', 'filter'], icon: SVG_ICONS.search, label: 'Filter Folio', act: () => { dom.omni.value=''; dom.res.classList.remove('show'); document.getElementById('grid-filter').focus(); }, color: 'var(--accent-2)' },
+                { keys: ['/group', 'group'], icon: SVG_ICONS.filters, label: groupMode ? 'Ungroup Lines' : 'Group by Context', act: toggleGroup, color: 'var(--accent)' },
+                { keys: ['/density', 'density'], icon: SVG_ICONS.scale, label: 'Toggle Density', act: toggleDensity, color: 'var(--accent-2)' },
                 { keys: ['/undo', 'undo'], icon: SVG_ICONS.undo, label: 'Undo', act: undo, color: 'var(--accent-2)' },
                 { keys: ['/redo', 'redo'], icon: SVG_ICONS.undo, label: 'Redo', act: redo, color: 'var(--accent-2)' },
                 { keys: ['/theme', 'theme'], icon: SVG_ICONS.theme, label: 'Toggle Theme', act: toggleTheme, color: 'var(--accent)' },
@@ -2392,10 +2551,11 @@
         let qtyEl = document.getElementById(`grid-qty-${id}`);
         let item = DATA.find(d => d.id === id);
         if(qtyEl && item) qtyEl.value = item.quantity;
-        const totalUnits = DATA.reduce((s, d) => s + d.quantity, 0);
-        const view = getViewRows();
-        document.getElementById('stats-counter').textContent = gridFilter.trim() ? `${view.length} / ${DATA.length} lines · ${totalUnits} units` : `${DATA.length} lines · ${totalUnits} units`;
+        renderStats(getViewRows());
+        renderGroupTotals();
         renderTotalsFooter();
+        renderSummary();
+        renderReadiness();
     }
 
     function renderTotalsFooter() {
@@ -2408,8 +2568,8 @@
             if(d.context) byContext.set(d.context, (byContext.get(d.context) || 0) + d.quantity);
         });
         let rows = '';
-        byContext.forEach((qty, ctx) => { rows += `<tr class="print-subtotal"><td class="select-col"></td><td colspan="3" dir="auto">Subtotal — ${esc(ctx)}</td><td style="text-align:center">${qty}</td><td class="delta-col"></td><td></td></tr>`; });
-        rows += `<tr class="print-total"><td class="select-col"></td><td colspan="3">Total</td><td style="text-align:center">${total}</td><td class="delta-col"></td><td></td></tr>`;
+        byContext.forEach((qty, ctx) => { rows += `<tr class="print-subtotal"><td class="select-col"></td><td colspan="3" dir="auto">Subtotal: ${esc(ctx)}</td><td class="f-num">${qty}</td><td class="delta-col"></td><td></td></tr>`; });
+        rows += `<tr class="print-total"><td class="select-col"></td><td colspan="3">Total</td><td class="f-num">${total}</td><td class="delta-col"></td><td></td></tr>`;
         tfoot.innerHTML = DATA.length ? rows : '';
     }
 
@@ -2469,7 +2629,7 @@
         let idx = findDataIndex(id); if(idx < 0) return;
         let name = DATA[idx].name;
         let newId;
-        commit(`Clone ${name}`, () => { let copy = { ...DATA[idx], id: ++ID_SEQ }; newId = copy.id; DATA.splice(idx, 0, copy); });
+        commit(`Clone ${name}`, () => { let copy = { ...DATA[idx], id: ++ID_SEQ }; newId = copy.id; flashRowId = copy.id; DATA.splice(idx, 0, copy); });
         lastTouchedRowId = newId;
         showToast('Line cloned', 'normal', 'Undo', undo);
     }
@@ -2538,11 +2698,11 @@
 
         suppressNextGridFocusRestore = true;
         commit(`Add ${name}`, () => {
-            if(exIdx >= 0) { DATA[exIdx].quantity += qty; lastTouchedRowId = DATA[exIdx].id; }
-            else { const newRow = { id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }; DATA.unshift(newRow); lastTouchedRowId = newRow.id; }
+            if(exIdx >= 0) { DATA[exIdx].quantity += qty; lastTouchedRowId = DATA[exIdx].id; flashRowId = lastTouchedRowId; }
+            else { const newRow = { id: ++ID_SEQ, raw, name, unit, quantity: qty, isCustom, context }; DATA.unshift(newRow); lastTouchedRowId = newRow.id; flashRowId = newRow.id; }
         });
 
-        document.getElementById('grid-container').scrollTop = 0;
+        revealRow(lastTouchedRowId);
     }
 
     function resolveLine() {
@@ -2681,7 +2841,7 @@
 
     let needsContextFilterActive = false;
     let gridRedrawGuard = false;
-    function toggleNeedsContextFilter() { needsContextFilterActive = !needsContextFilterActive; drawGrid(); }
+    function toggleNeedsContextFilter() { needsContextFilterActive = !needsContextFilterActive; if(needsContextFilterActive) contextFilter = null; drawGrid(); }
     function renderValidationChip() {
         const chip = document.getElementById('needs-context-chip');
         if(!chip) return false;
@@ -2712,6 +2872,8 @@
     function getViewRows() {
         let rows = DATA;
         if(needsContextFilterActive) rows = rows.filter(d => d.isCustom && !d.context);
+        if(contextFilter === 'sys') rows = rows.filter(d => !d.isCustom);
+        else if(contextFilter) rows = rows.filter(d => d.isCustom && d.context === contextFilter);
         if(gridFilter.trim()) {
             let nf = normalizeAr(gridFilter);
             rows = rows.filter(d => normalizeAr(`${d.name} ${d.unit} ${d.context}`).includes(nf));
@@ -2725,47 +2887,226 @@
         return rows;
     }
 
+    function isViewFiltered() { return !!(gridFilter.trim() || contextFilter || needsContextFilterActive); }
+
+    function groupKeyOf(d) { return !d.isCustom ? 'sys' : (d.context || 'need'); }
+
+    function groupMeta(key) {
+        if(key === 'sys') return { label: 'System core', seg: 'var(--seg-sys)' };
+        if(key === 'need') return { label: 'Needs a context', seg: 'var(--seg-need)' };
+        const i = CONTEXTS.indexOf(key);
+        return { label: key, seg: `var(--seg-${i >= 0 ? i : 3})` };
+    }
+
+    function groupNumText(n, u) { return `${n} ${n === 1 ? 'line' : 'lines'}, ${u} units`; }
+
+    function orderedView() {
+        const view = getViewRows();
+        if(!groupMode) return view;
+        const out = [];
+        GROUP_ORDER.forEach(k => view.forEach(d => { if(groupKeyOf(d) === k) out.push(d); }));
+        return out;
+    }
+
+    function renderStats(view) {
+        const totalUnits = DATA.reduce((s, d) => s + d.quantity, 0);
+        const el = document.getElementById('stats-counter');
+        if(el) el.textContent = isViewFiltered() ? `${view.length} of ${DATA.length} lines, ${totalUnits} units` : `${DATA.length} lines, ${totalUnits} units`;
+    }
+
+    function renderGroupTotals() {
+        if(!groupMode) return;
+        const totals = new Map(), counts = new Map();
+        getViewRows().forEach(d => { const k = groupKeyOf(d); totals.set(k, (totals.get(k) || 0) + d.quantity); counts.set(k, (counts.get(k) || 0) + 1); });
+        document.querySelectorAll('.grp-num[data-gk]').forEach(el => { const k = el.dataset.gk; el.textContent = groupNumText(counts.get(k) || 0, totals.get(k) || 0); });
+    }
+
+    function tweenNum(el, to) {
+        if(!el) return;
+        const from = el._cur || 0;
+        el._target = to;
+        const fmt = n => n.toLocaleString('en-US');
+        if(from === to) { el.textContent = fmt(to); return; }
+        if(Math.abs(to - from) < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el._cur = to; el.textContent = fmt(to); return; }
+        const start = performance.now(), dur = 280;
+        const step = now => {
+            if(el._target !== to) return;
+            const t = Math.min(1, (now - start) / dur);
+            el._cur = Math.round(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+            el.textContent = fmt(el._cur);
+            if(t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+
+    function isKeyActive(k) { return k === 'need' ? needsContextFilterActive : contextFilter === k; }
+
+    function renderSummary() {
+        const bar = document.getElementById('ctx-bar'), legend = document.getElementById('ctx-legend');
+        if(!bar || !legend) return;
+        tweenNum(document.getElementById('sum-units'), DATA.reduce((s, d) => s + d.quantity, 0));
+        tweenNum(document.getElementById('sum-lines'), DATA.length);
+        tweenNum(document.getElementById('sum-ext'), DATA.filter(d => d.isCustom).length);
+        const totals = new Map();
+        DATA.forEach(d => { const k = groupKeyOf(d); totals.set(k, (totals.get(k) || 0) + d.quantity); });
+        const keys = GROUP_ORDER.filter(k => totals.has(k));
+        bar.classList.toggle('has-filter', !!(contextFilter || needsContextFilterActive));
+        if(!keys.length) { bar.innerHTML = ''; legend.innerHTML = `<span class="ctx-empty">Units by context will show up here as you log lines.</span>`; return; }
+        bar.innerHTML = keys.map(k => {
+            const m = groupMeta(k), q = totals.get(k);
+            return `<button type="button" class="ctx-seg ${k === 'need' ? 'need' : ''} ${isKeyActive(k) ? 'on' : ''}" style="flex-grow:${q};--seg:${m.seg}" data-ctx-key="${esc(k)}" title="${esc(m.label)}: ${q}" aria-label="${esc(m.label)}, ${q} units"></button>`;
+        }).join('');
+        legend.innerHTML = keys.map(k => {
+            const m = groupMeta(k);
+            return `<button type="button" class="leg ${k === 'need' ? 'need' : ''} ${isKeyActive(k) ? 'on' : ''}" style="--seg:${m.seg}" data-ctx-key="${esc(k)}" aria-pressed="${isKeyActive(k)}"><i></i><span class="leg-ar" dir="auto">${esc(m.label)}</span><b>${totals.get(k)}</b></button>`;
+        }).join('');
+    }
+
+    function renderReadiness() {
+        const prog = document.getElementById('hud-progress'), btn = document.getElementById('btn-submit'), meta = document.getElementById('submit-meta');
+        if(!prog || !btn || !meta) return;
+        const missing = HUD_KEYS.filter(k => !STATE[k]);
+        prog.textContent = missing.length ? `${HUD_KEYS.length - missing.length} of ${HUD_KEYS.length} set` : 'Header complete';
+        prog.classList.toggle('done', !missing.length);
+        const incomplete = DATA.filter(d => d.isCustom && (!d.context || !d.unit.trim())).length;
+        let hint = '', ready = false;
+        if(!DATA.length) hint = 'Log a line first';
+        else if(missing.length) hint = `Set ${missing.join(', ')}`;
+        else if(incomplete) hint = `${incomplete} external ${incomplete === 1 ? 'line is' : 'lines are'} incomplete`;
+        else { ready = true; hint = `${DATA.length} ${DATA.length === 1 ? 'line' : 'lines'}, ${DATA.reduce((s, d) => s + d.quantity, 0)} units`; }
+        btn.classList.toggle('not-ready', !ready);
+        meta.textContent = hint;
+    }
+
+    function renderParsePreview() {
+        const el = document.getElementById('parse-preview');
+        if(!el) return;
+        let body = dom.omni.value.trim(), forceExt = false;
+        if(!body) { el.innerHTML = `<span class="pp-note">Type a name, then <kbd>*</kbd> and a quantity. Start with <kbd>!</kbd> for an external line.</span>`; return; }
+        if(/^\/(add|custom)(\s|$)/i.test(body)) { body = body.replace(/^\/(add|custom)\s*/i, ''); forceExt = true; }
+        else if(body.startsWith('/')) { el.innerHTML = `<span class="pp-note">Commands. Pick one and press Enter.</span>`; return; }
+        const p = parseOmniLine(body);
+        forceExt = forceExt || p.forceExt;
+        const name = p.name;
+        if(!name) { el.innerHTML = `<span class="pp-note">Add a name for the line.</span>`; return; }
+        let unit = p.unit != null ? p.unit : dom.unit.value.trim();
+        let sysItem = null;
+        if(!forceExt) {
+            sysItem = unit ? findSystemProduct(name, unit) : (SYS_BY_NAME.get(normalizeAr(name)) || null);
+            if(sysItem && !unit) unit = sysItem.u;
+        }
+        const ctx = p.ctxToken ? (resolveCtxToken(p.ctxToken) || '') : (dom.ctx.value || '');
+        let qty = p.qty;
+        if(qty == null && /^\d+$/.test(dom.qty.value.trim())) qty = parseInt(dom.qty.value.trim(), 10);
+        const chip = (cls, k, v) => `<span class="pp-chip ${cls}"><span class="pp-k">${esc(k)}</span><span class="pp-v" dir="auto">${esc(String(v))}</span></span>`;
+        const need = t => `<span class="pp-chip need">${esc(t)}</span>`;
+        const out = [sysItem ? chip('sys', 'System core', name) : chip('ext', forceExt ? 'External' : 'Not in catalog', name)];
+        if(unit) out.push(chip('', 'Unit', unit)); else if(!sysItem) out.push(need('Unit needed'));
+        if(!sysItem) out.push(ctx ? chip('', 'Context', ctx) : need('Context needed'));
+        out.push(qty > 0 ? chip('', 'Qty', qty) : need('Quantity needed'));
+        if(qty > 0 && (sysItem || (unit && ctx))) out.push(`<span class="pp-go">Enter logs ${esc(String(qty))} × ${esc(name)}</span>`);
+        el.innerHTML = out.join('');
+    }
+
+    function stepQty(id, delta) {
+        const d = DATA.find(x => x.id === id);
+        if(d) updateItemQuantity(id, Math.max(1, d.quantity + delta));
+    }
+
+    function syncGroupBtn() { const b = document.getElementById('group-btn'); if(b) b.setAttribute('aria-pressed', groupMode ? 'true' : 'false'); }
+
+    function toggleGroup() {
+        groupMode = !groupMode;
+        try { localStorage.setItem('lx_group', groupMode ? '1' : '0'); } catch(e) {}
+        syncGroupBtn();
+        drawGrid();
+        showToast(groupMode ? 'Grouped by context' : 'Back to a single list');
+    }
+
+    function setContextFilter(k) {
+        needsContextFilterActive = false;
+        contextFilter = contextFilter === k ? null : k;
+        drawGrid();
+    }
+
+    function fillExample(text) {
+        dom.omni.value = text; dom.omni.dataset.raw = '';
+        setFocus(dom.omni, 'example-filled');
+        dom.omni.dispatchEvent(new Event('input'));
+    }
+
+    function revealRow(id) {
+        const tr = id != null ? dom.grid.querySelector(`tr[data-id="${id}"]`) : null;
+        if(tr && groupMode) tr.scrollIntoView({ block: 'nearest' });
+        else document.getElementById('grid-container').scrollTop = 0;
+    }
+
+    const ICON_CLONE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    const ICON_REMOVE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+    function buildRow(d) {
+        const tr = document.createElement('tr');
+        tr.className = 'data-row';
+        tr.dataset.id = d.id;
+        let ctxHtml = `<span class="core-tag">System core</span>`, unitHtml = `<span class="unit-static" dir="auto">${esc(d.unit) || '-'}</span>`;
+        if(d.isCustom) {
+            ctxHtml = `<select id="grid-ctx-${d.id}" class="c-select cell-input ${!d.context ? 'req' : ''}" aria-label="Context" onchange="updateItemContext(${d.id}, this.value)"><option value="">Select category</option>${CONTEXTS.map(c => `<option value="${esc(c)}" ${d.context === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>`;
+            unitHtml = `<input id="grid-unit-${d.id}" type="text" dir="auto" class="cell-input" aria-label="Unit" value="${esc(d.unit) || ''}" onchange="updateItemUnit(${d.id}, this.value)">`;
+        }
+        let deltaHtml = '';
+        if(compareData) {
+            const delta = getCompareDelta(d);
+            if(delta.type === 'new') deltaHtml = `<span class="delta-new">NEW</span>`;
+            else if(delta.delta === 0) deltaHtml = `<span class="delta-same">0</span>`;
+            else deltaHtml = `<span class="${delta.delta > 0 ? 'delta-up' : 'delta-down'}">${delta.delta > 0 ? '+' : ''}${delta.delta}</span>`;
+        }
+        tr.innerHTML = `<td class="select-col"><input type="checkbox" class="row-select-chk" aria-label="Select line" ${selectedRowIds.has(d.id) ? 'checked' : ''} onclick="toggleRowSelection(${d.id}, this.checked, event.shiftKey)"></td>
+            <td class="c-name"><strong dir="auto">${esc(d.name)}</strong>${d.isCustom ? '<span class="pill-tag">EXT</span>' : ''}</td>
+            <td class="c-unit">${unitHtml}</td>
+            <td class="c-ctx">${ctxHtml}</td>
+            <td class="c-qty"><div class="stepper"><button type="button" class="step-btn" tabindex="-1" aria-label="Decrease quantity" onclick="stepQty(${d.id}, -1)">−</button><input id="grid-qty-${d.id}" type="number" class="cell-input mono-num" min="1" aria-label="Quantity" value="${d.quantity}" onchange="updateItemQuantity(${d.id}, this.value)"><button type="button" class="step-btn" tabindex="-1" aria-label="Increase quantity" onclick="stepQty(${d.id}, 1)">+</button></div></td>
+            <td class="delta-col mono-num">${deltaHtml}</td>
+            <td class="c-act"><div class="row-actions">
+                <button type="button" class="btn-icon" onclick="cloneItem(${d.id})" title="Duplicate line" aria-label="Duplicate line">${ICON_CLONE}</button>
+                <button type="button" class="btn-del" onclick="deleteItem(${d.id})" title="Remove line" aria-label="Remove line">${ICON_REMOVE}</button>
+            </div></td>`;
+        return tr;
+    }
+
     function drawGrid() {
         let activeId = document.activeElement ? document.activeElement.id : null;
         Array.from(selectedRowIds).forEach(id => { if(findDataIndex(id) < 0) selectedRowIds.delete(id); });
-        const view = getViewRows();
+        if(contextFilter && !DATA.some(d => groupKeyOf(d) === contextFilter)) contextFilter = null;
+        const view = orderedView();
         dom.grid.innerHTML = '';
         const empty = document.getElementById('empty-state'), tbl = document.getElementById('table');
         if(DATA.length) { empty.style.display = 'none'; tbl.style.display = 'table'; } else { empty.style.display = 'flex'; tbl.style.display = 'none'; }
-        const totalUnits = DATA.reduce((s,d) => s + d.quantity, 0);
-        document.getElementById('stats-counter').textContent = gridFilter.trim() ? `${view.length} / ${DATA.length} lines · ${totalUnits} units` : `${DATA.length} lines · ${totalUnits} units`;
+        renderStats(view);
         updateSortIndicators();
 
         if(!view.length && DATA.length) {
             let emptyMsg = gridFilter.trim() ? `No lines match "${esc(gridFilter)}"` : 'No lines match the current filter';
-            dom.grid.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text-muted);">${emptyMsg}</td></tr>`;
+            dom.grid.innerHTML = `<tr class="empty-row"><td colspan="7">${emptyMsg}</td></tr>`;
         } else {
+            const frag = document.createDocumentFragment();
+            const totals = new Map(), counts = new Map();
+            if(groupMode) view.forEach(d => { const k = groupKeyOf(d); totals.set(k, (totals.get(k) || 0) + d.quantity); counts.set(k, (counts.get(k) || 0) + 1); });
+            let lastKey = null;
             view.forEach(d => {
-                const tr = document.createElement('tr'); tr.className = 'data-row';
-                let ctxHtml = `<span class="core-tag">System Core</span>`, unitHtml = `<span class="unit-static" dir="auto">${esc(d.unit)||'-'}</span>`;
-                if(d.isCustom) {
-                    ctxHtml = `<select id="grid-ctx-${d.id}" class="c-select cell-input ${!d.context?'req':''}" onchange="updateItemContext(${d.id}, this.value)"><option value="">Select Category</option><option value="قرار لجنة" ${d.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${d.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${d.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${d.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select>`;
-                    unitHtml = `<input id="grid-unit-${d.id}" type="text" dir="auto" class="cell-input" style="width:100%" value="${esc(d.unit)||''}" onchange="updateItemUnit(${d.id}, this.value)">`;
+                if(groupMode) {
+                    const k = groupKeyOf(d);
+                    if(k !== lastKey) {
+                        lastKey = k;
+                        const m = groupMeta(k);
+                        const g = document.createElement('tr');
+                        g.className = 'group-row';
+                        g.innerHTML = `<td colspan="7"><div class="grp"><span class="grp-name" style="--seg:${m.seg}"><i></i>${esc(m.label)}</span><span class="grp-num" data-gk="${esc(k)}">${groupNumText(counts.get(k), totals.get(k))}</span></div></td>`;
+                        frag.appendChild(g);
+                    }
                 }
-                let deltaHtml = '';
-                if(compareData) {
-                    const delta = getCompareDelta(d);
-                    if(delta.type === 'new') deltaHtml = `<span class="delta-new">NEW</span>`;
-                    else if(delta.delta === 0) deltaHtml = `<span class="delta-same">0</span>`;
-                    else deltaHtml = `<span class="${delta.delta > 0 ? 'delta-up' : 'delta-down'}">${delta.delta > 0 ? '+' : ''}${delta.delta}</span>`;
-                }
-                tr.innerHTML = `<td class="select-col"><input type="checkbox" class="row-select-chk" ${selectedRowIds.has(d.id)?'checked':''} onclick="toggleRowSelection(${d.id}, this.checked, event.shiftKey)"></td>
-                    <td><strong style="font-size:1.02rem" dir="auto">${esc(d.name)}</strong>${d.isCustom?'<span class="pill-tag">EXT</span>':''}</td>
-                    <td>${unitHtml}</td>
-                    <td>${ctxHtml}</td>
-                    <td style="text-align:center"><input id="grid-qty-${d.id}" type="number" class="cell-input mono-num" min="1" value="${d.quantity}" onchange="updateItemQuantity(${d.id}, this.value)"></td>
-                    <td class="delta-col mono-num">${deltaHtml}</td>
-                    <td style="text-align:center" class="row-actions">
-                        <button class="btn-icon" onclick="cloneItem(${d.id})" title="Clone line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                        <button class="btn-del" onclick="deleteItem(${d.id})" title="Remove line"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-                    </td>`;
-                dom.grid.appendChild(tr);
+                frag.appendChild(buildRow(d));
             });
+            dom.grid.appendChild(frag);
             if(compareData) {
                 getRemovedCompareRows().forEach(c => {
                     const tr = document.createElement('tr'); tr.className = 'data-row compare-removed-row';
@@ -2783,11 +3124,19 @@
 
         renderSelectionUI(view);
         renderTotalsFooter();
+        renderSummary();
+        renderReadiness();
         if(renderValidationChip() && !gridRedrawGuard) {
             gridRedrawGuard = true;
             drawGrid();
             gridRedrawGuard = false;
             return;
+        }
+
+        if(flashRowId != null) {
+            const fr = dom.grid.querySelector(`tr[data-id="${flashRowId}"]`);
+            if(fr) fr.classList.add('flash');
+            flashRowId = null;
         }
 
         if(activeId && !suppressNextGridFocusRestore) {
@@ -2856,7 +3205,7 @@
     let lastClickedRowId = null;
 
     function toggleRowSelection(id, checked, shiftKey) {
-        const view = getViewRows();
+        const view = orderedView();
         if (shiftKey && lastClickedRowId != null) {
             let ids = view.map(d => d.id);
             let a = ids.indexOf(lastClickedRowId), b = ids.indexOf(id);
@@ -2880,7 +3229,7 @@
     function clearRowSelection() { selectedRowIds.clear(); drawGrid(); }
 
     function renderSelectionUI(view) {
-        document.querySelectorAll('.row-select-chk').forEach((chk, i) => { if(view[i]) chk.checked = selectedRowIds.has(view[i].id); });
+        document.querySelectorAll('tr.data-row[data-id]').forEach(tr => { const chk = tr.querySelector('.row-select-chk'); if(chk) chk.checked = selectedRowIds.has(Number(tr.dataset.id)); });
         const bar = document.getElementById('bulk-actions-bar');
         if (bar) {
             if (selectedRowIds.size > 0) { bar.style.display = 'flex'; document.getElementById('bulk-count').textContent = selectedRowIds.size; }
@@ -3206,10 +3555,10 @@
             div.className = `file-tab ${f.id === activeFileId ? 'active' : ''}`;
             const c = fileStatusCounts(f);
             let chips = '';
-            if (c.err) chips += `<span style="color:var(--danger);font-weight:800;">${c.err} err</span>`;
-            if (c.dupe) chips += `${chips?' · ':''}<span style="color:var(--warning);font-weight:800;">${c.dupe} dup</span>`;
-            if (c.ready) chips += `${chips?' · ':''}<span style="color:var(--accent-2);font-weight:800;">${c.ready} ok</span>`;
-            div.innerHTML = `<span>${esc(f.name)}</span>${chips ? `<span style="font-size:0.7rem;opacity:0.85;">${chips}</span>` : ''} <span class="close-tab" onclick="event.stopPropagation(); removeFile('${f.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`;
+            if (c.err) chips += `<span class="e">${c.err} err</span>`;
+            if (c.dupe) chips += `${chips?', ':''}<span class="d">${c.dupe} dup</span>`;
+            if (c.ready) chips += `${chips?', ':''}<span class="o">${c.ready} ok</span>`;
+            div.innerHTML = `<span>${esc(f.name)}</span>${chips ? `<span class="tab-chips">${chips}</span>` : ''} <span class="close-tab" aria-label="Remove file" onclick="event.stopPropagation(); removeFile('${f.id}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>`;
             div.onclick = () => switchActiveFile(f.id);
             tc.appendChild(div);
         });
@@ -3340,27 +3689,27 @@
             parts.push(`
             <tr class="${trCls}">
                 <td style="text-align:center;"><input id="rev-chk-${s.id}" type="checkbox" class="rev-checkbox" ${s.checked ? 'checked' : ''} onchange="updateStg('${s.id}', 'chk', this.checked)"></td>
-                <td><input id="rev-name-${s.id}" dir="auto" class="rev-inp ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product Name..." onchange="updateStg('${s.id}', 'name', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
-                <td><input id="rev-unit-${s.id}" dir="auto" class="rev-inp ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit..." onchange="updateStg('${s.id}', 'unit', this.value)" style="width:100%; font-weight:600; ${s.isSystem ? 'color:var(--accent-2);' : ''}"></td>
-                <td><select id="rev-ctx-${s.id}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" style="padding:0.5rem; width:100%;${s.isSystem ? ' opacity:0.4;' : ''}" onchange="updateStg('${s.id}', 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
-                <td style="text-align:center;"><input id="rev-qty-${s.id}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg('${s.id}', 'qty', this.value)" style="width:100%;"></td>
+                <td><input id="rev-name-${s.id}" dir="auto" class="rev-inp ${s.isSystem ? 'sys' : ''} ${s.name.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.name)}" placeholder="Product name" aria-label="Product name" onchange="updateStg('${s.id}', 'name', this.value)"></td>
+                <td><input id="rev-unit-${s.id}" dir="auto" class="rev-inp ${s.isSystem ? 'sys' : ''} ${!s.isSystem && s.unit.trim()==='' && s.checked ? 'err' : ''}" value="${esc(s.unit)}" placeholder="Unit" aria-label="Unit" onchange="updateStg('${s.id}', 'unit', this.value)"></td>
+                <td><select id="rev-ctx-${s.id}" class="c-select ${!s.isSystem && !s.context && s.checked ? 'err' : ''}" onchange="updateStg('${s.id}', 'ctx', this.value)" ${s.isSystem ? 'disabled' : ''}><option value="">${s.isSystem ? 'System Core' : 'Select Context...'}</option><option value="قرار لجنة" ${s.context==='قرار لجنة'?'selected':''}>قرار لجنة</option><option value="حكم قضائي" ${s.context==='حكم قضائي'?'selected':''}>حكم قضائي</option><option value="شئون طبية" ${s.context==='شئون طبية'?'selected':''}>شئون طبية</option><option value="داخل اللستة" ${s.context==='داخل اللستة'?'selected':''}>داخل اللستة</option></select></td>
+                <td style="text-align:center;"><input id="rev-qty-${s.id}" class="qty-rev-inp ${ (isNaN(s.quantity) || s.quantity<=0) && s.checked ? 'err' : '' }" type="number" min="1" value="${isNaN(s.quantity) ? '' : s.quantity}" onchange="updateStg('${s.id}', 'qty', this.value)"></td>
                 <td style="text-align:center;"><span class="status-badge ${statCls}">${statTxt}</span></td>
             </tr>`);
             absorbed.forEach(dup => {
                 parts.push(`
                 <tr class="row-disabled">
                     <td></td>
-                    <td style="padding-left:2rem; font-size:0.85rem;" dir="auto">↳ ${esc(dup.name)}</td>
+                    <td class="merged-cell" dir="auto">↳ ${esc(dup.name)}</td>
                     <td style="font-size:0.85rem;" dir="auto">${esc(dup.unit)}</td>
                     <td style="font-size:0.85rem;" dir="auto">${esc(dup.context)}</td>
                     <td style="text-align:center; font-size:0.85rem;">${isNaN(dup.quantity) ? '' : dup.quantity}</td>
-                    <td style="text-align:center;"><button type="button" class="btn-ghost" style="padding:2px 8px; font-size:0.72rem;" onclick="unmergeStg('${dup.id}')">↺ Keep separate</button></td>
+                    <td style="text-align:center;"><button type="button" class="btn-ghost keep-sep" onclick="unmergeStg('${dup.id}')">Keep separate</button></td>
                 </tr>`);
             });
         });
 
-        tb.innerHTML = parts.join('') || `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No rows match this filter.</td></tr>`;
-        if(truncated) tb.innerHTML += `<tr><td colspan="6" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.8rem;">Showing first ${REVIEW_CAP} of ${visibleRows.length} matching rows — narrow with the filter above to see the rest.</td></tr>`;
+        tb.innerHTML = parts.join('') || `<tr class="review-note"><td colspan="6">No rows match this filter.</td></tr>`;
+        if(truncated) tb.innerHTML += `<tr class="review-note"><td colspan="6">Showing the first ${REVIEW_CAP} of ${visibleRows.length} matching rows. Narrow the filter to see the rest.</td></tr>`;
 
         renderFileTabs();
         const allChk = document.getElementById('rev-chk-all');
@@ -3465,7 +3814,7 @@
 
         pushBatchToFirebase(payload, controller.signal).then(() => {
             clearTimeout(timeout);
-            if (timedOut) { removePendingByBatchId(batchId); showToast('Import actually completed after the earlier timeout — the queued duplicate has been removed.'); closeImport(true); return; }
+            if (timedOut) { removePendingByBatchId(batchId); markRecentPushSent(batchId); showToast('Import went through after the timeout. The queued duplicate was removed.'); closeImport(true); return; }
             if (settled) return;
             settled = true;
             showSuccessModal('Batch imported and pushed to the folio database.' + (skippedFiles.length ? ` (Skipped, no active rows: ${skippedFiles.join(', ')})` : ''));
@@ -3522,7 +3871,7 @@
 
         pushBatchToFirebase(p, controller.signal).then(()=>{
             clearTimeout(timeout);
-            if (timedOut) { removePendingByBatchId(batchId); showToast('Went through after all — the queued duplicate has been removed.'); return; }
+            if (timedOut) { removePendingByBatchId(batchId); markRecentPushSent(batchId); showToast('Went through after all. The queued duplicate was removed. Void the workspace if you are done.'); return; }
             if (settled) return;
             settled = true;
             showSuccessModal('Workspace pushed and exported.');
@@ -3634,9 +3983,9 @@
         document.getElementById('status-title').textContent = failCount === 0 ? 'Self-Test Passed' : 'Self-Test Failed';
         document.getElementById('status-desc').textContent = `${passCount}/${results.length} checks passed.`;
         const list = document.getElementById('status-detail-list');
-        list.innerHTML = results.map(r => `<div style="display:flex; gap:8px; padding:4px 0; align-items:flex-start;">
-            <span style="color:${r.pass?'var(--accent)':'var(--danger)'}; font-weight:700; flex-shrink:0;">${r.pass?'✓':'✕'}</span>
-            <span>${esc(r.name)}${r.detail ? `<br><small style="color:var(--text-muted)">${esc(r.detail)}</small>` : ''}</span>
+        list.innerHTML = results.map(r => `<div class="test-row">
+            <span class="mark ${r.pass ? 'pass' : 'fail'}">${r.pass ? '✓' : '✕'}</span>
+            <span>${esc(r.name)}${r.detail ? `<br><small>${esc(r.detail)}</small>` : ''}</span>
         </div>`).join('');
         list.style.display = 'block';
         openModal('status-modal');
@@ -3765,6 +4114,23 @@
         dom.ctx.value = ''; highlightCtxSelected();
         assert('Context menu defaults its highlighted option to a real context, not the empty placeholder', ctxOptions().findIndex(d => d.classList.contains('active-opt')) > 0);
 
+        dom.omni.value = 'Ambroxol*5'; dom.omni.dataset.raw = ''; dom.unit.value = ''; dom.qty.value = '';
+        renderParsePreview();
+        const previewText = document.getElementById('parse-preview').textContent;
+        assert('Parse preview reads a system line as system core with its quantity', /System core/.test(previewText) && /Ambroxol/.test(previewText) && /\b5\b/.test(previewText), previewText);
+        dom.omni.value = '!Preview Drug @Box'; renderParsePreview();
+        const previewNeed = document.getElementById('parse-preview').textContent;
+        assert('Parse preview flags the missing context and quantity on an external line', /Context needed/.test(previewNeed) && /Quantity needed/.test(previewNeed), previewNeed);
+
+        const priorFilter = contextFilter, priorGroup = groupMode, dataBackup = DATA;
+        DATA = [{ id: 9001, name: 'P1', unit: 'U', quantity: 2, isCustom: false, context: '' }, { id: 9002, name: 'P2', unit: 'U', quantity: 3, isCustom: true, context: CONTEXTS[1] }, { id: 9003, name: 'P3', unit: 'U', quantity: 4, isCustom: true, context: '' }];
+        contextFilter = 'sys'; const sysOnly = getViewRows().length;
+        contextFilter = CONTEXTS[1]; const ctxOnly = getViewRows().length;
+        contextFilter = null; groupMode = true; const groupedOrder = orderedView().map(d => d.id).join(',');
+        DATA = dataBackup; contextFilter = priorFilter; groupMode = priorGroup;
+        assert('Context filter isolates system core and a single context', sysOnly === 1 && ctxOnly === 1);
+        assert('Grouped order runs system core, then contexts, then lines needing one', groupedOrder === '9001,9002,9003', groupedOrder);
+
         dom.omni.value = omniSnap.v; dom.omni.dataset.raw = omniSnap.raw; dom.unit.value = omniSnap.u; dom.unit.disabled = omniSnap.ud; dom.ctx.value = omniSnap.c; dom.ctx.disabled = omniSnap.cd; dom.qty.value = omniSnap.q;
         dom.res.classList.remove('show'); closeCtxMenu(); syncCtxUI();
         setFocus(dom.omni, 'selftest-cleanup');
@@ -3784,7 +4150,7 @@
         const container = document.getElementById('toast-stack');
         const el = document.createElement('div');
         el.className = 'toast' + (type === 'error' ? ' error-toast' : '');
-        el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span class="toast-msg"></span>`;
+        el.innerHTML = `${type === 'error' ? TOAST_ICONS.error : TOAST_ICONS.ok}<span class="toast-msg"></span>`;
         el.querySelector('.toast-msg').textContent = msg;
         if(actionLabel && actionFn) {
             const btn = document.createElement('button');
@@ -3797,7 +4163,7 @@
         toastStack.push(el);
         requestAnimationFrame(() => el.classList.add('show'));
         while(toastStack.length > 3) removeToast(toastStack[0]);
-        el._toastTimeout = setTimeout(() => removeToast(el), actionLabel ? 6000 : 3000);
+        el._toastTimeout = setTimeout(() => removeToast(el), actionLabel ? 6000 : (type === 'error' ? 5000 : 3000));
     }
 
     let SEARCH_IDX = [];
@@ -3820,6 +4186,9 @@
     const SYS_PRODUCT_MAP = new Map();
 
     SEARCH_IDX.forEach(x => { if(x.t === 'product') SYS_PRODUCT_MAP.set(`${x.txt.toLowerCase()}|${(x.u||'').toLowerCase().replace(/\s+/g,'')}`, x); });
+
+    const SYS_BY_NAME = new Map();
+    SEARCH_IDX.forEach(x => { if(x.t === 'product') { const k = normalizeAr(x.txt); if(!SYS_BY_NAME.has(k)) SYS_BY_NAME.set(k, x); } });
 
     const UNITS = [...new Set(PRODS.map(p => p.split('|')[1]).filter(Boolean))].sort();
 
@@ -3895,7 +4264,7 @@
             if(!tr || !td) return;
             const cIdx = Array.from(tr.children).indexOf(td);
             let nextTr = e.key === 'ArrowUp' ? tr.previousElementSibling : tr.nextElementSibling;
-            while(nextTr && nextTr.classList.contains('row-disabled')) nextTr = e.key === 'ArrowUp' ? nextTr.previousElementSibling : nextTr.nextElementSibling;
+            while(nextTr && (nextTr.classList.contains('row-disabled') || nextTr.classList.contains('group-row'))) nextTr = e.key === 'ArrowUp' ? nextTr.previousElementSibling : nextTr.nextElementSibling;
             if(nextTr && nextTr.children[cIdx]) {
                 const targetInput = nextTr.children[cIdx].querySelector('input:not([disabled]), select:not([disabled])');
                 if(targetInput) { targetInput.focus(); if(targetInput.select) targetInput.select(); }
@@ -4001,8 +4370,24 @@
 
     let isSubmittingData = false;
 
+    dom.unit.addEventListener('input', renderParsePreview);
+    dom.qty.addEventListener('input', renderParsePreview);
+
+    document.getElementById('summary').addEventListener('click', e => {
+        const b = e.target.closest('[data-ctx-key]');
+        if(!b) return;
+        if(b.dataset.ctxKey === 'need') toggleNeedsContextFilter(); else setContextFilter(b.dataset.ctxKey);
+    });
+
+    document.getElementById('empty-state').addEventListener('click', e => {
+        const b = e.target.closest('[data-example]');
+        if(b) fillExample(b.dataset.example);
+    });
+
     window.onload = () => {
-        buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); syncDensityIcon(); renderFrequentChips(); renderPendingBadge(); syncCtxUI();
+        try { groupMode = localStorage.getItem('lx_group') === '1'; } catch(e) {}
+        syncGroupBtn();
+        buildHudMenus(); loadLocalBackup(); updateHudUI(); syncThemeIcon(); syncDensityIcon(); renderFrequentChips(); renderPendingBadge(); syncCtxUI(); renderSummary();
         setPalette(document.documentElement.dataset.palette);
         dom.omni.focus();
         setInterval(saveLocalBackup, 30000);
